@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { hidden } from 'ansi-colors'
 
 /**
@@ -10,6 +10,7 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 let mainWindow
+let menuWindow
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
@@ -37,6 +38,41 @@ function createWindow () {
   })
 }
 
+function createMenuWindow () {
+  menuWindow = new BrowserWindow({
+    height: 600,
+    width: 400,
+    titleBarStyle: 'hiddenInset',
+    // modal: true,
+    // parent: mainWindow,
+    frame: false,
+    show: false
+  })
+
+  const menuURL = process.env.NODE_ENV === 'development'
+    ? `http://localhost:9080/#/menu`
+    : `file://${__dirname}/index.html/#/menu`
+
+  menuWindow.loadURL(menuURL)
+
+  menuWindow.on('close', (event) => {
+    // menuWindow = null
+    if (menuWindow) {
+      menuWindow.hide()
+    }
+    event.preventDefault()
+  })
+
+  menuWindow.on('blur', (event) => {
+    console.log('.......')
+  })
+
+  // menuWindow.setClosable(false)
+  menuWindow.setFullScreenable(false)
+  // menuWindow.setMinimizable(false)
+  menuWindow.setMaximizable(false)
+}
+
 app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
@@ -48,6 +84,21 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (mainWindow === null) {
     createWindow()
+  }
+})
+
+ipcMain.on('open-menu', (event, arg) => {
+  console.log('【open-menu】', arg)
+  if (!menuWindow) {
+    createMenuWindow()
+  }
+  menuWindow.show()
+  event.returnValue = 'opened'
+})
+
+ipcMain.on('close-menu', (event, arg) => {
+  if (menuWindow) {
+    menuWindow.hide()
   }
 })
 
