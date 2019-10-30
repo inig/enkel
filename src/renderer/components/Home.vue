@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <Button type="success">测试</Button>
+    <AppHeader></AppHeader>
   </div>
 </template>
 
@@ -9,7 +9,8 @@
   export default {
     name: 'Home',
     components: {
-      Button
+      Button,
+      AppHeader: () => import('./parts/AppHeader')
     }
   }
 </script>
