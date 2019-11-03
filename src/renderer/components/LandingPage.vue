@@ -1,16 +1,14 @@
 <template>
   <div id="wrapper">
-    <img id="logo"
-         src="~@/assets/logo.png"
-         alt="electron-vue">
+    <img id="logo" src="~@/assets/logo.png" alt="electron-vue">
     <main>
       <div class="left-side">
         <span class="title">
-          Welcome to your new project! 2
+          Welcome to your new project!
         </span>
         <system-information></system-information>
       </div>
-      <Button type="primary">Test</Button>
+
       <div class="right-side">
         <div class="doc">
           <div class="title">Getting Started</div>
@@ -23,10 +21,8 @@
         </div>
         <div class="doc">
           <div class="title alt">Other Documentation</div>
-          <button class="alt"
-                  @click="open('https://electron.atom.io/docs/')">Electron</button>
-          <button class="alt"
-                  @click="open('https://vuejs.org/v2/guide/')">Vue.js</button>
+          <button class="alt" @click="open('https://electron.atom.io/docs/')">Electron</button>
+          <button class="alt" @click="open('https://vuejs.org/v2/guide/')">Vue.js</button>
         </div>
       </div>
     </main>
@@ -35,11 +31,10 @@
 
 <script>
   import SystemInformation from './LandingPage/SystemInformation'
-  import { Button } from 'view-design'
 
   export default {
     name: 'landing-page',
-    components: { SystemInformation, Button },
+    components: { SystemInformation },
     methods: {
       open (link) {
         this.$electron.shell.openExternal(link)
@@ -49,7 +44,7 @@
 </script>
 
 <style>
-  @import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro");
+  @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
 
   * {
     box-sizing: border-box;
@@ -57,16 +52,15 @@
     padding: 0;
   }
 
-  body {
-    font-family: "Source Sans Pro", sans-serif;
-  }
+  body { font-family: 'Source Sans Pro', sans-serif; }
 
   #wrapper {
-    background: radial-gradient(
-      ellipse at top left,
-      rgba(255, 255, 255, 1) 40%,
-      rgba(229, 229, 229, 0.9) 100%
-    );
+    background:
+      radial-gradient(
+        ellipse at top left,
+        rgba(255, 255, 255, 1) 40%,
+        rgba(229, 229, 229, .9) 100%
+      );
     height: 100vh;
     padding: 60px 80px;
     width: 100vw;
@@ -83,9 +77,7 @@
     justify-content: space-between;
   }
 
-  main > div {
-    flex-basis: 50%;
-  }
+  main > div { flex-basis: 50%; }
 
   .left-side {
     display: flex;
@@ -116,7 +108,7 @@
   }
 
   .doc button {
-    font-size: 0.8em;
+    font-size: .8em;
     cursor: pointer;
     outline: none;
     padding: 0.75em 2em;

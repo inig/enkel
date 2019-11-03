@@ -1,8 +1,8 @@
 {
-  "name": "enkel2",
+  "name": "enkel",
   "version": "0.0.1",
-  "author": "liangshan <loveliangshan@126.com>",
-  "description": "enkel工具桌面端",
+  "author": "cheenoalive@gmail.com",
+  "description": "An electron-vue project",
   "license": null,
   "main": "./dist/electron/main.js",
   "scripts": {
@@ -17,8 +17,8 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "enkel2",
-    "appId": "com.dei2.enkel",
+    "productName": "enkel",
+    "appId": "com.example.yourapp",
     "directories": {
       "output": "build"
     },
@@ -52,9 +52,6 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "less": "^3.10.3",
-    "less-loader": "^5.0.0",
-    "view-design": "^4.0.2",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
     "vue-router": "^3.0.1",
@@ -77,9 +74,9 @@
     "css-loader": "^0.28.11",
     "del": "^3.0.0",
     "devtron": "^1.4.0",
-    "electron": "^2.0.4",
-    "electron-builder": "^20.19.2",
-    "electron-debug": "^1.5.0",
+    "electron": "^6.0.7",
+    "electron-builder": "^21.2.0",
+    "electron-debug": "^3.0.0",
     "electron-devtools-installer": "^2.2.4",
     "file-loader": "^1.1.11",
     "html-webpack-plugin": "^3.2.0",

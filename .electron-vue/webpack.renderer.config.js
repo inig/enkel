@@ -33,7 +33,7 @@ let rendererConfig = {
     rules: [
       {
         test: /\.less$/,
-        use: ['vue-style-loader', 'css-loader', { loader: 'less-loader', options: { javascriptEnabled: true } }]
+        use: ['vue-style-loader', 'css-loader', 'less-loader']
       },
       {
         test: /\.css$/,
@@ -102,7 +102,7 @@ let rendererConfig = {
   },
   plugins: [
     new VueLoaderPlugin(),
-    new MiniCssExtractPlugin({ filename: 'styles.css' }),
+    new MiniCssExtractPlugin({filename: 'styles.css'}),
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: path.resolve(__dirname, '../src/index.ejs'),
