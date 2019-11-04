@@ -1,8 +1,10 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { hidden } from 'ansi-colors'
 
 import path from 'path'
-
+const electron = require('electron')
+const Menu = electron.Menu
+if (process.mas) app.setName('Your Electron App Name')
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
@@ -13,8 +15,9 @@ if (process.env.NODE_ENV !== 'development') {
 
 function initMenu () {
   const isMac = (process.platform === 'darwin')
+
   const menuTemplate = [
-    // { role: 'appMenu' }
+    { role: 'appMenu' },
     ...(isMac ? [{
       label: 'Enkel',
       submenu: [
@@ -110,9 +113,169 @@ function initMenu () {
     }
   ]
 
+  console.log('>>>>menu: ', Menu)
+
   const menu = Menu.buildFromTemplate(menuTemplate)
 
   Menu.setApplicationMenu(menu)
+
+}
+
+/**
+ * 注册键盘快捷键
+ * 其中：label: '切换开发者工具',这个可以在发布时注释掉
+ */
+let template = [
+  {
+    label: 'Edit ( 操作 )',
+    submenu: [{
+      label: 'Copy ( 复制 )',
+      accelerator: 'CmdOrCtrl+C',
+      role: 'copy'
+    }, {
+      label: 'Paste ( 粘贴 )',
+      accelerator: 'CmdOrCtrl+V',
+      role: 'paste'
+    }, {
+      label: 'Reload ( 重新加载 )',
+      accelerator: 'CmdOrCtrl+R',
+      click: function (item, focusedWindow) {
+        if (focusedWindow) {
+          // on reload, start fresh and close any old
+          // open secondary windows
+          if (focusedWindow.id === 1) {
+            BrowserWindow.getAllWindows().forEach(function (win) {
+              if (win.id > 1) {
+                win.close()
+              }
+            })
+          }
+          focusedWindow.reload()
+        }
+      }
+    }]
+  },
+  {
+    label: 'Window ( 窗口 )',
+    role: 'window',
+    submenu: [{
+      label: 'Minimize ( 最小化 )',
+      accelerator: 'CmdOrCtrl+M',
+      role: 'minimize'
+    }, {
+      label: 'Close ( 关闭 )',
+      accelerator: 'CmdOrCtrl+W',
+      role: 'close'
+    }, {
+      label: '切换开发者工具',
+      accelerator: (function () {
+        if (process.platform === 'darwin') {
+          return 'Alt+Command+I'
+        } else {
+          return 'Ctrl+Shift+I'
+        }
+      })(),
+      click: function (item, focusedWindow) {
+        if (focusedWindow) {
+          focusedWindow.toggleDevTools()
+        }
+      }
+    }, {
+      type: 'separator'
+    }]
+  },
+  {
+    label: 'Help ( 帮助 ) ',
+    role: 'help',
+    submenu: [{
+      label: 'FeedBack ( 意见反馈 )',
+      click: function () {
+        electron.shell.openExternal('https://forum.iptchain.net')
+      }
+    }]
+  }
+]
+
+/**
+* 增加更新相关的菜单选项
+*/
+function addUpdateMenuItems (items, position) {
+  if (process.mas) return
+
+  const version = electron.app.getVersion()
+  let updateItems = [{
+    label: `Version ${version}`,
+    enabled: false
+  }, {
+    label: 'Checking for Update',
+    enabled: false,
+    key: 'checkingForUpdate'
+  }, {
+    label: 'Check for Update',
+    visible: false,
+    key: 'checkForUpdate',
+    click: function () {
+      require('electron').autoUpdater.checkForUpdates()
+    }
+  }, {
+    label: 'Restart and Install Update',
+    enabled: true,
+    visible: false,
+    key: 'restartToUpdate',
+    click: function () {
+      require('electron').autoUpdater.quitAndInstall()
+    }
+  }]
+
+  items.splice.apply(items, [position, 0].concat(updateItems))
+}
+
+function findReopenMenuItem () {
+  const menu = Menu.getApplicationMenu()
+  if (!menu) return
+
+  let reopenMenuItem
+  menu.items.forEach(function (item) {
+    if (item.submenu) {
+      item.submenu.items.forEach(function (item) {
+        if (item.key === 'reopenMenuItem') {
+          reopenMenuItem = item
+        }
+      })
+    }
+  })
+  return reopenMenuItem
+}
+
+// 针对Mac端的一些配置
+if (process.platform === 'darwin') {
+  const name = electron.app.getName()
+  template.unshift({
+    label: name,
+    submenu: [{
+      label: 'Quit ( 退出 )',
+      accelerator: 'Command+Q',
+      click: function () {
+        app.quit()
+      }
+    }]
+  })
+
+  // Window menu.
+  template[3].submenu.push({
+    type: 'separator'
+  }, {
+    label: 'Bring All to Front',
+    role: 'front'
+  })
+
+  addUpdateMenuItems(template[0].submenu, 1)
+}
+
+// 针对Windows端的一些配置
+if (process.platform === 'win32') {
+  const helpMenu = template[template.length - 1].submenu
+  addUpdateMenuItems(helpMenu, 0)
 }
 
 let mainWindow
@@ -143,10 +306,13 @@ function createWindow () {
 
   mainWindow.loadURL(winURL)
 
-  initMenu()
+  // initMenu()
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
+
+    const menu = Menu.buildFromTemplate(template)
+    Menu.setApplicationMenu(menu)
   })
 
   mainWindow.on('closed', () => {
@@ -155,12 +321,10 @@ function createWindow () {
   })
 
   mainWindow.on('blur', () => {
-    dialog.showMessageBox({
-      message: 'blur'
-    })
+    // dialog.showMessageBox({
+    //   message: 'blur'
+    // })
   })
-
-  console.log(mainWindow)
 
   // mainWindow.setAspectRatio({
   //   aspectRatio: 0.56

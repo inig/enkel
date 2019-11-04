@@ -1,5 +1,6 @@
 {
-  "name": "enkel",
+  "name": "Enkel",
+  "productName": "Enkel",
   "version": "0.0.1",
   "author": "cheenoalive@gmail.com",
   "description": "An electron-vue project",
@@ -17,7 +18,8 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "enkel",
+    "productName": "Enkel",
+    "name": "Enkel",
     "appId": "com.example.yourapp",
     "directories": {
       "output": "build"
@@ -74,7 +76,7 @@
     "css-loader": "^0.28.11",
     "del": "^3.0.0",
     "devtron": "^1.4.0",
-    "electron": "^6.0.7",
+    "electron": "^6.1.0",
     "electron-builder": "^21.2.0",
     "electron-debug": "^3.0.0",
     "electron-devtools-installer": "^2.2.4",
