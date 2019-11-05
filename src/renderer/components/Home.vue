@@ -9,7 +9,7 @@
 
 <script>
   import { Button } from 'view-design'
-  const { ipcRenderer, remote } = require('electron')
+  import { ipcRenderer, remote } from 'electron'
 
   export default {
     name: 'Home',
@@ -18,10 +18,12 @@
       AppHeader: () => import('./parts/AppHeader')
     },
     mounted () {
-      ipcRenderer.on('opened-menu', (event, arg) => {
-        console.log('opened menu: ', arg)
+      console.log('>>>[Home]')
+      ipcRenderer.on('navigate-to', (event, arg) => {
+        this.$router.replace({
+          name: arg.path
+        })
       })
-
       // this.initMenu()
     },
     methods: {
