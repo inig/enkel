@@ -1,14 +1,27 @@
 <template>
-  <div class="base64_container">
-    base64 container
+  <div class="tool_container base64_container">
+    <ESplit v-model="split">
+    </ESplit>
   </div>
 </template>
 
 <script>
-  export default {
-    name: 'Base64'
+// import { Split } from 'view-design'
+export default {
+  name: 'Base64',
+  components: {
+    ESplit: () => import('../../custom/ESplit')
+  },
+  data () {
+    return {
+      split: 0.5
+    }
   }
+}
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+.tool_container {
+  height: 100%;
+}
 </style>

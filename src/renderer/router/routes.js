@@ -27,7 +27,7 @@ export const developRouter = {
         createTime: '545440088000',
         hot: false
       },
-      component: require('@/components/tools/developer/Base64').default
+      component: require('@/components/tools/developer/Json').default
     },
     {
       path: '/qrcode',
@@ -41,7 +41,7 @@ export const developRouter = {
         createTime: '545440088000',
         hot: false
       },
-      component: require('@/components/tools/developer/Base64').default
+      component: require('@/components/tools/developer/Qrcode').default
     },
     {
       path: '/base64',
