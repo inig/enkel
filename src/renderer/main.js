@@ -9,6 +9,11 @@ import mixins from './mixins'
 
 import './themes/index.less'
 
+import { Notice, Message } from 'view-design'
+
+Vue.prototype.$Notice = Notice
+Vue.prototype.$Message = Message
+
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 Vue.http = Vue.prototype.$http = axios
 Vue.config.productionTip = false
