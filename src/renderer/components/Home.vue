@@ -4,12 +4,15 @@
 
     <Button type="primary"
             @click="openMenu">打开菜单</Button>
+
+    <Button type="primary"
+            @click="capture">屏幕截图</Button>
   </div>
 </template>
 
 <script>
 import { Button } from 'view-design'
-import { ipcRenderer, remote } from 'electron'
+import { ipcRenderer, remote, screen, desktopCapturer } from 'electron'
 
 export default {
   name: 'Home',
@@ -105,6 +108,29 @@ export default {
     },
     openMenu (evt) {
       ipcRenderer.send('open-menu', { name: 'ls' })
+    },
+    capture () {
+      const displays = screen.getAllDisplays()
+
+      const getDesktopCapturer = displays.map((display, i) => {
+        return new Promise((resolve, reject) => {
+          desktopCapturer.getSources({
+            types: ['screen'],
+            thumbnailSize: display.size
+          }, (error, sources) => {
+            if (!error) {
+              return resolve({
+                display,
+                thumbnail: sources[i].thumbnail.toDataURL()
+              })
+            }
+            return reject(error)
+          })
+        })
+      })
+      Promise.all(getDesktopCapturer).then(sources => {
+        ipcRenderer.send('shortcut-capture', sources)
+      }).catch(error => console.log(error))
     }
   }
 }
