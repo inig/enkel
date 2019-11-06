@@ -18,9 +18,11 @@ export default {
   },
   mounted () {
     ipcRenderer.on('navigate-to', (event, arg) => {
-      this.$router.replace({
-        name: arg.path
-      })
+      if (this.$route.name !== arg.path) {
+        this.$router.replace({
+          name: arg.path
+        })
+      }
     })
     // this.initMenu()
   },

@@ -11,6 +11,8 @@ import './themes/index.less'
 
 import { Notice, Message } from 'view-design'
 
+import { ipcRenderer } from 'electron'
+
 Vue.prototype.$Notice = Notice
 Vue.prototype.$Message = Message
 
@@ -19,6 +21,13 @@ Vue.http = Vue.prototype.$http = axios
 Vue.config.productionTip = false
 
 Vue.mixin(mixins)
+
+router.beforeEach((to, from, next) => {
+  if (to.meta && to.meta.title) {
+    document.title = to.meta.title
+  }
+  next()
+})
 
 /* eslint-disable no-new */
 new Vue({

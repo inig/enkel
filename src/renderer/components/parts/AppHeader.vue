@@ -29,7 +29,7 @@
       </svg>
     </div>
     <slot>
-      Enkel
+      {{$route.meta ? ($route.meta.title || 'Enkel') : 'Enkel'}}
     </slot>
   </div>
 </template>

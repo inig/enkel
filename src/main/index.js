@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog, systemPreferences } from 'electron
 import { hidden } from 'ansi-colors'
 
 import path from 'path'
-if (process.mas) app.setName('Enkel')
+// if (process.mas) app.setName('Enkel')
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
