@@ -11,7 +11,7 @@ import './themes/index.less'
 
 import { Notice, Message } from 'view-design'
 
-import { ipcRenderer } from 'electron'
+import '../../static/css/font-awesome/css/font-awesome.min.css'
 
 Vue.prototype.$Notice = Notice
 Vue.prototype.$Message = Message

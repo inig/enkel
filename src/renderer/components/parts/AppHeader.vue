@@ -10,7 +10,7 @@
     <div class="menu_fold bgWhite"
          v-if="$route.name === 'menu' && menuFolded"
          @click="menuFold">
-      <img src="../../assets/logo.png"
+      <img src="~@/assets/logo.png"
            alt="Enkel">
     </div>
     <div class="menu_home"

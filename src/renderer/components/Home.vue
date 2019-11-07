@@ -5,8 +5,8 @@
     <Button type="primary"
             @click="openMenu">打开菜单</Button>
 
-    <Button type="primary"
-            @click="capture">屏幕截图</Button>
+    <!-- <Button type="primary"
+            @click="capture">屏幕截图</Button> -->
   </div>
 </template>
 
