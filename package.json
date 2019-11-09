@@ -1,8 +1,7 @@
 {
-  "name": "Enkel",
-  "productName": "Enkel",
+  "name": "enkel",
   "version": "0.0.1",
-  "author": "cheenoalive@gmail.com",
+  "author": "loveliangshan@126.com",
   "description": "An electron-vue project",
   "license": null,
   "main": "./dist/electron/main.js",
@@ -18,22 +17,13 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "Enkel",
-    "name": "Enkel",
-    "appId": "com.example.yourapp",
+    "productName": "enkel",
+    "appId": "com.dei2.enkel",
     "directories": {
       "output": "build"
     },
-    "publish": [
-      {
-        "provider": "enkel",
-        "url": "http://static.dei2.com/enkel/"
-      }
-    ],
     "files": [
-      "dist/electron/**/*",
-      "node_modules/",
-      "package.json"
+      "dist/electron/**/*"
     ],
     "dmg": {
       "contents": [
@@ -51,32 +41,18 @@
       ]
     },
     "mac": {
-      "icon": "build/icons/icon.icns",
-      "artifactName": "${productName}_setup_${version}.${ext}"
+      "icon": "build/icons/icon.icns"
     },
     "win": {
-      "icon": "build/icons/icon.ico",
-      "artifactName": "${productName}_setup_${version}.${ext}"
+      "icon": "build/icons/icon.ico"
     },
     "linux": {
-      "icon": "build/icons",
-      "artifactName": "${productName}_setup_${version}.${ext}"
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": true,
-      "allowElevation": true,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "runAfterFinish": true,
-      "installerIcon": "./build/icon.ico",
-      "uninstallerIcon": "./build/icon.ico"
+      "icon": "build/icons"
     }
   },
   "dependencies": {
-    "axios": "^0.18.0",
-    "js-base64": "^2.5.1",
     "vue": "^2.5.16",
+    "axios": "^0.18.0",
     "vue-electron": "^1.0.6",
     "vue-router": "^3.0.1",
     "vuex": "^3.0.1",
@@ -98,26 +74,23 @@
     "css-loader": "^0.28.11",
     "del": "^3.0.0",
     "devtron": "^1.4.0",
-    "electron": "^6.1.0",
-    "electron-debug": "^3.0.0",
+    "electron": "^7.1.1",
+    "electron-debug": "^1.5.0",
     "electron-devtools-installer": "^2.2.4",
-    "electron-updater": "^4.2.0",
+    "electron-builder": "^20.19.2",
+    "mini-css-extract-plugin": "0.4.0",
     "file-loader": "^1.1.11",
     "html-webpack-plugin": "^3.2.0",
-    "less": "^3.10.3",
-    "less-loader": "^5.0.0",
-    "mini-css-extract-plugin": "0.4.0",
     "multispinner": "^0.2.1",
     "node-loader": "^0.6.0",
     "style-loader": "^0.21.0",
     "url-loader": "^1.0.1",
-    "view-design": "^4.0.2",
     "vue-html-loader": "^1.2.4",
     "vue-loader": "^15.2.4",
     "vue-style-loader": "^4.1.0",
     "vue-template-compiler": "^2.5.16",
-    "webpack": "^4.15.1",
     "webpack-cli": "^3.0.8",
+    "webpack": "^4.15.1",
     "webpack-dev-server": "^3.1.4",
     "webpack-hot-middleware": "^2.22.2",
     "webpack-merge": "^4.1.3"
