@@ -64,4 +64,9 @@ body {
     }
   }
 }
+.custom_drawer {
+  .custom_header {
+    padding-top: 16px;
+  }
+}
 </style>

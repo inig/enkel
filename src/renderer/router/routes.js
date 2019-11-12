@@ -29,20 +29,20 @@ export const developRouter = {
       },
       component: require('@/components/tools/developer/Json').default
     },
-    // {
-    //   path: '/qrcode',
-    //   name: 'qrcode',
-    //   meta: {
-    //     label: '二维码',
-    //     title: '二维码生成',
-    //     icon: '#route-qrcode',
-    //     name: '二维码生成',
-    //     desc: '将字符生成二维码，可下载生成的二维码',
-    //     createTime: '545440088000',
-    //     hot: false
-    //   },
-    //   component: require('@/components/tools/developer/Qrcode').default
-    // },
+    {
+      path: '/request',
+      name: 'request',
+      meta: {
+        label: '网络请求',
+        title: '模拟网络请求',
+        icon: '#route-request',
+        name: '模拟网络请求',
+        desc: '模拟网络请求',
+        createTime: '545440088000',
+        hot: false
+      },
+      component: require('@/components/tools/developer/Request').default
+    },
     // {
     //   path: '/base64',
     //   name: 'base64',
