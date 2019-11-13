@@ -41,7 +41,7 @@ export const developRouter = {
         createTime: '545440088000',
         hot: false
       },
-      component: require('@/components/tools/developer/Request').default
+      component: require('@/components/tools/developer/Request/index').default
     },
     // {
     //   path: '/base64',

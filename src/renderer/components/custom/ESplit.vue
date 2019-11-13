@@ -57,11 +57,11 @@
       },
       min: {
         type: [Number, String],
-        default: '150px'
+        default: '40px'
       },
       max: {
         type: [Number, String],
-        default: '150px'
+        default: '40px'
       }
     },
     data () {
@@ -87,12 +87,12 @@
 <style lang="less" scoped>
   .left {
     height: 100%;
-    padding-right: 15px;
+    // padding-right: 15px;
     box-sizing: border-box;
   }
   .right {
     height: 100%;
-    padding-left: 15px;
+    // padding-left: 15px;
     box-sizing: border-box;
   }
   .trigger_area {

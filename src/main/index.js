@@ -57,7 +57,7 @@ function createWindow () {
 
   mainWindow.on('closed', () => {
     mainWindow = null
-    app.quit()
+    // app.quit()
   })
 
   mainWindow.on('blur', () => {
@@ -66,11 +66,7 @@ function createWindow () {
     // })
   })
 
-  mainWindow.setAspectRatio(16 / 9)
-
-  // mainWindow.setAspectRatio({
-  //   aspectRatio: 0.56
-  // })
+  // mainWindow.setAspectRatio(16 / 9)
 }
 
 function createMenuWindow () {
@@ -159,7 +155,6 @@ app.on('activate', () => {
 })
 
 ipcMain.on('open-menu', (event, arg) => {
-  console.log('【open-menu】', arg)
   if (!menuWindow) {
     createMenuWindow()
   }
@@ -176,10 +171,6 @@ ipcMain.on('close-menu', (event, arg) => {
 
 ipcMain.on('set-bounds', (event, arg) => {
   if (menuWindow) {
-
-    // dialog.showMessageBox({
-    //   message: JSON.stringify(arg)
-    // })
     menuWindow.setBounds(arg, true)
   }
 })
@@ -194,6 +185,9 @@ ipcMain.on('menu-unfold', (event) => {
 })
 
 ipcMain.on('navigate-to', (event, arg) => {
+  if (mainWindow === null) {
+    createWindow()
+  }
   mainWindow.webContents.send('navigate-to', arg)
   mainWindow.showInactive()
   mainWindow.flashFrame(true)
@@ -208,9 +202,18 @@ ipcMain.on('right-menu-click', (event, arg) => {
         return {
           label: item.meta.title,
           click () {
-            mainWindow.webContents.send('navigate-to', {
-              path: item.name
-            })
+            if (mainWindow === null) {
+              createWindow()
+              setTimeout(() => {
+                mainWindow.webContents.send('navigate-to', {
+                  path: item.name
+                })
+              }, 1000)
+            } else {
+              mainWindow.webContents.send('navigate-to', {
+                path: item.name
+              })
+            }
           }
         }
       })
