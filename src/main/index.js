@@ -1,6 +1,68 @@
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, systemPreferences } from 'electron'
 
 import path from 'path'
+const low = require('lowdb')
+const FileSync = require('lowdb/adapters/FileSync')
+const adapter = new FileSync(app.getAppPath() + path.sep + 'db.json')
+const db = low(adapter)
+
+db.defaults({
+  requests: [
+    {
+      url: 'http://a.com',
+      method: 'GET',
+      label: '测试'
+    },
+    {
+      label: '分组一',
+      name: 'group1',
+      children: [
+        {
+          url: 'http://aa.com',
+          method: 'GET',
+          label: '分组一测试'
+        }
+      ]
+    }
+  ]
+}).write()
+
+function S4 () {
+  return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1)
+}
+function getUUID (perfix) {
+  return ((perfix ? (perfix + '-') : '') + S4() + '-' + S4())
+}
+
+function getRequests () {
+  return db.get('requests').value()
+}
+
+function setRequests (args) {
+  let requests = getRequests()
+  if (args.parent) {
+    requests.map(item => {
+      if (item.name === args.parent) {
+        item.children.splice((args.index || 10000), 0, args.request)
+      }
+    })
+  } else {
+    requests.splice((args.index || 10000), 0, args.request)
+  }
+  db.set('requests', requests).write()
+  return requests
+}
+
+function setRequestsFolder (args) {
+  let requests = getRequests()
+  requests.splice((args.index || 10000), 0, {
+    label: args.label,
+    name: args.name || getUUID(),
+    children: []
+  })
+  db.set('requests', requests).write()
+  return requests
+}
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -223,6 +285,15 @@ ipcMain.on('right-menu-click', (event, arg) => {
   menu.popup(win)
 })
 
+ipcMain.on('get-requests', (event) => {
+  event.returnValue = getRequests()
+})
+ipcMain.on('set-requests', (event, args) => {
+  event.returnValue = setRequests(args)
+})
+ipcMain.on('set-requests-folder', (event, args) => {
+  event.returnValue = setRequestsFolder(args)
+})
 /**
  * Auto Updater
  *
