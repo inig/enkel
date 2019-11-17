@@ -9,18 +9,23 @@ const db = low(adapter)
 db.defaults({
   requests: [
     {
-      url: 'http://a.com',
+      id: '9e24bad1c663',
+      url: 'http://capipre.zhaopin.com/capi/garyscale/getHomePageGrayConfig?uticket=00ac237b333f4e06a3a238dec67bc687&at=9b7bfdc0c77745c9afb2db15867c06e9&rt=9bb4ccc8b4304ef68da59c00d55f3858&platform=5&d=1B2D3D3D88034056343CD0C58C6B5CC4&channel=apple&k=26412474748748&s=1d4f0ci9e2e4d8cz591e13eiu39ok487f&v=7930&version=7.9.30',
       method: 'GET',
-      label: '测试'
+      label: '测试',
+      type: 'request'
     },
     {
-      label: '分组一',
-      name: 'group1',
+      label: 'Weex首页',
+      id: '0d29ed42e3ec',
+      type: 'folder',
       children: [
         {
-          url: 'http://aa.com',
+          id: '78f275a046d1',
+          url: 'http://capi.zhaopin.com/capi/position/searchRecommend?isCompus=0&resumeNumber=&resumeVersion=&pageIndex=1&pageSize=40&uticket=00ac237b333f4e06a3a238dec67bc687&at=99572e2f4b05460abdc13f9535dfcfa7&rt=73cbd4c6b91548e79b3886c0709d0f48&platform=5&d=1B2D3D3D88034056343CD0C58C6B5CC4&channel=apple&k=26412474748748&v=7918&version=7.9.18&key=26412474748748&t=1554891664846&e=9ec2c21eae188a342bb823f229963baa',
           method: 'GET',
-          label: '分组一测试'
+          label: '推荐职位',
+          type: 'request'
         }
       ]
     }
@@ -31,9 +36,10 @@ function S4 () {
   return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1)
 }
 function getUUID (perfix) {
-  return ((perfix ? (perfix + '-') : '') + S4() + '-' + S4())
+  return ((perfix ? (perfix + '-') : '') + S4() + S4() + S4())
 }
-
+console.log('===1===', getUUID())
+console.log('===2===', getUUID())
 function getRequests () {
   return db.get('requests').value()
 }

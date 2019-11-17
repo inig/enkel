@@ -92,4 +92,102 @@ body {
     font-size: 12px;
   }
 }
+.request_method_select {
+  .ivu-select-selection {
+    height: 100%;
+    background-color: transparent;
+    border: none;
+  }
+  &.ivu-select-visible {
+    .ivu-select-selection {
+      box-shadow: none;
+    }
+  }
+  &.ivu-select-single {
+    .ivu-select-selection {
+      height: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+}
+.request_url_input {
+  .ivu-input {
+    border: none;
+    &:focus {
+      box-shadow: none;
+      border-color: transparent;
+    }
+  }
+}
+.request_btn_box {
+  .ivu-btn-text {
+    &:focus {
+      box-shadow: none;
+    }
+  }
+}
+.request_send_form {
+  .ivu-tabs-ink-bar {
+    background-color: #fcfcfc;
+  }
+  .ivu-tabs-nav {
+    .ivu-tabs-tab {
+      color: rgb(152, 152, 152);
+      &:hover {
+        color: rgb(222, 222, 222);
+      }
+    }
+    .ivu-tabs-tab-active {
+      color: rgb(222, 222, 222);
+    }
+  }
+  .ivu-tabs {
+    height: 100%;
+    .ivu-tabs-content {
+      height: calc(100% - 52px);
+    }
+  }
+  .ivu-tabs-bar {
+    border-bottom: 1px solid #474846;
+  }
+}
+.json_form_item {
+  .ivu-input {
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+    border-bottom: 1px solid #474846;
+    color: rgb(217, 217, 217);
+    border-radius: 0;
+    &:focus {
+      box-shadow: none;
+      border-color: #474846;
+    }
+    &:hover {
+      border-color: #474846;
+    }
+    &::placeholder {
+      color: rgb(81, 81, 80);
+    }
+  }
+  .ivu-checkbox-inner {
+    background-color: transparent;
+    border: 1px solid rgb(153, 153, 153);
+  }
+  .ivu-checkbox-checked {
+    .ivu-checkbox-inner {
+      // background-color: rgb(94, 160, 33);
+      // border-color: rgb(94, 160, 33);
+      background-color: rgb(167, 149, 251);
+      border-color: rgb(167, 149, 251);
+    }
+    &:hover {
+      .ivu-checkbox-inner {
+        border-color: rgb(167, 149, 251);
+      }
+    }
+  }
+}
 </style>

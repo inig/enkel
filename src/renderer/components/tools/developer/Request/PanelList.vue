@@ -27,6 +27,59 @@
         </Dropdown>
       </div>
     </div>
+    <div class="requests_list">
+      <div class="requests_item"
+           v-for="(item, index) in requestsList"
+           :key="index">
+        <div class="requests_item_inner"
+             :class="[activeItem[0] === index ? 'active' : '']"
+             @click="setActiveItem(index)"
+             v-if="item.type === 'request'">
+          <div class="requests_item_method"
+               :style="{color: methodColors[item.method.toLowerCase()]}">{{item.method}}</div>
+          <div class="requests_item_content">【{{item.label}}】{{item.url}}</div>
+        </div>
+        <div class="requests_item_folder_inner"
+             :class="[activeItem[0] === index ? 'active' : '', openedItem.indexOf(item.id) > -1 ? 'opened' : '']"
+             v-if="item.type === 'folder'">
+          <div class="requests_item_folder_header"
+               @click="toggleOpenedItem(item.id)">
+            <div class="requests_item_folder_header_icon">
+              <svg v-if="(activeItem[0] !== index) && (openedItem.indexOf(item.id) > -1)">
+                <use xlink:href="#folder-open-outline"></use>
+              </svg>
+              <svg v-else-if="(activeItem[0] !== index) && (openedItem.indexOf(item.id) < 0)">
+                <use xlink:href="#folder-outline"></use>
+              </svg>
+              <svg v-else-if="(activeItem[0] === index) && (openedItem.indexOf(item.id) > -1)">
+                <use xlink:href="#folder-open"></use>
+              </svg>
+              <svg v-else-if="(activeItem[0] === index) && (openedItem.indexOf(item.id) < 0)">
+                <use xlink:href="#folder"></use>
+              </svg>
+            </div>
+            <div class="requests_item_folder_header_content">{{item.label}}</div>
+          </div>
+          <div class="requests_item_folder_content"
+               :style="{height: openedItem.indexOf(item.id) > -1 ? (item.children.length * 36 + 'px') : '0px'}">
+            <div class="requests_item"
+                 v-for="(itm, idx) in item.children"
+                 :key="idx">
+              <div class="requests_item_inner"
+                   :class="[(activeItem[0] === index && activeItem[1] === idx) ? 'active' : '']"
+                   style="padding-left: 40px;"
+                   @click="setActiveItem(index, idx)"
+                   v-if="itm.type === 'request'">
+                <div class="requests_item_method"
+                     :style="{color: colors[itm.method.toLowerCase()]}">{{itm.method}}</div>
+                <div class="requests_item_content">【{{itm.label}}】{{itm.url}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <Modal v-model="requestModal.shown"
            title="新建请求">
       <Form :label-width="80">
@@ -119,7 +172,7 @@ export default {
         return [
           {
             name: 'GET',
-            color: '#745be6'
+            color: 'rgb(167, 149, 251)'
           },
           {
             name: 'POST',
@@ -142,13 +195,29 @@ export default {
       },
       formatedParams: [],
       folderModal: {
-        shown: true,
+        shown: false,
         formatData: {
           label: ''
         }
       },
-      defaultMethod: 'GET'
+      requestsList: [],
+      defaultMethod: 'GET',
+      colors: {
+        get: 'rgb(167, 149, 251)',
+        post: 'rgb(94, 160, 33)'
+      },
+      activeItem: [1, 0],
+      openedItem: ['0d29ed42e3ec']
     }
+  },
+  computed: {
+    methodColors () {
+      return this.$store.state.methodColors
+    }
+  },
+  created () {
+    this.getRequestsList()
+    this.$emit('active', this.getActiveObj())
   },
   methods: {
     openRequestModal () {
@@ -229,7 +298,37 @@ export default {
       let responseData = ipcRenderer.sendSync('set-requests-folder', {
         label: this.folderModal.formatData.label
       })
-      console.log('>>>>>>>>', responseData)
+    },
+    getRequestsList () {
+      this.requestsList = ipcRenderer.sendSync('get-requests')
+    },
+    toggleOpenedItem (id) {
+      let index = this.openedItem.indexOf(id)
+      if (index > -1) {
+        this.openedItem.splice(index, 1)
+      } else {
+        this.openedItem.push(id)
+      }
+    },
+    setActiveItem (index, subindex = -1) {
+      this.activeItem = [index, subindex]
+    },
+    getActiveObj () {
+      let activeObj = {}
+      if (this.activeItem[1] === -1) {
+        activeObj = this.requestsList[this.activeItem[0]] || {}
+      } else {
+        activeObj = this.requestsList[this.activeItem[0]] ? this.requestsList[this.activeItem[0]].children[this.activeItem[1]] : {}
+      }
+      return activeObj
+    }
+  },
+  watch: {
+    activeItem: {
+      immediate: true,
+      handler (val) {
+        this.$emit('active', this.getActiveObj())
+      }
     }
   }
 }
@@ -258,12 +357,144 @@ export default {
     // justify-content: space-around;
     .request_panel_operation {
       width: 48px;
-      height: 32px;
+      height: 36px;
       margin-left: 15px;
       display: flex;
       flex-direction: row;
       align-items: center;
       justify-content: center;
+    }
+  }
+  .requests_list {
+    width: 100%;
+    height: calc(100% - 36px);
+    padding-top: 15px;
+    box-sizing: border-box;
+    .requests_item {
+      width: 100%;
+      min-height: 36px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      .requests_item_inner {
+        width: 100%;
+        height: 36px;
+        padding: 0 8px;
+        box-sizing: border-box;
+        background-color: rgba(54, 55, 53, 0);
+        transition: all 0.2s ease-in-out;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        .requests_item_method {
+          font-size: 10px;
+          font-weight: bold;
+          width: 36px;
+          height: 36px;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+        }
+        .requests_item_content {
+          font-size: 13px;
+          // margin-left: 8px;
+          width: calc(100% - 40px);
+          height: 36px;
+          line-height: 36px;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          color: rgb(141, 141, 141);
+        }
+        &:hover {
+          background-color: rgba(54, 55, 53, 1);
+          .requests_item_content {
+            color: rgb(234, 234, 234);
+          }
+        }
+        &.active {
+          background-color: rgba(54, 55, 53, 1);
+          .requests_item_content {
+            color: rgb(234, 234, 234);
+          }
+        }
+      }
+      .requests_item_folder_inner {
+        width: 100%;
+        min-height: 36px;
+        background-color: rgba(54, 55, 53, 0);
+        transition: all 0.2s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        color: rgb(141, 141, 141);
+        &:hover {
+          .requests_item_folder_header {
+            color: rgb(234, 234, 234);
+          }
+        }
+        &.active {
+          .requests_item_folder_header {
+            color: rgb(234, 234, 234);
+          }
+        }
+        .requests_item_folder_header {
+          width: 100%;
+          height: 36px;
+          padding: 0 8px;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          // color: rgb(145, 146, 145);
+          .requests_item_folder_header_icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            svg {
+              width: 14px;
+              height: 14px;
+              fill: rgb(145, 146, 145);
+            }
+          }
+          .requests_item_folder_header_content {
+            font-size: 13px;
+            margin-left: 8px;
+            width: calc(100% - 40px);
+            height: 36px;
+            line-height: 36px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            // color: rgb(141, 141, 141);
+          }
+          &:hover {
+            background-color: rgba(54, 55, 53, 1);
+            .requests_item_folder_header_content {
+              color: rgb(234, 234, 234);
+            }
+          }
+          &.active {
+            background-color: rgba(54, 55, 53, 1);
+            .requests_item_folder_header_content {
+              color: rgb(234, 234, 234);
+            }
+          }
+        }
+        .requests_item_folder_content {
+          width: 100%;
+          // height: 120px;
+          background-color: rgb(40, 40, 40);
+          overflow: hidden;
+          transition: all 0.15s ease-in-out;
+        }
+      }
     }
   }
 }
@@ -284,7 +515,7 @@ export default {
   background-color: #f8f8fa;
   .format_param_item {
     width: 100%;
-    height: 32px;
+    height: 36px;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -297,7 +528,7 @@ export default {
     }
     .params_item_status {
       width: 32px;
-      height: 32px;
+      height: 36px;
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -322,7 +553,7 @@ export default {
     }
     .params_item_delete {
       width: 32px;
-      height: 32px;
+      height: 36px;
       opacity: 0;
       transition: opacity 0.2s ease-in-out;
       cursor: pointer;
