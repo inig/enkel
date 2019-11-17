@@ -17,7 +17,8 @@
              v-model="currentRequest.url"
              @on-change="changeUrl" />
       <div class="request_btn_box">
-        <Button type="text">发送</Button>
+        <Button type="text"
+                @click="request">发送</Button>
       </div>
     </div>
     <div class="request_send_form">
@@ -38,6 +39,7 @@
 
 <script>
 import { Select, Option, Input, Button, Tabs, TabPane } from 'view-design'
+import { ipcRenderer } from 'electron'
 export default {
   name: 'RequestForm',
   props: {
@@ -140,6 +142,12 @@ export default {
     },
     changeUrl () {
       this.formatedParams = this.formatParams(this.currentRequest.url)
+    },
+    request () {
+      ipcRenderer.send('request', {
+        method: this.currentRequest.method,
+        url: this.currentRequest.url
+      })
     }
   },
   watch: {

@@ -190,4 +190,18 @@ body {
     }
   }
 }
+.request_result {
+  .ivu-tabs-nav-scroll {
+    height: 47px;
+    .ivu-tabs-nav {
+      height: 47px;
+      .ivu-tabs-tab {
+        display: inline-flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+}
 </style>

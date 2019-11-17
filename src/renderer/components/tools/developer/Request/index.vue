@@ -1,19 +1,5 @@
 <template>
   <div class="tool_container base64_container">
-    <!-- <Button type="primary"
-            @click="openDrawer">历史</Button>
-
-    <Drawer placement="left"
-            class-name="custom_drawer"
-            v-model="drawerShown">
-      <div class="custom_header"
-           slot="header">
-        headers
-      </div>
-      <p>Some contents...</p>
-      <p>Some contents...</p>
-      <p>Some contents...</p>
-    </Drawer> -->
     <ESplit v-model="split1"
             max="300px">
       <div slot="left"
@@ -36,7 +22,9 @@
                class="custom_trigger">
           </div>
           <div slot="right"
-               class="custom_sub_right"></div>
+               class="custom_sub_right">
+            <RequestResult></RequestResult>
+          </div>
         </ESplit>
       </div>
     </ESplit>
@@ -51,7 +39,8 @@ export default {
     Drawer, Button,
     ESplit: () => import('../../../custom/ESplit'),
     PanelList: () => import('./PanelList'),
-    RequestForm: () => import('./RequestForm')
+    RequestForm: () => import('./RequestForm'),
+    RequestResult: () => import('./RequestResult')
   },
   data () {
     return {
@@ -108,6 +97,9 @@ export default {
     height: 100%;
     background-color: rgb(40, 41, 38);
     .custom_sub_left {
+      height: 100%;
+    }
+    .custom_sub_right {
       height: 100%;
     }
   }

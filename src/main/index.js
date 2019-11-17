@@ -1,5 +1,5 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, systemPreferences } from 'electron'
-
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, net } from 'electron'
+import axios from 'axios'
 import path from 'path'
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
@@ -38,8 +38,7 @@ function S4 () {
 function getUUID (perfix) {
   return ((perfix ? (perfix + '-') : '') + S4() + S4() + S4())
 }
-console.log('===1===', getUUID())
-console.log('===2===', getUUID())
+
 function getRequests () {
   return db.get('requests').value()
 }
@@ -300,6 +299,13 @@ ipcMain.on('set-requests', (event, args) => {
 ipcMain.on('set-requests-folder', (event, args) => {
   event.returnValue = setRequestsFolder(args)
 })
+
+ipcMain.on('request', async (event, args) => {
+  event.reply('start-request')
+  let response = await axios(args)
+  event.reply('response', response)
+})
+
 /**
  * Auto Updater
  *
