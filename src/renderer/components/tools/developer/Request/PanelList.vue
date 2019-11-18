@@ -34,6 +34,7 @@
         <div class="requests_item_inner"
              :class="[activeItem[0] === index ? 'active' : '']"
              @click="setActiveItem(index)"
+             @contextmenu="showContextMenu(item.id)"
              v-if="item.type === 'request'">
           <div class="requests_item_method"
                :style="{color: methodColors[item.method.toLowerCase()]}">{{item.method}}</div>
@@ -81,7 +82,8 @@
     </div>
 
     <Modal v-model="requestModal.shown"
-           title="新建请求">
+           title="新建请求"
+           @on-ok="saveRequest">
       <Form :label-width="80">
         <FormItem label="请求描述">
           <Input placeholder="请输入请求描述"
@@ -158,415 +160,427 @@
 </template>
 
 <script>
-import { Input, Dropdown, DropdownMenu, DropdownItem, Button, Icon, Modal, Form, FormItem, Select, Option, Checkbox } from 'view-design'
-import { ipcRenderer } from 'electron'
-export default {
-  name: 'RequestPanelList',
-  components: {
-    Input, Dropdown, DropdownMenu, DropdownItem, Button, Icon, Modal, Form, FormItem, Select, Option, Checkbox
-  },
-  props: {
-    requestMethods: {
-      type: Array,
-      default () {
-        return [
-          {
-            name: 'GET',
-            color: 'rgb(167, 149, 251)'
-          },
-          {
-            name: 'POST',
-            color: 'rgb(94, 160, 33)'
+  import { Input, Dropdown, DropdownMenu, DropdownItem, Button, Icon, Modal, Form, FormItem, Select, Option, Checkbox } from 'view-design'
+  import { ipcRenderer } from 'electron'
+  export default {
+    name: 'RequestPanelList',
+    components: {
+      Input, Dropdown, DropdownMenu, DropdownItem, Button, Icon, Modal, Form, FormItem, Select, Option, Checkbox
+    },
+    props: {
+      requestMethods: {
+        type: Array,
+        default () {
+          return [
+            {
+              name: 'GET',
+              color: 'rgb(167, 149, 251)'
+            },
+            {
+              name: 'POST',
+              color: 'rgb(94, 160, 33)'
+            }
+          ]
+        }
+      }
+    },
+    data () {
+      return {
+        requestModal: {
+          shown: false,
+          paramFormatShown: false,
+          formatData: {
+            url: 'https://www.baidu.com/s?wd=electron-vue',
+            label: '',
+            method: 'GET',
+            header: {},
+            cookie: {}
           }
-        ]
+        },
+        formatedParams: [],
+        folderModal: {
+          shown: false,
+          formatData: {
+            label: ''
+          }
+        },
+        requestsList: [],
+        defaultMethod: 'GET',
+        colors: {
+          get: 'rgb(167, 149, 251)',
+          post: 'rgb(94, 160, 33)'
+        },
+        activeItem: [1, 0],
+        openedItem: ['0d29ed42e3ec']
       }
-    }
-  },
-  data () {
-    return {
-      requestModal: {
-        shown: false,
-        paramFormatShown: false,
-        formatData: {
-          url: 'https://www.baidu.com/s?wd=electron-vue&rsv_spt=1&rsv_iqid=0xd48fba0d0008c655&issp=1&f=8&rsv_bp=1',
-          label: '',
-          method: 'GET'
+    },
+    computed: {
+      methodColors () {
+        return this.$store.state.methodColors
+      }
+    },
+    created () {
+      this.getRequestsList()
+      this.$emit('active', this.getActiveObj())
+    },
+    methods: {
+      openRequestModal () {
+        this.requestModal.shown = true
+      },
+      openFolderModal () {
+        this.folderModal.shown = true
+      },
+      panelOperate (name) {
+        if (name === 'new-request') {
+          this.openRequestModal()
+        } else if (name === 'new-folder') {
+          this.openFolderModal()
         }
       },
-      formatedParams: [],
-      folderModal: {
-        shown: false,
-        formatData: {
-          label: ''
+      formatParams (str) {
+        if (!str || !str.trim() || (str.indexOf('?') < 0)) {
+          return []
+        }
+        let search = str.replace(/^([^?]*)(\?)(.*)$/, '$3')
+        if (!search || !search.trim()) {
+          return []
+        }
+        return search.split('&').map(item => {
+          return {
+            key: item.split('=')[0],
+            value: item.split('=')[1],
+            status: true
+          }
+        })
+      },
+      toggleParamsFormat () {
+        if (!this.requestModal.formatData.url) {
+          alert('url不能为空')
+          return
+        }
+        if (!this.requestModal.paramFormatShown) {
+          // 格式化参数
+          this.formatedParams = this.formatParams(this.requestModal.formatData.url)
+        }
+        this.requestModal.paramFormatShown = !this.requestModal.paramFormatShown
+      },
+      hoverInItem (e) {
+        if (!e.target.classList.contains('active')) {
+          e.target.classList.add('active')
         }
       },
-      requestsList: [],
-      defaultMethod: 'GET',
-      colors: {
-        get: 'rgb(167, 149, 251)',
-        post: 'rgb(94, 160, 33)'
-      },
-      activeItem: [1, 0],
-      openedItem: ['0d29ed42e3ec']
-    }
-  },
-  computed: {
-    methodColors () {
-      return this.$store.state.methodColors
-    }
-  },
-  created () {
-    this.getRequestsList()
-    this.$emit('active', this.getActiveObj())
-  },
-  methods: {
-    openRequestModal () {
-      this.requestModal.shown = true
-    },
-    openFolderModal () {
-      this.folderModal.shown = true
-    },
-    panelOperate (name) {
-      if (name === 'new-request') {
-        this.openRequestModal()
-      } else if (name === 'new-folder') {
-        this.openFolderModal()
-      }
-    },
-    formatParams (str) {
-      if (!str || !str.trim() || (str.indexOf('?') < 0)) {
-        return []
-      }
-      let search = str.replace(/^([^?]*)(\?)(.*)$/, '$3')
-      if (!search || !search.trim()) {
-        return []
-      }
-      return search.split('&').map(item => {
-        return {
-          key: item.split('=')[0],
-          value: item.split('=')[1],
-          status: true
+      hoverOutItem (e) {
+        if (e.target.classList.contains('active')) {
+          e.target.classList.remove('active')
         }
-      })
-    },
-    toggleParamsFormat () {
-      if (!this.requestModal.formatData.url) {
-        alert('url不能为空')
-        return
-      }
-      if (!this.requestModal.paramFormatShown) {
-        // 格式化参数
+      },
+      deleteItem (index) {
+        this.formatedParams.splice(Number(index), 1)
+        this.setUrlStr(this.formatedParams)
+      },
+      setUrlStr (data) {
+        let params = JSON.parse(JSON.stringify(data))
+        let i = 0
+        let outArr = []
+        for (i; i < params.length; i++) {
+          if (params[i].status) {
+            outArr.push(params[i].key + '=' + params[i].value)
+          }
+        }
+        this.requestModal.formatData.url = this.requestModal.formatData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
+      },
+      disableParamItem () {
+        this.setUrlStr(this.formatedParams)
+      },
+      changeFormatedParams (e) {
+        this.setUrlStr(this.formatedParams)
+      },
+      changeUrl () {
         this.formatedParams = this.formatParams(this.requestModal.formatData.url)
-      }
-      this.requestModal.paramFormatShown = !this.requestModal.paramFormatShown
-    },
-    hoverInItem (e) {
-      if (!e.target.classList.contains('active')) {
-        e.target.classList.add('active')
-      }
-    },
-    hoverOutItem (e) {
-      if (e.target.classList.contains('active')) {
-        e.target.classList.remove('active')
-      }
-    },
-    deleteItem (index) {
-      this.formatedParams.splice(Number(index), 1)
-      this.setUrlStr(this.formatedParams)
-    },
-    setUrlStr (data) {
-      let params = JSON.parse(JSON.stringify(data))
-      let i = 0
-      let outArr = []
-      for (i; i < params.length; i++) {
-        if (params[i].status) {
-          outArr.push(params[i].key + '=' + params[i].value)
+      },
+      createFolder () {
+        let responseData = ipcRenderer.sendSync('set-requests-folder', {
+          label: this.folderModal.formatData.label
+        })
+      },
+      getRequestsList () {
+        this.requestsList = ipcRenderer.sendSync('get-requests')
+      },
+      toggleOpenedItem (id) {
+        let index = this.openedItem.indexOf(id)
+        if (index > -1) {
+          this.openedItem.splice(index, 1)
+        } else {
+          this.openedItem.push(id)
         }
-      }
-      this.requestModal.formatData.url = this.requestModal.formatData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
-    },
-    disableParamItem () {
-      this.setUrlStr(this.formatedParams)
-    },
-    changeFormatedParams (e) {
-      this.setUrlStr(this.formatedParams)
-    },
-    changeUrl () {
-      this.formatedParams = this.formatParams(this.requestModal.formatData.url)
-    },
-    createFolder () {
-      let responseData = ipcRenderer.sendSync('set-requests-folder', {
-        label: this.folderModal.formatData.label
-      })
-    },
-    getRequestsList () {
-      this.requestsList = ipcRenderer.sendSync('get-requests')
-    },
-    toggleOpenedItem (id) {
-      let index = this.openedItem.indexOf(id)
-      if (index > -1) {
-        this.openedItem.splice(index, 1)
-      } else {
-        this.openedItem.push(id)
+      },
+      setActiveItem (index, subindex = -1) {
+        this.activeItem = [index, subindex]
+      },
+      getActiveObj () {
+        let activeObj = {}
+        if (this.activeItem[1] === -1) {
+          activeObj = this.requestsList[this.activeItem[0]] || {}
+        } else {
+          activeObj = this.requestsList[this.activeItem[0]] ? this.requestsList[this.activeItem[0]].children[this.activeItem[1]] : {}
+        }
+        return activeObj
+      },
+      saveRequest () {
+        this.requestsList = ipcRenderer.sendSync('set-requests', {
+          request: this.requestModal.formatData
+        })
+      },
+      showContextMenu (id) {
+        this.requestsList = ipcRenderer.sendSync('context-menu-request-item', {
+          id: id
+        })
       }
     },
-    setActiveItem (index, subindex = -1) {
-      this.activeItem = [index, subindex]
-    },
-    getActiveObj () {
-      let activeObj = {}
-      if (this.activeItem[1] === -1) {
-        activeObj = this.requestsList[this.activeItem[0]] || {}
-      } else {
-        activeObj = this.requestsList[this.activeItem[0]] ? this.requestsList[this.activeItem[0]].children[this.activeItem[1]] : {}
-      }
-      return activeObj
-    }
-  },
-  watch: {
-    activeItem: {
-      immediate: true,
-      handler (val) {
-        this.$emit('active', this.getActiveObj())
+    watch: {
+      activeItem: {
+        immediate: true,
+        handler (val) {
+          this.$emit('active', this.getActiveObj())
+        }
       }
     }
   }
-}
 </script>
 
 <style lang="less" scoped>
-.w100p {
-  width: 100%;
-}
-.fs12 {
-  font-size: 12px;
-}
-.request_panel_list {
-  width: 100%;
-  height: 100%;
-  padding: 10px 0;
-  box-sizing: border-box;
-  .list_filter_container {
+  .w100p {
     width: 100%;
-    height: 36px;
-    padding: 0 15px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    // justify-content: space-around;
-    .request_panel_operation {
-      width: 48px;
-      height: 36px;
-      margin-left: 15px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-    }
   }
-  .requests_list {
+  .fs12 {
+    font-size: 12px;
+  }
+  .request_panel_list {
     width: 100%;
-    height: calc(100% - 36px);
-    padding-top: 15px;
+    height: 100%;
+    padding: 10px 0;
     box-sizing: border-box;
-    .requests_item {
+    .list_filter_container {
       width: 100%;
-      min-height: 36px;
+      height: 36px;
+      padding: 0 15px;
+      box-sizing: border-box;
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: flex-start;
-      .requests_item_inner {
-        width: 100%;
+      // justify-content: space-around;
+      .request_panel_operation {
+        width: 48px;
         height: 36px;
-        padding: 0 8px;
-        box-sizing: border-box;
-        background-color: rgba(54, 55, 53, 0);
-        transition: all 0.2s ease-in-out;
+        margin-left: 15px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+    .requests_list {
+      width: 100%;
+      height: calc(100% - 36px);
+      padding-top: 15px;
+      box-sizing: border-box;
+      .requests_item {
+        width: 100%;
+        min-height: 36px;
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
-        .requests_item_method {
-          font-size: 10px;
-          font-weight: bold;
-          width: 36px;
-          height: 36px;
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: center;
-        }
-        .requests_item_content {
-          font-size: 13px;
-          // margin-left: 8px;
-          width: calc(100% - 40px);
-          height: 36px;
-          line-height: 36px;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-          overflow: hidden;
-          color: rgb(141, 141, 141);
-        }
-        &:hover {
-          background-color: rgba(54, 55, 53, 1);
-          .requests_item_content {
-            color: rgb(234, 234, 234);
-          }
-        }
-        &.active {
-          background-color: rgba(54, 55, 53, 1);
-          .requests_item_content {
-            color: rgb(234, 234, 234);
-          }
-        }
-      }
-      .requests_item_folder_inner {
-        width: 100%;
-        min-height: 36px;
-        background-color: rgba(54, 55, 53, 0);
-        transition: all 0.2s ease-in-out;
-        display: flex;
-        flex-direction: column;
-        color: rgb(141, 141, 141);
-        &:hover {
-          .requests_item_folder_header {
-            color: rgb(234, 234, 234);
-          }
-        }
-        &.active {
-          .requests_item_folder_header {
-            color: rgb(234, 234, 234);
-          }
-        }
-        .requests_item_folder_header {
+        .requests_item_inner {
           width: 100%;
           height: 36px;
           padding: 0 8px;
           box-sizing: border-box;
+          background-color: rgba(54, 55, 53, 0);
+          transition: all 0.2s ease-in-out;
           display: flex;
           flex-direction: row;
           align-items: center;
-          // color: rgb(145, 146, 145);
-          .requests_item_folder_header_icon {
+          justify-content: flex-start;
+          .requests_item_method {
+            font-size: 10px;
+            font-weight: bold;
             width: 36px;
             height: 36px;
             display: flex;
             flex-direction: row;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
-            svg {
-              width: 14px;
-              height: 14px;
-              fill: rgb(145, 146, 145);
-            }
           }
-          .requests_item_folder_header_content {
+          .requests_item_content {
             font-size: 13px;
-            margin-left: 8px;
+            // margin-left: 8px;
             width: calc(100% - 40px);
             height: 36px;
             line-height: 36px;
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
-            // color: rgb(141, 141, 141);
+            color: rgb(141, 141, 141);
           }
           &:hover {
             background-color: rgba(54, 55, 53, 1);
-            .requests_item_folder_header_content {
+            .requests_item_content {
               color: rgb(234, 234, 234);
             }
           }
           &.active {
             background-color: rgba(54, 55, 53, 1);
-            .requests_item_folder_header_content {
+            .requests_item_content {
               color: rgb(234, 234, 234);
             }
           }
         }
-        .requests_item_folder_content {
+        .requests_item_folder_inner {
           width: 100%;
-          // height: 120px;
-          background-color: rgb(40, 40, 40);
-          overflow: hidden;
-          transition: all 0.15s ease-in-out;
+          min-height: 36px;
+          background-color: rgba(54, 55, 53, 0);
+          transition: all 0.2s ease-in-out;
+          display: flex;
+          flex-direction: column;
+          color: rgb(141, 141, 141);
+          &:hover {
+            .requests_item_folder_header {
+              color: rgb(234, 234, 234);
+            }
+          }
+          &.active {
+            .requests_item_folder_header {
+              color: rgb(234, 234, 234);
+            }
+          }
+          .requests_item_folder_header {
+            width: 100%;
+            height: 36px;
+            padding: 0 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            // color: rgb(145, 146, 145);
+            .requests_item_folder_header_icon {
+              width: 36px;
+              height: 36px;
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              justify-content: center;
+              font-size: 13px;
+              svg {
+                width: 14px;
+                height: 14px;
+                fill: rgb(145, 146, 145);
+              }
+            }
+            .requests_item_folder_header_content {
+              font-size: 13px;
+              margin-left: 8px;
+              width: calc(100% - 40px);
+              height: 36px;
+              line-height: 36px;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              // color: rgb(141, 141, 141);
+            }
+            &:hover {
+              background-color: rgba(54, 55, 53, 1);
+              .requests_item_folder_header_content {
+                color: rgb(234, 234, 234);
+              }
+            }
+            &.active {
+              background-color: rgba(54, 55, 53, 1);
+              .requests_item_folder_header_content {
+                color: rgb(234, 234, 234);
+              }
+            }
+          }
+          .requests_item_folder_content {
+            width: 100%;
+            // height: 120px;
+            background-color: rgb(40, 40, 40);
+            overflow: hidden;
+            transition: all 0.15s ease-in-out;
+          }
         }
       }
     }
   }
-}
-.drop_down_item {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  i {
-    margin-right: 8px;
-  }
-}
-.format_param_container {
-  width: 100%;
-  max-height: 300px;
-  padding: 15px 0;
-  box-sizing: border-box;
-  overflow-y: auto;
-  background-color: #f8f8fa;
-  .format_param_item {
-    width: 100%;
-    height: 36px;
+  .drop_down_item {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    &.sticky {
-      position: sticky;
-      left: 0;
-      top: 0;
-      background-color: #ffffff;
+    i {
+      margin-right: 8px;
     }
-    .params_item_status {
-      width: 32px;
+  }
+  .format_param_container {
+    width: 100%;
+    max-height: 300px;
+    padding: 15px 0;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background-color: #f8f8fa;
+    .format_param_item {
+      width: 100%;
       height: 36px;
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: flex-end;
-    }
-    .params_item_label {
-      width: 150px;
-      height: 40px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
       justify-content: space-between;
-    }
-    .params_item_value {
-      flex: 1;
-      margin-left: 20px;
-      height: 40px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .params_item_delete {
-      width: 32px;
-      height: 36px;
-      opacity: 0;
-      transition: opacity 0.2s ease-in-out;
-      cursor: pointer;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-    }
-    &.active {
+      &.sticky {
+        position: sticky;
+        left: 0;
+        top: 0;
+        background-color: #ffffff;
+      }
+      .params_item_status {
+        width: 32px;
+        height: 36px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .params_item_label {
+        width: 150px;
+        height: 40px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .params_item_value {
+        flex: 1;
+        margin-left: 20px;
+        height: 40px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
       .params_item_delete {
-        opacity: 1;
+        width: 32px;
+        height: 36px;
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+        cursor: pointer;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+      &.active {
+        .params_item_delete {
+          opacity: 1;
+        }
       }
     }
   }
-}
 </style>

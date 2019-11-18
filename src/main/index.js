@@ -13,7 +13,9 @@ db.defaults({
       url: 'http://capipre.zhaopin.com/capi/garyscale/getHomePageGrayConfig?uticket=00ac237b333f4e06a3a238dec67bc687&at=9b7bfdc0c77745c9afb2db15867c06e9&rt=9bb4ccc8b4304ef68da59c00d55f3858&platform=5&d=1B2D3D3D88034056343CD0C58C6B5CC4&channel=apple&k=26412474748748&s=1d4f0ci9e2e4d8cz591e13eiu39ok487f&v=7930&version=7.9.30',
       method: 'GET',
       label: '测试',
-      type: 'request'
+      type: 'request',
+      cookie: {},
+      header: {}
     },
     {
       label: 'Weex首页',
@@ -25,7 +27,9 @@ db.defaults({
           url: 'http://capi.zhaopin.com/capi/position/searchRecommend?isCompus=0&resumeNumber=&resumeVersion=&pageIndex=1&pageSize=40&uticket=00ac237b333f4e06a3a238dec67bc687&at=99572e2f4b05460abdc13f9535dfcfa7&rt=73cbd4c6b91548e79b3886c0709d0f48&platform=5&d=1B2D3D3D88034056343CD0C58C6B5CC4&channel=apple&k=26412474748748&v=7918&version=7.9.18&key=26412474748748&t=1554891664846&e=9ec2c21eae188a342bb823f229963baa',
           method: 'GET',
           label: '推荐职位',
-          type: 'request'
+          type: 'request',
+          cookie: {},
+          header: {}
         }
       ]
     }
@@ -43,7 +47,7 @@ function getRequests () {
   return db.get('requests').value()
 }
 
-function setRequests (args) {
+function setRequest (args) {
   let requests = getRequests()
   if (args.parent) {
     requests.map(item => {
@@ -58,13 +62,50 @@ function setRequests (args) {
   return requests
 }
 
-function setRequestsFolder (args) {
+function setRequestFolder (args) {
   let requests = getRequests()
   requests.splice((args.index || 10000), 0, {
     label: args.label,
     name: args.name || getUUID(),
     children: []
   })
+  db.set('requests', requests).write()
+  return requests
+}
+
+function findRequestIndex (id, requests) {
+  let out = [-1, -1]
+  for (let i = 0; i < requests.length; i++) {
+    if (requests[i].id === id) {
+      out[0] = i
+      i = requests.length
+    } else if (requests[i].type === 'folder') {
+      let children = requests[i].children
+      for (let j = 0; j < children.length; j++) {
+        if (children[j].id === id) {
+          out[0] = i
+          out[1] = j
+          j = children.length
+          i = requests.length
+        }
+      }
+    } else { }
+  }
+  return out
+}
+
+function removeRequest (args) {
+  let requests = getRequests()
+  if (args.id) {
+    let index = findRequestIndex(args.id, requests)
+    if (index[0] !== -1) {
+      if (index[1] !== -1) {
+        requests[index[0]].children.splice(index[1], 1)
+      } else {
+        requests.splice(index[0], 1)
+      }
+    }
+  }
   db.set('requests', requests).write()
   return requests
 }
@@ -290,14 +331,32 @@ ipcMain.on('right-menu-click', (event, arg) => {
   menu.popup(win)
 })
 
+ipcMain.on('context-menu-request-item', (event, args) => {
+  const menu = new Menu()
+  menu.append(new MenuItem({
+    label: '删除',
+    click () {
+      removeRequest(args)
+    }
+  }))
+  const win = BrowserWindow.fromWebContents(event.sender)
+  menu.popup(win)
+})
+
 ipcMain.on('get-requests', (event) => {
   event.returnValue = getRequests()
 })
 ipcMain.on('set-requests', (event, args) => {
-  event.returnValue = setRequests(args)
+  if (args.request) {
+    args.request = Object.assign({
+      type: 'request',
+      id: getUUID()
+    }, args.request)
+  }
+  event.returnValue = setRequest(args)
 })
 ipcMain.on('set-requests-folder', (event, args) => {
-  event.returnValue = setRequestsFolder(args)
+  event.returnValue = setRequestFolder(args)
 })
 
 ipcMain.on('request', async (event, args) => {

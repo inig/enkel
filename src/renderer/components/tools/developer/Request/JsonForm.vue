@@ -13,12 +13,14 @@
 
       <div class="json_form_item_key">
         <Input placeholder="key"
-               v-model="item.key" />
+               v-model="item.key"
+               @on-keydown="noEmptyInput" />
       </div>
 
       <div class="json_form_item_value">
         <Input placeholder="value"
-               v-model="item.value" />
+               v-model="item.value"
+               @on-keydown="noEmptyInput" />
       </div>
 
       <div class="json_form_item_delete"
@@ -51,125 +53,123 @@
 </template>
 
 <script>
-import { Checkbox, Icon, Input } from 'view-design'
-export default {
-  name: 'JsonForm',
-  components: {
-    Checkbox, Icon, Input
-  },
-  model: {
-    prop: 'value',
-    event: 'change'
-  },
-  props: {
-    value: {
-      type: Array,
-      default () {
-        return []
-      }
+  import { Checkbox, Icon, Input } from 'view-design'
+  export default {
+    name: 'JsonForm',
+    components: {
+      Checkbox, Icon, Input
     },
-    currentRequest: {
-      type: Object,
-      default () {
-        return {}
-      }
-    }
-  },
-  data () {
-    return {
-      params: []
-    }
-  },
-  created () {
-    this.params = this.value
-  },
-  methods: {
-    hoverInItem (e) {
-      if (!e.target.classList.contains('active')) {
-        e.target.classList.add('active')
-      }
+    model: {
+      prop: 'value',
+      event: 'change'
     },
-    hoverOutItem (e) {
-      if (e.target.classList.contains('active')) {
-        e.target.classList.remove('active')
-      }
-    },
-    addNewItem () {
-      this.params.push({
-        key: '',
-        value: '',
-        status: true
-      })
-    },
-    deleteItem (index) {
-      this.params.splice(Number(index), 1)
-    },
-    setUrlStr (data) {
-      let params = JSON.parse(JSON.stringify(data))
-      let i = 0
-      let outArr = []
-      for (i; i < params.length; i++) {
-        if (params[i].status) {
-          outArr.push(params[i].key + '=' + params[i].value)
+    props: {
+      value: {
+        type: Array,
+        default () {
+          return []
+        }
+      },
+      currentRequest: {
+        type: Object,
+        default () {
+          return {}
         }
       }
-      this.requestModal.formatData.url = this.requestModal.formatData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
     },
-    disableParamItem () {
-      // this.setUrlStr(this.params)
-      this.$emit('change', this.params)
+    data () {
+      return {
+        params: []
+      }
     },
-    changeFormatedParams (e) {
-      this.setUrlStr(this.params)
+    created () {
+      // this.params = this.value
+    },
+    methods: {
+      hoverInItem (e) {
+        if (!e.target.classList.contains('active')) {
+          e.target.classList.add('active')
+        }
+      },
+      hoverOutItem (e) {
+        if (e.target.classList.contains('active')) {
+          e.target.classList.remove('active')
+        }
+      },
+      addNewItem () {
+        this.params.push({
+          key: '',
+          value: '',
+          status: true
+        })
+      },
+      deleteItem (index) {
+        this.params.splice(Number(index), 1)
+      },
+      disableParamItem () {
+        this.$emit('change', this.params)
+      },
+      noEmptyInput (evt) {
+        if ([13, 32].indexOf(evt.keyCode) > -1) {
+          evt.preventDefault()
+        }
+      }
+    },
+    watch: {
+      value: {
+        immediate: true,
+        handler (val) {
+          this.params = val
+        }
+      }
     }
   }
-}
 </script>
 
 <style lang="less" scoped>
-.json_form {
-  height: 100%;
-  overflow-y: auto;
-  padding-bottom: 128px;
-  box-sizing: border-box;
-  .json_form_item {
-    width: 100%;
-    height: 36px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    .json_form_item_select {
-      width: 30px;
+  .json_form {
+    height: 100%;
+    overflow-y: auto;
+    padding-bottom: 128px;
+    box-sizing: border-box;
+    .json_form_item {
+      width: 100%;
       height: 36px;
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: flex-end;
-    }
-    .json_form_item_key {
-      width: calc(40% - 35px);
-    }
-    .json_form_item_value {
-      width: calc(60% - 35px);
-      margin-left: 10px;
-    }
-    .json_form_item_delete {
-      width: 30px;
-      height: 36px;
-      opacity: 0;
-      transition: opacity 0.2s ease-in-out;
-      cursor: pointer;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-    }
-    &.active {
+      justify-content: space-between;
+      .json_form_item_select {
+        width: 30px;
+        height: 36px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .json_form_item_key {
+        width: calc(40% - 35px);
+      }
+      .json_form_item_value {
+        width: calc(60% - 35px);
+        margin-left: 10px;
+      }
       .json_form_item_delete {
-        opacity: 1;
+        width: 30px;
+        height: 36px;
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+        cursor: pointer;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+      &.active {
+        .json_form_item_delete {
+          opacity: 1;
+        }
       }
     }
   }
-}
 </style>
