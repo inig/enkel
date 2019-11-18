@@ -335,8 +335,22 @@ ipcMain.on('context-menu-request-item', (event, args) => {
   const menu = new Menu()
   menu.append(new MenuItem({
     label: '删除',
-    click () {
-      removeRequest(args)
+    click: async () => {
+      let res = await dialog.showMessageBox({
+        type: 'info',
+        message: `确定删除【${args.label}】吗`,
+        defaultId: 1,
+        cancelId: 0,
+        buttons: ['取消', '确定']
+      })
+      if (res.response == 1) {
+        event.reply('context-menu-delete', {
+          deleted: args,
+          requests: removeRequest(args)
+        })
+      } else {
+        event.preventDefault()
+      }
     }
   }))
   const win = BrowserWindow.fromWebContents(event.sender)

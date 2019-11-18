@@ -25,84 +25,84 @@
 </template>
 
 <script>
-  import Copy from '../../../custom/Copy'
-  // import '../../../../../../static/js/jquery.json'
-  // import '../../../../../../static/js/json2'
-  // import '../../../../../../static/js/jsonlint'
-  export default {
-    name: 'ResponsePreview',
-    components: {
-      Copy,
-      JsonView: () => import('../../../custom/json-view')
-    },
-    props: {
-      data: {
-        type: [Object, String],
-        default () {
-          return {}
-        }
+import Copy from '../../../custom/Copy'
+// import '../../../../../../static/js/jquery.json'
+// import '../../../../../../static/js/json2'
+// import '../../../../../../static/js/jsonlint'
+export default {
+  name: 'ResponsePreview',
+  components: {
+    Copy,
+    JsonView: () => import('../../../custom/json-view')
+  },
+  props: {
+    data: {
+      type: [Object, String],
+      default () {
+        return {}
       }
-    },
-    data () {
-      return {
-        // originValue: '',
-        // currentJson: '',
-        // currentJsonStr: ''
-      }
-    },
-    computed: {
-      // transformedValue () {
-      //   let result = ''
-      //   let data = JSON.stringify(this.data)
-      //   if (data !== '') {
-      //     let originValue = data
-      //     try {
-      //       this.currentJson = jsonlint.parse(originValue)
-      //       this.currentJsonStr = JSON.stringify(this.currentJson)
-      //       result = new JSONFormat(originValue, 4).toString()
-      //     } catch (e) {
-      //       result = '<span style="color: #f1592a; font-weight: bold;">' + e + '</span>'
-      //       this.currentJsonStr = result
-      //     }
-      //     return result
-      //   } else {
-      //     return ''
-      //   }
-      // }
     }
+  },
+  data () {
+    return {
+      // originValue: '',
+      // currentJson: '',
+      // currentJsonStr: ''
+    }
+  },
+  computed: {
+    // transformedValue () {
+    //   let result = ''
+    //   let data = JSON.stringify(this.data)
+    //   if (data !== '') {
+    //     let originValue = data
+    //     try {
+    //       this.currentJson = jsonlint.parse(originValue)
+    //       this.currentJsonStr = JSON.stringify(this.currentJson)
+    //       result = new JSONFormat(originValue, 4).toString()
+    //     } catch (e) {
+    //       result = '<span style="color: #f1592a; font-weight: bold;">' + e + '</span>'
+    //       this.currentJsonStr = result
+    //     }
+    //     return result
+    //   } else {
+    //     return ''
+    //   }
+    // }
   }
+}
 </script>
 
 <style lang="less" scoped>
-  .response_preview_container {
+.response_preview_container {
+  position: relative;
+  -webkit-user-select: text;
+  height: 100%;
+  .response_preview {
     position: relative;
-    -webkit-user-select: text;
+    width: 100%;
+    height: calc(100% - 30px);
+    padding: 0 10px 0 0;
+    box-sizing: border-box;
+    overflow-y: auto;
+    color: #c8c8c8;
+  }
+  .empty_container {
+    position: absolute;
+    width: 100%;
     height: 100%;
-    .response_preview {
-      position: relative;
-      width: 100%;
-      height: calc(100% - 30px);
-      padding: 0 10px 0 0;
-      box-sizing: border-box;
-      overflow-y: auto;
-      color: #c8c8c8;
-    }
-    .empty_container {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: 1;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      svg {
-        width: 64px;
-        height: 64px;
-        fill: #444;
-      }
+    top: 0;
+    left: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    svg {
+      width: 64px;
+      height: 64px;
+      fill: #444;
     }
   }
+}
 </style>
