@@ -66,8 +66,9 @@ function setRequestFolder (args) {
   let requests = getRequests()
   requests.splice((args.index || 10000), 0, {
     label: args.label,
-    name: args.name || getUUID(),
-    children: []
+    id: args.name || getUUID(),
+    children: [],
+    type: 'folder'
   })
   db.set('requests', requests).write()
   return requests

@@ -312,7 +312,7 @@ export default {
       this.formatedParams = this.formatParams(this.requestModal.formatData.url)
     },
     createFolder () {
-      let responseData = ipcRenderer.sendSync('set-requests-folder', {
+      this.requestsList = ipcRenderer.sendSync('set-requests-folder', {
         label: this.folderModal.formatData.label
       })
     },
