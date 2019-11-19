@@ -168,13 +168,6 @@ function createWindow () {
     mainWindow = null
     // app.quit()
   })
-
-  mainWindow.on('blur', () => {
-    // dialog.showMessageBox({
-    //   message: 'blur'
-    // })
-  })
-
   // mainWindow.setAspectRatio(16 / 9)
 }
 
@@ -213,26 +206,6 @@ function createMenuWindow () {
     }
     event.preventDefault()
   })
-
-  menuWindow.on('blur', (event) => {
-    // let displays = screen.getAllDisplays()
-    // let externalDisplay = displays.find((display) => {
-    //   return display.bounds.x !== 0 || display.bounds.y !== 0
-    // })
-    // if (externalDisplay) {
-    //   dialog.showMessageBox({
-    //     message: JSON.stringify(screen)
-    //   })
-    // }
-
-
-  })
-
-  // menuWindow.setClosable(false)
-  // menuWindow.setFullScreenable(false)
-  // menuWindow.setMinimizable(false)
-  // menuWindow.setMaximizable(false)
-
 }
 
 function minimizeMenuWindow () {
