@@ -32,11 +32,9 @@
 </template>
 
 <script>
-import { Drawer, Button } from 'view-design'
 export default {
   name: 'Request',
   components: {
-    Drawer, Button,
     ESplit: () => import('../../../custom/ESplit'),
     PanelList: () => import('./PanelList'),
     RequestForm: () => import('./RequestForm'),
@@ -44,7 +42,6 @@ export default {
   },
   data () {
     return {
-      drawerShown: false,
       split1: 0.2,
       split2: 0.5,
       requestMethods: [
@@ -61,9 +58,6 @@ export default {
     }
   },
   methods: {
-    openDrawer () {
-      this.drawerShown = true
-    },
     setActiveItem (data) {
       this.activeRequest = JSON.parse(JSON.stringify(data))
     }

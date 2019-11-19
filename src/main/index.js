@@ -6,6 +6,8 @@ const FileSync = require('lowdb/adapters/FileSync')
 const adapter = new FileSync(app.getAppPath() + path.sep + 'db.json')
 const db = low(adapter)
 
+const puppeteer = require('puppeteer')
+
 db.defaults({
   requests: [
     {
@@ -351,6 +353,23 @@ ipcMain.on('request', async (event, args) => {
   event.reply('start-request')
   let response = await axios(args)
   event.reply('response', response)
+})
+
+ipcMain.on('screenshot', (event, args) => {
+  (async () => {
+    console.log('@@@@@@@', puppeteer)
+    const browser = await puppeteer.launch(
+      {
+        headless: true
+      }
+    )
+    const page = await browser.newPage()
+    await page.goto(args.url)
+    await page.screenshot({
+      path: 'example.png'
+    })
+    await browser.close()
+  })()
 })
 
 /**
