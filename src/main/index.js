@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, net } from 'electron'
 import axios from 'axios'
 import path from 'path'
+import os from 'os'
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 const adapter = new FileSync(app.getAppPath() + path.sep + 'db.json')
@@ -127,7 +128,7 @@ let menuWindow
 
 let menuWindowNormalBounds = {}
 const winURL = process.env.NODE_ENV === 'development'
-  ? `http://localhost:9080`
+  ? `http://localhost:9080/#/screenshots`
   : `file://${__dirname}/index.html`
 
 function createWindow () {
@@ -357,21 +358,70 @@ ipcMain.on('request', async (event, args) => {
 
 ipcMain.on('screenshot', (event, args) => {
   (async () => {
-    console.log('@@@@@@@', puppeteer)
-    const browser = await puppeteer.launch(
-      {
-        headless: true
+    console.log('@@@@@@@', args)
+    const browser = await puppeteer.launch({
+      headless: true,
+      ignoreHTTPSErrors: true,
+      defaultViewport: {
+        width: args.width || 800,
+        height: args.height || 600,
+        deviceScaleFactor: args.dpr || 2
       }
-    )
+    })
     const page = await browser.newPage()
-    await page.goto(args.url)
+    await page.goto(args.url, {
+      waitUntil: ["load", "domcontentloaded", "networkidle0"]
+    })
     await page.screenshot({
-      path: 'example.png'
+      path: path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (args.filename || 'screenshot.jpg')),
+      type: 'jpeg',
+      encoding: 'binary',
+      quality: 100,
+      fullPage: true
     })
     await browser.close()
   })()
 })
 
+function screenshot (args) {
+  (async () => {
+    console.log('@@@@@@@', args)
+    const browser = await puppeteer.launch({
+      headless: true,
+      ignoreHTTPSErrors: true,
+      defaultViewport: {
+        width: Number(args.width) || 800,
+        height: Number(args.height) || 600,
+        deviceScaleFactor: args.dpr || 2
+      }
+    })
+    const page = await browser.newPage()
+    await page.goto(args.url, {
+      waitUntil: ["load", "domcontentloaded", "networkidle0"]
+    })
+    await page.screenshot({
+      path: args.path || path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (args.filename || 'screenshot.jpg')),
+      type: 'jpeg',
+      encoding: 'binary',
+      quality: 100,
+      fullPage: true
+    })
+    await browser.close()
+  })()
+}
+
+ipcMain.on('open-save', async (event, args) => {
+  let response = await dialog.showSaveDialogSync({
+    defaultPath: path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (args.filename || 'screenshot.jpg')),
+    buttonLabel: '保存'
+  })
+  if (response) {
+    screenshot(Object.assign({}, args.options, {
+      path: response
+    }))
+  }
+  console.log(response)
+})
 /**
  * Auto Updater
  *

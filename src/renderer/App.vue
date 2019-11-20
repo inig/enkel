@@ -204,4 +204,16 @@
       }
     }
   }
+  .emulator_settings {
+    .ivu-select-selection {
+      background-color: transparent;
+      border: none;
+    }
+    .ivu-select-visible {
+      .ivu-select-selection {
+        border-color: transparent;
+        box-shadow: none;
+      }
+    }
+  }
 </style>
