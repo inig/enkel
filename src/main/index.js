@@ -356,32 +356,9 @@ ipcMain.on('request', async (event, args) => {
   event.reply('response', response)
 })
 
-ipcMain.on('screenshot', (event, args) => {
-  (async () => {
-    console.log('@@@@@@@', args)
-    const browser = await puppeteer.launch({
-      headless: true,
-      ignoreHTTPSErrors: true,
-      defaultViewport: {
-        width: args.width || 800,
-        height: args.height || 600,
-        deviceScaleFactor: args.dpr || 2
-      }
-    })
-    const page = await browser.newPage()
-    await page.goto(args.url, {
-      waitUntil: ["load", "domcontentloaded", "networkidle0"]
-    })
-    await page.screenshot({
-      path: path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (args.filename || 'screenshot.jpg')),
-      type: 'jpeg',
-      encoding: 'binary',
-      quality: 100,
-      fullPage: true
-    })
-    await browser.close()
-  })()
-})
+function sleep (ts = 500) {
+  return new Promise(resolve => setTimeout(resolve, ts))
+}
 
 function screenshot (args) {
   (async () => {
@@ -389,18 +366,24 @@ function screenshot (args) {
     const browser = await puppeteer.launch({
       headless: true,
       ignoreHTTPSErrors: true,
-      defaultViewport: {
-        width: Number(args.width) || 800,
-        height: Number(args.height) || 600,
-        deviceScaleFactor: args.dpr || 2
-      }
+      defaultViewport: args.viewport,
+      timeout: 10 * 1000
     })
     const page = await browser.newPage()
     await page.goto(args.url, {
       waitUntil: ["load", "domcontentloaded", "networkidle0"]
     })
+    let script = ''
+    if (args.cookies && (args.cookies.length > 0)) {
+      script += args.cookies.map(item => 'document.cookie = "' + item.key + '=' + item.value + '"').join('\n')
+    }
+
+    await page.mainFrame().addScriptTag({
+      content: script + '\n' + args.scripts
+    })
+    console.log('...2..', script + '\n' + args.scripts)
     await page.screenshot({
-      path: args.path || path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (args.filename || 'screenshot.jpg')),
+      path: args.path || path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + 'screenshot.jpg'),
       type: 'jpeg',
       encoding: 'binary',
       quality: 100,
@@ -412,11 +395,11 @@ function screenshot (args) {
 
 ipcMain.on('open-save', async (event, args) => {
   let response = await dialog.showSaveDialogSync({
-    defaultPath: path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (args.filename || 'screenshot.jpg')),
+    defaultPath: path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + 'screenshot.jpg'),
     buttonLabel: '保存'
   })
   if (response) {
-    screenshot(Object.assign({}, args.options, {
+    screenshot(Object.assign({}, args, {
       path: response
     }))
   }
