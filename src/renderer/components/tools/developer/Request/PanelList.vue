@@ -400,6 +400,8 @@ export default {
     height: calc(100% - 36px);
     padding-top: 15px;
     box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
     .requests_item {
       width: 100%;
       // min-height: 36px;

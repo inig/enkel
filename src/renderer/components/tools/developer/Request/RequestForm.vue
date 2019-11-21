@@ -241,7 +241,8 @@ export default {
     }
   }
   .request_send_form {
-    height: calc(100% - 46px);
+    height: 100%;
+    // height: calc(100% - 46px);
   }
 }
 </style>

@@ -128,7 +128,7 @@ let menuWindow
 
 let menuWindowNormalBounds = {}
 const winURL = process.env.NODE_ENV === 'development'
-  ? `http://localhost:9080/#/screenshots`
+  ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
 
 function createWindow () {
@@ -360,39 +360,50 @@ function sleep (ts = 500) {
   return new Promise(resolve => setTimeout(resolve, ts))
 }
 
+function getHost (u) {
+  let url = 'https://' + u.replace(/^([^/]*\/?\/?)(.*)$/, '$2')
+  var result = url.match("^https?:\/\/([^\/:]*)")
+  if (result && result[1]) {
+    var domain = result[1].match("[0-9a-zA-Z-]*\.(com\.tw|com\.cn|com\.hk|net\.cn|org\.cn|gov\.cn|ac\.cn|bj\.cn|sh\.cn|tj\.cn|cq\.cn|he\.cn|sx\.cn|nm\.cn|ln\.cn|jl\.cn|hl\.cn|js\.cn|zj\.cn|ah\.cn|fj\.cn|jx\.cn|sd\.cn|ha\.cn|hb\.cn|hn\.cn|gd\.cn|gx\.cn|hi\.cn|sc\.cn|gz\.cn|yn\.cn|xz\.cn|sn\.cn|gs\.cn|qh\.cn|nx\.cn|xj\.cn|tw\.cn|hk\.cn|mo\.cn|com|net|org|biz|info|cn|mobi|name|sh|ac|io|tw|hk|ws|travel|us|tm|cc|tv|la|in|中国|公司|网络)$")
+    try { return domain[0] } catch (e) { }
+  }
+  return ''
+}
+
 function screenshot (args) {
-  (async () => {
+  return new Promise(async (resolve) => {
     console.log('@@@@@@@', args)
     const browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       ignoreHTTPSErrors: true,
       defaultViewport: args.viewport,
       timeout: 60 * 1000
     })
     const page = await browser.newPage()
-    // let domain = args.url
+    // let domain = getHost(args.url)
     await page.setCookie(...args.cookies.map(item => {
       return {
         name: item.key,
         value: item.value,
-        domain: '.zhaopin.com'
+        url: args.url
       }
     }))
+    if (args.userAgent) {
+      await page.setUserAgent(args.userAgent)
+    }
     await page.goto(args.url, {
       waitUntil: ["load", "domcontentloaded", "networkidle0"]
     })
     let _args = JSON.parse(JSON.stringify(args))
-    if (!args.scripts || args.scripts.length === 0) {
-      await page.screenshot({
-        path: args.path,
-        type: 'jpeg',
-        encoding: 'binary',
-        quality: args.hasOwnProperty('quality') ? args.quality : 100,
-        fullPage: args.hasOwnProperty('fullPage') ? args.fullPage : true
-      }).catch(err => {
-        // console.log('>>>>> Error: ', err)
-      })
-    } else if (args.scripts && args.scripts.length > 0) {
+    await page.screenshot({
+      path: args.path,
+      type: 'jpeg',
+      encoding: 'binary',
+      quality: args.hasOwnProperty('quality') ? args.quality : 100,
+      fullPage: args.hasOwnProperty('fullPage') ? args.fullPage : true
+    }).catch(() => {
+    })
+    if (args.scripts && args.scripts.length > 0) {
       let i = 0
       for (i; i < args.scripts.length; i++) {
         await page.mainFrame().addScriptTag({
@@ -406,18 +417,19 @@ function screenshot (args) {
         }
 
         await page.screenshot({
-          path: (i === 0 ? args.path : _args.path.replace(/(.*)(\.[a-zA-Z]*)$/, '$1-' + (i + 1) + '$2')), // path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (i > 0 ? 'screenshot_' + (i + 1) + '.jpg' : 'screenshot.jpg')), // (i === 0 ? args.path : _args.path.replace(/\/(.*)(\.[a-zA-Z]*)$/, '$1-' + (i + 1) + '$2')), // || path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + 'screenshot.jpg'),
+          path: _args.path.replace(/(.*)(\.[a-zA-Z]*)$/, '$1-' + (i + 1) + '$2'), // path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (i > 0 ? 'screenshot_' + (i + 1) + '.jpg' : 'screenshot.jpg')), // (i === 0 ? args.path : _args.path.replace(/\/(.*)(\.[a-zA-Z]*)$/, '$1-' + (i + 1) + '$2')), // || path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + 'screenshot.jpg'),
           type: 'jpeg',
           encoding: 'binary',
           quality: args.hasOwnProperty('quality') ? args.quality : 100,
           fullPage: args.hasOwnProperty('fullPage') ? args.fullPage : true
-        }).catch(err => {
-          // console.log('>>>>> Error: ', err)
+        }).catch(() => {
         })
       }
     }
+
     await browser.close()
-  })()
+    resolve(true)
+  })
 }
 
 ipcMain.on('open-save', async (event, args) => {
@@ -426,9 +438,11 @@ ipcMain.on('open-save', async (event, args) => {
     buttonLabel: '保存'
   })
   if (response) {
-    screenshot(Object.assign({}, args, {
+    event.reply('start-screenshot')
+    await screenshot(Object.assign({}, args, {
       path: response
     }))
+    event.reply('end-screenshot')
   }
 })
 /**
