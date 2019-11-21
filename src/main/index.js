@@ -364,31 +364,58 @@ function screenshot (args) {
   (async () => {
     console.log('@@@@@@@', args)
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       ignoreHTTPSErrors: true,
       defaultViewport: args.viewport,
-      timeout: 10 * 1000
+      timeout: 60 * 1000
     })
     const page = await browser.newPage()
+    // let domain = args.url
+    await page.setCookie(...args.cookies.map(item => {
+      return {
+        name: item.key,
+        value: item.value,
+        domain: '.zhaopin.com'
+      }
+    }))
     await page.goto(args.url, {
       waitUntil: ["load", "domcontentloaded", "networkidle0"]
     })
-    let script = ''
-    if (args.cookies && (args.cookies.length > 0)) {
-      script += args.cookies.map(item => 'document.cookie = "' + item.key + '=' + item.value + '"').join('\n')
-    }
+    let _args = JSON.parse(JSON.stringify(args))
+    if (!args.scripts || args.scripts.length === 0) {
+      await page.screenshot({
+        path: args.path,
+        type: 'jpeg',
+        encoding: 'binary',
+        quality: args.hasOwnProperty('quality') ? args.quality : 100,
+        fullPage: args.hasOwnProperty('fullPage') ? args.fullPage : true
+      }).catch(err => {
+        // console.log('>>>>> Error: ', err)
+      })
+    } else if (args.scripts && args.scripts.length > 0) {
+      let i = 0
+      for (i; i < args.scripts.length; i++) {
+        await page.mainFrame().addScriptTag({
+          content: args.scripts[i].text
+        })
+        if (i !== 0) {
+          await page.waitForNavigation({
+            waitUntil: ["load", "domcontentloaded", "networkidle0"]
+          })
+          await sleep(300)
+        }
 
-    await page.mainFrame().addScriptTag({
-      content: script + '\n' + args.scripts
-    })
-    console.log('...2..', script + '\n' + args.scripts)
-    await page.screenshot({
-      path: args.path || path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + 'screenshot.jpg'),
-      type: 'jpeg',
-      encoding: 'binary',
-      quality: 100,
-      fullPage: true
-    })
+        await page.screenshot({
+          path: (i === 0 ? args.path : _args.path.replace(/(.*)(\.[a-zA-Z]*)$/, '$1-' + (i + 1) + '$2')), // path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (i > 0 ? 'screenshot_' + (i + 1) + '.jpg' : 'screenshot.jpg')), // (i === 0 ? args.path : _args.path.replace(/\/(.*)(\.[a-zA-Z]*)$/, '$1-' + (i + 1) + '$2')), // || path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + 'screenshot.jpg'),
+          type: 'jpeg',
+          encoding: 'binary',
+          quality: args.hasOwnProperty('quality') ? args.quality : 100,
+          fullPage: args.hasOwnProperty('fullPage') ? args.fullPage : true
+        }).catch(err => {
+          // console.log('>>>>> Error: ', err)
+        })
+      }
+    }
     await browser.close()
   })()
 }
@@ -403,7 +430,6 @@ ipcMain.on('open-save', async (event, args) => {
       path: response
     }))
   }
-  console.log(response)
 })
 /**
  * Auto Updater
