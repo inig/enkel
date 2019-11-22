@@ -49,7 +49,7 @@ export const developRouter = {
       meta: {
         label: '网页截图',
         title: '网页截图',
-        icon: '#route-request',
+        icon: '#route-screenshot',
         name: '网页截图',
         desc: '网页截图，支持长图截取',
         createTime: '545440088000',
