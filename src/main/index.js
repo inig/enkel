@@ -445,6 +445,10 @@ ipcMain.on('open-save', async (event, args) => {
     event.reply('end-screenshot')
   }
 })
+
+ipcMain.on('shell-npm-install', (event, args) => {
+  console.log('NPM Install', args)
+})
 /**
  * Auto Updater
  *

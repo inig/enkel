@@ -56,7 +56,21 @@ export const developRouter = {
         hot: false
       },
       component: require('@/components/tools/developer/Screenshots/index').default
-    }
+    },
+    // {
+    //   path: '/shell',
+    //   name: 'shell',
+    //   meta: {
+    //     label: 'NPM包安装',
+    //     title: 'NPM包安装',
+    //     icon: '#route-shell',
+    //     name: 'NPM包安装',
+    //     desc: '可视化NPM包安装',
+    //     createTime: '545440088000',
+    //     hot: false
+    //   },
+    //   component: require('@/components/tools/developer/Shell/index').default
+    // }
   ]
 }
 
