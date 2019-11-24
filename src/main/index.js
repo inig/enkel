@@ -1,11 +1,17 @@
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, net } from 'electron'
 import axios from 'axios'
 import path from 'path'
+// import fs from 'fs'
 import os from 'os'
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
-const adapter = new FileSync(app.getAppPath() + path.sep + 'db.json')
+const adapter = new FileSync(app.getPath('userData') + path.sep + 'db.json')
+// const adapter = new FileSync(app.getAppPath() + path.sep + 'db.json')
 const db = low(adapter)
+// console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
+// if (!fs.existsSync(app.getAppPath() + path.sep + 'db.json')) {
+//   fs.writeFileSync(app.getAppPath() + path.sep + 'db.json', '')
+// }
 
 const puppeteer = require('puppeteer')
 
@@ -13,23 +19,23 @@ db.defaults({
   requests: [
     {
       id: '9e24bad1c663',
-      url: 'http://capipre.zhaopin.com/capi/garyscale/getHomePageGrayConfig?uticket=00ac237b333f4e06a3a238dec67bc687&at=9b7bfdc0c77745c9afb2db15867c06e9&rt=9bb4ccc8b4304ef68da59c00d55f3858&platform=5&d=1B2D3D3D88034056343CD0C58C6B5CC4&channel=apple&k=26412474748748&s=1d4f0ci9e2e4d8cz591e13eiu39ok487f&v=7930&version=7.9.30',
+      url: 'http://gank.io/api/xiandu/data/id/appinn/count/10/page/1',
       method: 'GET',
-      label: '测试',
+      label: '获取闲读数据',
       type: 'request',
       cookie: {},
       header: {}
     },
     {
-      label: 'Weex首页',
+      label: '笑话目录',
       id: '0d29ed42e3ec',
       type: 'folder',
       children: [
         {
           id: '78f275a046d1',
-          url: 'http://capi.zhaopin.com/capi/position/searchRecommend?isCompus=0&resumeNumber=&resumeVersion=&pageIndex=1&pageSize=40&uticket=00ac237b333f4e06a3a238dec67bc687&at=99572e2f4b05460abdc13f9535dfcfa7&rt=73cbd4c6b91548e79b3886c0709d0f48&platform=5&d=1B2D3D3D88034056343CD0C58C6B5CC4&channel=apple&k=26412474748748&v=7918&version=7.9.18&key=26412474748748&t=1554891664846&e=9ec2c21eae188a342bb823f229963baa',
+          url: 'http://gank.io/api/today',
           method: 'GET',
-          label: '推荐职位',
+          label: '最新干货',
           type: 'request',
           cookie: {},
           header: {}
@@ -155,10 +161,9 @@ function createWindow () {
       plugins: true,
       nodeIntegration: true, // 是否集成 Nodejs
       webSecurity: false,
-      preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
+      // preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
     }
   })
-
   mainWindow.loadURL(winURL)
 
   // initMenu()
@@ -192,7 +197,7 @@ function createMenuWindow () {
       plugins: true,
       nodeIntegration: true, // 是否集成 Nodejs
       webSecurity: false,
-      preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
+      // preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
     }
   })
 
@@ -372,7 +377,7 @@ function getHost (u) {
 
 function screenshot (args) {
   return new Promise(async (resolve) => {
-    console.log('@@@@@@@', args)
+    // console.log('@@@@@@@', args)
     const browser = await puppeteer.launch({
       headless: true,
       ignoreHTTPSErrors: true,

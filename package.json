@@ -1,17 +1,13 @@
 {
-  "name": "electron5",
-  "productName": "electron5",
+  "name": "enkel",
   "version": "0.0.1",
-  "author": "loveliangshan@126.com",
+  "author": "梁山 <>",
   "description": "An electron-vue project",
   "license": null,
   "main": "./dist/electron/main.js",
   "scripts": {
-    "build": "node .electron-vue/build.js",
-    "build:darwin": "cross-env BUILD_TARGET=darwin node .electron-vue/build.js",
-    "build:linux": "cross-env BUILD_TARGET=linux node .electron-vue/build.js",
-    "build:mas": "cross-env BUILD_TARGET=mas node .electron-vue/build.js",
-    "build:win32": "cross-env BUILD_TARGET=win32 node .electron-vue/build.js",
+    "build": "node .electron-vue/build.js && electron-builder",
+    "build:dir": "node .electron-vue/build.js && electron-builder --dir",
     "build:clean": "cross-env BUILD_TARGET=clean node .electron-vue/build.js",
     "build:web": "cross-env BUILD_TARGET=web node .electron-vue/build.js",
     "dev": "node .electron-vue/dev-runner.js",
@@ -20,11 +16,45 @@
     "pack:renderer": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.renderer.config.js",
     "postinstall": ""
   },
+  "build": {
+    "productName": "enkel",
+    "appId": "loveliangshan@126.com",
+    "directories": {
+      "output": "build"
+    },
+    "files": [
+      "dist/electron/**/*"
+    ],
+    "dmg": {
+      "contents": [
+        {
+          "x": 410,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 150,
+          "type": "file"
+        }
+      ]
+    },
+    "mac": {
+      "icon": "build/icons/icon.icns"
+    },
+    "win": {
+      "icon": "build/icons/icon.ico"
+    },
+    "linux": {
+      "icon": "build/icons"
+    }
+  },
   "dependencies": {
+    "vue": "^2.5.16",
     "axios": "^0.18.0",
     "lowdb": "^1.0.0",
     "puppeteer": "^2.0.0",
-    "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
     "vue-router": "^3.0.1",
     "vuex": "^3.0.1",
@@ -46,18 +76,17 @@
     "css-loader": "^0.28.11",
     "del": "^3.0.0",
     "devtron": "^1.4.0",
-    "electron": "latest",
+    "electron": "6.0.12",
     "electron-debug": "^1.5.0",
     "electron-devtools-installer": "^2.2.4",
-    "electron-packager": "latest",
-    "electron-rebuild": "^1.8.1",
+    "electron-builder": "^21.2.0",
     "mini-css-extract-plugin": "0.4.0",
     "file-loader": "^1.1.11",
     "html-webpack-plugin": "^3.2.0",
-    "less": "^3.10.3",
-    "less-loader": "^5.0.0",
     "multispinner": "^0.2.1",
     "node-loader": "^0.6.0",
+    "less": "^3.10.3",
+    "less-loader": "^5.0.0",
     "style-loader": "^0.21.0",
     "url-loader": "^1.0.1",
     "view-design": "^4.0.2",

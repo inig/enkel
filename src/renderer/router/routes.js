@@ -180,5 +180,5 @@ export const convenienceRouter = {
 
 export const routes = [
   developRouter,
-  convenienceRouter
+  // convenienceRouter
 ]

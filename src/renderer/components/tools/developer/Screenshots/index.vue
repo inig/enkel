@@ -266,7 +266,7 @@ export default {
     let _devices = JSON.parse(JSON.stringify(devices))
     _devices.unshift({
       name: 'Responsive',
-      userAgent: 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Mobile Safari/537.36',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36',
       viewport: {
         width: 800,
         height: 600,
@@ -278,7 +278,7 @@ export default {
     })
     return {
       split1: 0.5,
-      url: 'https://m.zhaopin.com',
+      url: 'https://m.baidu.com',
       // url: 'https://jobs.zhaopin.com/CC149019781J00191836809.htm',
       emulatorScale: 100,
       options: {
@@ -294,24 +294,24 @@ export default {
         }
       },
       cookies: [
-        {
-          key: 'at',
-          value: '2d747302c6ec4e9588ac1e101a4c312e',
-          status: true
-        },
-        {
-          key: 'rt',
-          value: 'ee1b347514be459fa4ca87874f3f362a',
-          status: true
-        }
+        // {
+        //   key: 'at',
+        //   value: '567b08bb841d4c718e563e38d1bc2e9f',
+        //   status: true
+        // },
+        // {
+        //   key: 'rt',
+        //   value: '7e465863c1364038a0864722e40dc67d',
+        //   status: true
+        // }
       ],
       scripts: [
-        {
-          text: `let warningSpan = document.querySelector('.warning-span')\nwarningSpan && warningSpan.click()\nlet a = document.querySelector('.btn_box .confirm a')\na && a.click()\nlet b = document.querySelector('.updateD_btn_box .updateD_confirm a')\nb && b.click()`
-        },
-        {
-          text: `location.href = 'https://m.zhaopin.com/sou/2006--?keyword=java&provinceCode=2006&city=2006&cityName=%E6%9C%9D%E9%98%B3%E5%8C%BA'`
-        }
+        // {
+        //   text: `let warningSpan = document.querySelector('.warning-span')\nwarningSpan && warningSpan.click()\nlet a = document.querySelector('.btn_box .confirm a')\na && a.click()\nlet b = document.querySelector('.updateD_btn_box .updateD_confirm a')\nb && b.click()`
+        // },
+        // {
+        //   text: `location.href = 'https://m.zhaopin.com/sou/2006--?keyword=java&provinceCode=2006&city=2006&cityName=%E6%9C%9D%E9%98%B3%E5%8C%BA'`
+        // }
       ],
       // scripts: `let warningSpan = document.querySelector('.warning-span')\nwarningSpan && warningSpan.click()\nlet a = document.querySelector('.btn_box .confirm a')\na && a.click()\nlet b = document.querySelector('.updateD_btn_box .updateD_confirm a')\nb && b.click()`,
       // scripts: `let warningSpan = document.querySelector('.risk-warning__content button')\nwarningSpan && warningSpan.click()\nlet btn = document.querySelectorAll('.privacy-protocol-update__confirm button')[1]\nbtn && btn.click()`,
@@ -338,7 +338,7 @@ export default {
         } else {
           this.showReset = false
         }
-      }, 10 * 1000)
+      }, 30 * 1000)
     },
     endScreenshot () {
       this.loading = false
