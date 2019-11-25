@@ -17,6 +17,7 @@
     "postinstall": ""
   },
   "build": {
+    "asar": false,
     "productName": "enkel",
     "appId": "loveliangshan@126.com",
     "directories": {

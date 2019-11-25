@@ -375,7 +375,7 @@ function getHost (u) {
   return ''
 }
 
-function screenshot (args) {
+function screenshot (event, args) {
   return new Promise(async (resolve) => {
     // console.log('@@@@@@@', args)
     const browser = await puppeteer.launch({
@@ -431,7 +431,6 @@ function screenshot (args) {
         })
       }
     }
-
     await browser.close()
     resolve(true)
   })
@@ -444,7 +443,7 @@ ipcMain.on('open-save', async (event, args) => {
   })
   if (response) {
     event.reply('start-screenshot')
-    await screenshot(Object.assign({}, args, {
+    await screenshot(event, Object.assign({}, args, {
       path: response
     }))
     event.reply('end-screenshot')
