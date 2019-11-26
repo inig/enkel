@@ -1,10 +1,17 @@
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, net } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import axios from 'axios'
 import path from 'path'
-// import fs from 'fs'
+import fs from 'fs'
 import os from 'os'
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
+if (!fs.existsSync(app.getPath('userData'))) {
+  fs.mkdirSync(app.getPath('userData'))
+  fs.writeFileSync(app.getPath('userData') + path.sep + 'db.json', '{}')
+} else if (!fs.existsSync(app.getPath('userData') + path.sep + 'db.json')) {
+  fs.writeFileSync(app.getPath('userData') + path.sep + 'db.json', '{}')
+}
 const adapter = new FileSync(app.getPath('userData') + path.sep + 'db.json')
 // const adapter = new FileSync(app.getAppPath() + path.sep + 'db.json')
 const db = low(adapter)
@@ -203,7 +210,7 @@ function createMenuWindow () {
 
   const menuURL = process.env.NODE_ENV === 'development'
     ? `http://localhost:9080/#/menu`
-    : `file://${__dirname}/index.html/#/menu`
+    : `file://${__dirname}/index.html?page=menu`
 
   menuWindow.loadURL(menuURL)
 
@@ -230,7 +237,7 @@ function restoreMenuWindow () {
   menuWindow.setBounds(menuWindowNormalBounds, true)
 }
 
-app.on('ready', createWindow)
+// app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -280,7 +287,7 @@ ipcMain.on('navigate-to', (event, arg) => {
   }
   mainWindow.webContents.send('navigate-to', arg)
   mainWindow.showInactive()
-  mainWindow.flashFrame(true)
+  // mainWindow.flashFrame(true)
 })
 
 ipcMain.on('right-menu-click', (event, arg) => {
@@ -298,11 +305,13 @@ ipcMain.on('right-menu-click', (event, arg) => {
                 mainWindow.webContents.send('navigate-to', {
                   path: item.name
                 })
+                mainWindow.showInactive()
               }, 1000)
             } else {
               mainWindow.webContents.send('navigate-to', {
                 path: item.name
               })
+              mainWindow.showInactive()
             }
           }
         }
@@ -470,3 +479,49 @@ ipcMain.on('shell-npm-install', (event, args) => {
 // app.on('ready', () => {
 //   if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 // })
+// 发送消息给渲染线程
+function sendStatusToWindow (status, params) {
+  mainWindow.webContents.send(status, params)
+}
+autoUpdater.autoDownload = false // 关闭自动更新
+autoUpdater.autoInstallOnAppQuit = true // APP退出的时候自动安装
+autoUpdater.on('checking-for-update', () => {
+  sendStatusToWindow('Checking for update...')
+})
+autoUpdater.on('update-available', (info) => {
+  // 可以更新版本
+  sendStatusToWindow('autoUpdater-canUpdate', info)
+})
+// autoUpdater.on('update-not-available', (info) => {
+//   // 不能够更新
+// })
+autoUpdater.on('error', (err) => {
+  // 更新错误
+  sendStatusToWindow('autoUpdater-error', err)
+})
+autoUpdater.on('download-progress', (progressObj) => {
+  // 正在下载的下载进度
+  sendStatusToWindow('autoUpdater-progress', progressObj)
+})
+autoUpdater.on('update-downloaded', (info) => {
+  // 下载完成
+  sendStatusToWindow('autoUpdater-downloaded')
+})
+
+ipcMain.on('exit-app', () => {
+  app.quit()
+})
+
+app.on('ready', async () => {
+  // if ((process.env.NODE_ENV == 'development') && !process.env.IS_TEST) {
+  // Install Vue Devtools
+  // await installVueDevtools()
+  // }
+  createWindow()
+
+  // 每次运行APP检测更新。这里设置延时是为了避免还未开始渲染，更新检测就已经完成(网速超快，页面加载跟不上)。
+  setTimeout(() => {
+    // 检测是否有更新
+    autoUpdater.checkForUpdates()
+  }, 1500)
+})
