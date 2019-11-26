@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, net } from 'electron'
-import { autoUpdater } from 'electron-updater'
+// import { autoUpdater } from 'electron-updater'
+import { screenshot } from './puppeteer'
 import axios from 'axios'
 import path from 'path'
 import fs from 'fs'
@@ -20,7 +21,7 @@ const db = low(adapter)
 //   fs.writeFileSync(app.getAppPath() + path.sep + 'db.json', '')
 // }
 
-const puppeteer = require('puppeteer')
+// const puppeteer = require('puppeteer')
 
 db.defaults({
   requests: [
@@ -370,10 +371,6 @@ ipcMain.on('request', async (event, args) => {
   event.reply('response', response)
 })
 
-function sleep (ts = 500) {
-  return new Promise(resolve => setTimeout(resolve, ts))
-}
-
 function getHost (u) {
   let url = 'https://' + u.replace(/^([^/]*\/?\/?)(.*)$/, '$2')
   var result = url.match("^https?:\/\/([^\/:]*)")
@@ -384,78 +381,17 @@ function getHost (u) {
   return ''
 }
 
-function screenshot (event, args) {
-  return new Promise(async (resolve) => {
-    // console.log('@@@@@@@', args)
-    const browser = await puppeteer.launch({
-      headless: true,
-      ignoreHTTPSErrors: true,
-      defaultViewport: args.viewport,
-      timeout: 60 * 1000
-    })
-    const page = await browser.newPage()
-    // let domain = getHost(args.url)
-    await page.setCookie(...args.cookies.map(item => {
-      return {
-        name: item.key,
-        value: item.value,
-        url: args.url
-      }
-    }))
-    if (args.userAgent) {
-      await page.setUserAgent(args.userAgent)
-    }
-    await page.goto(args.url, {
-      waitUntil: ["load", "domcontentloaded", "networkidle0"]
-    })
-    let _args = JSON.parse(JSON.stringify(args))
-    await page.screenshot({
-      path: args.path,
-      type: 'jpeg',
-      encoding: 'binary',
-      quality: args.hasOwnProperty('quality') ? args.quality : 100,
-      fullPage: args.hasOwnProperty('fullPage') ? args.fullPage : true
-    }).catch(() => {
-    })
-    if (args.scripts && args.scripts.length > 0) {
-      let i = 0
-      for (i; i < args.scripts.length; i++) {
-        await page.mainFrame().addScriptTag({
-          content: args.scripts[i].text
-        })
-        if (i !== 0) {
-          await page.waitForNavigation({
-            waitUntil: ["load", "domcontentloaded", "networkidle0"]
-          })
-          await sleep(300)
-        }
-
-        await page.screenshot({
-          path: _args.path.replace(/(.*)(\.[a-zA-Z]*)$/, '$1-' + (i + 1) + '$2'), // path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (i > 0 ? 'screenshot_' + (i + 1) + '.jpg' : 'screenshot.jpg')), // (i === 0 ? args.path : _args.path.replace(/\/(.*)(\.[a-zA-Z]*)$/, '$1-' + (i + 1) + '$2')), // || path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + 'screenshot.jpg'),
-          type: 'jpeg',
-          encoding: 'binary',
-          quality: args.hasOwnProperty('quality') ? args.quality : 100,
-          fullPage: args.hasOwnProperty('fullPage') ? args.fullPage : true
-        }).catch(() => {
-        })
-      }
-    }
-    await browser.close()
-    resolve(true)
-  })
-}
-
 ipcMain.on('open-save', async (event, args) => {
   let response = await dialog.showSaveDialogSync({
     defaultPath: path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + 'screenshot.jpg'),
     buttonLabel: '保存'
   })
   if (response) {
-    event.reply('start-screenshot')
-    await screenshot(event, Object.assign({}, args, {
-      path: response
-    }))
-    event.reply('end-screenshot')
+    if (args.type === 'screenshot') {
+      screenshot(event, Object.assign({}, args, {
+        path: response
+      }))
+    }
   }
 })
 
@@ -480,6 +416,7 @@ ipcMain.on('shell-npm-install', (event, args) => {
 //   if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 // })
 // 发送消息给渲染线程
+/**
 function sendStatusToWindow (status, params) {
   mainWindow.webContents.send(status, params)
 }
@@ -511,7 +448,7 @@ autoUpdater.on('update-downloaded', (info) => {
 ipcMain.on('exit-app', () => {
   app.quit()
 })
-
+ */
 app.on('ready', async () => {
   // if ((process.env.NODE_ENV == 'development') && !process.env.IS_TEST) {
   // Install Vue Devtools
@@ -520,8 +457,7 @@ app.on('ready', async () => {
   createWindow()
 
   // 每次运行APP检测更新。这里设置延时是为了避免还未开始渲染，更新检测就已经完成(网速超快，页面加载跟不上)。
-  setTimeout(() => {
-    // 检测是否有更新
-    autoUpdater.checkForUpdates()
-  }, 1500)
+  // setTimeout(() => {
+  //   autoUpdater.checkForUpdates()
+  // }, 1500)
 })
