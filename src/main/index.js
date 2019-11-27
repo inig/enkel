@@ -23,6 +23,8 @@ const db = low(adapter)
 
 // const puppeteer = require('puppeteer')
 
+axios.defaults.timeout = 5000
+
 db.defaults({
   requests: [
     {
@@ -163,7 +165,7 @@ function createWindow () {
     useContentSize: true,
     width: 1000,
     titleBarStyle: 'hidden',
-    show: false,
+    show: true,
     webPreferences: {
       javascript: true,
       plugins: true,
@@ -176,15 +178,42 @@ function createWindow () {
 
   // initMenu()
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
-  })
+  // mainWindow.once('ready-to-show', () => {
+  //   mainWindow.show()
+  // })
 
   mainWindow.on('closed', () => {
     mainWindow = null
     // app.quit()
   })
   // mainWindow.setAspectRatio(16 / 9)
+}
+
+function createNewWindow (arg) {
+  let newWindow = new BrowserWindow({
+    height: 563,
+    useContentSize: true,
+    width: 1000,
+    titleBarStyle: 'hidden',
+    show: true,
+    webPreferences: {
+      javascript: true,
+      plugins: true,
+      nodeIntegration: true, // 是否集成 Nodejs
+      webSecurity: false,
+      // preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
+    }
+  })
+  const url = process.env.NODE_ENV === 'development'
+    ? `http://localhost:9080/#/${arg.path}`
+    : `file://${__dirname}/index.html?page=${arg.path}`
+  newWindow.loadURL(url)
+
+  newWindow.on('closed', () => {
+    // newWindow = null
+    newWindow.destroy()
+    // app.quit()
+  })
 }
 
 function createMenuWindow () {
@@ -218,9 +247,13 @@ function createMenuWindow () {
   menuWindow.on('close', (event) => {
     // menuWindow = null
     if (menuWindow) {
-      menuWindow.hide()
+      menuWindow.destroy()
+      app.quit()
     }
     event.preventDefault()
+  })
+  menuWindow.once('ready-to-show', () => {
+    menuWindow.show()
   })
 }
 
@@ -238,7 +271,19 @@ function restoreMenuWindow () {
   menuWindow.setBounds(menuWindowNormalBounds, true)
 }
 
-// app.on('ready', createWindow)
+app.on('ready', async () => {
+  // if ((process.env.NODE_ENV == 'development') && !process.env.IS_TEST) {
+  // Install Vue Devtools
+  // await installVueDevtools()
+  // }
+  // createWindow()
+  createMenuWindow()
+
+  // 每次运行APP检测更新。这里设置延时是为了避免还未开始渲染，更新检测就已经完成(网速超快，页面加载跟不上)。
+  // setTimeout(() => {
+  //   autoUpdater.checkForUpdates()
+  // }, 1500)
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -247,8 +292,11 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow()
+  // if (mainWindow === null) {
+  //   createWindow()
+  // }
+  if (menuWindow === null) {
+    createMenuWindow()
   }
 })
 
@@ -283,11 +331,13 @@ ipcMain.on('menu-unfold', (event) => {
 })
 
 ipcMain.on('navigate-to', (event, arg) => {
-  if (mainWindow === null) {
-    createWindow()
-  }
-  mainWindow.webContents.send('navigate-to', arg)
-  mainWindow.showInactive()
+  createNewWindow(arg)
+  // if (mainWindow === null) {
+  //   createWindow()
+  // }
+  // console.log('>>>>>>>', arg)
+  // mainWindow.webContents.send('navigate-to', arg)
+  // mainWindow.showInactive()
   // mainWindow.flashFrame(true)
 })
 
@@ -300,20 +350,31 @@ ipcMain.on('right-menu-click', (event, arg) => {
         return {
           label: item.meta.title,
           click () {
+            createNewWindow({
+              path: item.name
+            })
+            /**
             if (mainWindow === null) {
-              createWindow()
+              // createWindow()
               setTimeout(() => {
-                mainWindow.webContents.send('navigate-to', {
+                createNewWindow({
                   path: item.name
                 })
-                mainWindow.showInactive()
+                // mainWindow.webContents.send('navigate-to', {
+                //   path: item.name
+                // })
+                // mainWindow.showInactive()
               }, 1000)
             } else {
-              mainWindow.webContents.send('navigate-to', {
+              createNewWindow({
                 path: item.name
               })
-              mainWindow.showInactive()
+              // mainWindow.webContents.send('navigate-to', {
+              //   path: item.name
+              // })
+              // mainWindow.showInactive()
             }
+             */
           }
         }
       })
@@ -367,8 +428,23 @@ ipcMain.on('set-requests-folder', (event, args) => {
 
 ipcMain.on('request', async (event, args) => {
   event.reply('start-request')
-  let response = await axios(args)
-  event.reply('response', response)
+  await axios(args).then(response => {
+    event.reply('response', response)
+  }).catch(err => {
+    event.reply('response', err.response ? {
+      data: {
+        errmsg: err.response.statusText,
+        status: err.response.status
+      },
+      headers: err.response.headers
+    } : {
+        data: {
+          errmsg: err.message,
+          status: 1001
+        },
+        headers: {}
+      })
+  })
 })
 
 function getHost (u) {
@@ -393,6 +469,18 @@ ipcMain.on('open-save', async (event, args) => {
       }))
     }
   }
+})
+
+ipcMain.on('show-all-window', (event, args) => {
+  BrowserWindow.getAllWindows().forEach(item => item.show())
+})
+
+ipcMain.on('close-all-window', (event, args) => {
+  BrowserWindow.getAllWindows().forEach(item => {
+    if (item.id != menuWindow.id) {
+      item.destroy()
+    }
+  })
 })
 
 ipcMain.on('shell-npm-install', (event, args) => {
@@ -449,15 +537,4 @@ ipcMain.on('exit-app', () => {
   app.quit()
 })
  */
-app.on('ready', async () => {
-  // if ((process.env.NODE_ENV == 'development') && !process.env.IS_TEST) {
-  // Install Vue Devtools
-  // await installVueDevtools()
-  // }
-  createWindow()
 
-  // 每次运行APP检测更新。这里设置延时是为了避免还未开始渲染，更新检测就已经完成(网速超快，页面加载跟不上)。
-  // setTimeout(() => {
-  //   autoUpdater.checkForUpdates()
-  // }, 1500)
-})

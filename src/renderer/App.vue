@@ -16,9 +16,10 @@ export default {
     // UpdateProgress: () => import('./components/custom/UpdateProgress')
   },
   created () {
-    if (location.href.indexOf('page=menu') > -1) {
+    if (location.href.indexOf('page=') > -1) {
+      let pathName = location.href.replace(/^([^?]*\?[^?]*page=)([^&]*)(.*)$/, '$2')
       this.$router.replace({
-        name: 'menu'
+        name: pathName
       })
     }
   }
@@ -270,6 +271,17 @@ body {
       border-color: transparent;
       box-shadow: none;
     }
+  }
+}
+
+.menu_operate_dropdown {
+  .ivu-dropdown-rel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
   }
 }
 </style>

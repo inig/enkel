@@ -18,6 +18,7 @@
              @on-change="changeUrl" />
       <div class="request_btn_box">
         <Button type="text"
+                :disabled="!currentRequest.url"
                 @click="request">发送</Button>
       </div>
     </div>

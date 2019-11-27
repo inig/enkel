@@ -9,26 +9,45 @@
     </div>
     <div class="menu_fold bgWhite"
          v-if="$route.name === 'menu' && menuFolded"
-         @click="menuFold"
+         title="双击打开"
+         @dblclick="menuFold"
          @contextmenu="showRightMenu">
       <img src="~@/assets/logo.png"
            alt="Enkel">
     </div>
-    <div class="menu_home"
+    <div class="menu_operate"
+         v-if="$route.name === 'menu' && !menuFolded">
+      <Dropdown class="menu_operate_dropdown"
+                transfer
+                placement="bottom-end"
+                @on-click="operateHandler">
+        <a href="javascript:void(0)">
+          <Icon type="ios-cog"
+                size="20"
+                color="#fff"></Icon>
+        </a>
+        <DropdownMenu slot="list">
+          <DropdownItem name="show-all-window">显示所有窗口</DropdownItem>
+          <DropdownItem name="close-all-window">关闭所有窗口</DropdownItem>
+        </DropdownMenu>
+      </Dropdown>
+    </div>
+
+    <!-- <div class="menu_home"
          v-if="!menuFolded"
          :style="{right: ($route.name === 'menu') ? '32px' : '0'}"
          @click="goto('home')">
       <svg>
         <use xlink:href="#home"></use>
       </svg>
-    </div>
-    <div class="menu_close"
+    </div> -->
+    <!-- <div class="menu_close"
          v-if="$route.name === 'menu' && !menuFolded"
          @click="closeMenu">
       <svg>
         <use xlink:href="#close"></use>
       </svg>
-    </div>
+    </div> -->
     <slot>
       {{$route.meta ? ($route.meta.title || 'Enkel') : 'Enkel'}}
     </slot>
@@ -38,8 +57,12 @@
 <script>
 import { ipcRenderer } from 'electron'
 import { routes } from '../../router/routes'
+import { Dropdown, DropdownMenu, DropdownItem, Icon } from 'view-design'
 export default {
   name: 'AppHeader',
+  components: {
+    Dropdown, DropdownMenu, DropdownItem, Icon
+  },
   data () {
     return {
       menuFolded: false
@@ -65,6 +88,9 @@ export default {
       ipcRenderer.send('right-menu-click', {
         routes: routes
       })
+    },
+    operateHandler (name) {
+      ipcRenderer.send(name)
     }
   }
 }
@@ -113,6 +139,25 @@ export default {
   img {
     width: 100%;
     height: 100%;
+  }
+}
+.menu_operate {
+  width: 48px;
+  height: 48px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  .menu_operate_dropdown {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
   }
 }
 .menu_home {
