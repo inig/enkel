@@ -56,11 +56,10 @@ function getRequests () {
 function setRequest (event, args) {
   let requests = getRequests()
   if (args.parent) {
-    requests.map(item => {
-      if (item.name === args.parent) {
-        item.children.splice((args.index || 10000), 0, args.request)
-      }
-    })
+    let dirIndex = findRequestIndex(args.parent.id, requests)
+    if (dirIndex[0] !== -1) {
+      requests[dirIndex[0]].children.push(args.request)
+    }
   } else {
     requests.splice((args.index || 10000), 0, args.request)
   }
@@ -194,6 +193,36 @@ ipcMain.on('set-requests-folder', (event, args) => {
 })
 ipcMain.on('modify-requests-folder', (event, args) => {
   event.returnValue = modifyRequestFolder(event, args)
+})
+
+ipcMain.on('move-request-to-dir', (event, args) => {
+  let requests = getRequests()
+  if (args.request.id && args.dir.id) {
+    let index = findRequestIndex(args.request.id, requests)
+    let dirIndex = findRequestIndex(args.dir.id, requests)
+    if (index[0] !== -1 && index[1] === -1 && dirIndex[0] !== -1) {
+      requests[dirIndex[0]].children.push(args.request)
+      requests.splice(index[0], 1)
+      db.set('requests', requests).write()
+    }
+  }
+  requestsUpdated(event, requests)
+  event.returnValue = requests
+})
+ipcMain.on('move-request-out-from-dir', (event, args) => {
+  let requests = getRequests()
+  if (args.request.id && args.dir.id) {
+    let index = findRequestIndex(args.request.id, requests)
+    let dirIndex = findRequestIndex(args.dir.id, requests)
+    console.log(index, dirIndex)
+    if (index[0] !== -1 && index[1] !== -1 && dirIndex[0] !== -1) {
+      requests.push(args.request)
+      requests[dirIndex[0]].children.splice(index[1], 1)
+      db.set('requests', requests).write()
+    }
+  }
+  requestsUpdated(event, requests)
+  event.returnValue = requests
 })
 
 ipcMain.on('request', async (event, args) => {
