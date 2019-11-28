@@ -9,12 +9,13 @@ import mixins from './mixins'
 import * as filters from './filters'
 import './themes/index.less'
 
-import { Notice, Message } from 'view-design'
+import { Notice, Message, Modal } from 'view-design'
 
 import '../../static/css/font-awesome/css/font-awesome.min.css'
 
 Vue.prototype.$Notice = Notice
 Vue.prototype.$Message = Message
+Vue.prototype.$Modal = Modal
 
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 Vue.http = Vue.prototype.$http = axios

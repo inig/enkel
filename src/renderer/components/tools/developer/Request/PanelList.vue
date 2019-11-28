@@ -28,7 +28,8 @@
         </Dropdown>
       </div>
     </div>
-    <div class="requests_list">
+    <div class="requests_list"
+         id="list">
       <div class="requests_item"
            v-for="(item, index) in requestsList"
            :key="index">
@@ -251,7 +252,8 @@
 
 <script>
   import { Input, Dropdown, DropdownMenu, DropdownItem, Button, Icon, Modal, Form, FormItem, Select, Option, Checkbox } from 'view-design'
-  import { ipcRenderer } from 'electron'
+  import { ipcRenderer, remote } from 'electron'
+  const { Menu, MenuItem } = remote
   export default {
     name: 'RequestPanelList',
     components: {
@@ -334,6 +336,9 @@
           outHtml = text.replace(reg, item => '<span class="emphasize">' + item + '</span>')
           return outHtml
         }
+      },
+      allDirs () {
+        return this.requestsList.filter(item => item.type === 'folder')
       }
     },
     created () {
@@ -495,7 +500,69 @@
         })
       },
       showContextMenu (item) {
-        ipcRenderer.send('contextmenu-tool-request', item)
+        // ipcRenderer.send('contextmenu-tool-request', item)
+        const menu = new Menu()
+        menu.append(new MenuItem({
+          label: '删除',
+          click: async () => {
+            // let res = await dialog.showMessageBox({
+            //   type: 'info',
+            //   message: `确定删除【${args.label}】吗`,
+            //   defaultId: 1,
+            //   cancelId: 0,
+            //   buttons: ['取消', '确定']
+            // })
+            this.$Modal.confirm({
+              title: `确定删除<span style="color: green;">【${item.label}】</span>吗`,
+              render (h) {
+                return h('div', {
+                  style: {
+                    paddingLeft: '40px',
+                    boxSizing: 'border-box'
+                  }
+                }, [
+                  h('span', {
+                    style: {
+                      color: '#ed4014'
+                    }
+                  }, '删除后将无法恢复，请确认后再操作')
+                ])
+              },
+              onOk: () => {
+                this.requestsList = ipcRenderer.sendSync('remove-request', item)
+                this.$Notice.success({
+                  desc: '【' + item.label + '】删除成功'
+                })
+              }
+            })
+            // if (res.response == 1) {
+            // event.reply('contextmenu-tool-request-delete', {
+            //   deleted: args,
+            //   requests: removeRequest(args)
+            // })
+            // } else {
+            // event.preventDefault()
+            // }
+          }
+        }))
+        menu.append(new MenuItem({
+          label: '修改',
+          click: () => {
+            alert('修改')
+            // event.reply('contextmenu-tool-request-modify', args)
+          }
+        }))
+        // menu.append(new MenuItem({
+        //   label: '移动到',
+        //   submenu: [
+        //     {
+        //       label: '笑话目录',
+        //       type: 'submenu'
+        //     }
+        //   ]
+        // }))
+        // const win = BrowserWindow.fromWebContents(event.sender)
+        menu.popup({ window: remote.getCurrentWindow() })
       },
       requestItemDelete (event, data) {
         this.requestsList = data.requests
