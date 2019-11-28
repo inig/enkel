@@ -6,7 +6,7 @@ import router from './router'
 import store from './store'
 
 import mixins from './mixins'
-
+import * as filters from './filters'
 import './themes/index.less'
 
 import { Notice, Message } from 'view-design'
@@ -21,6 +21,10 @@ Vue.http = Vue.prototype.$http = axios
 Vue.config.productionTip = false
 
 Vue.mixin(mixins)
+
+Object.keys(filters).forEach(key => {
+  Vue.filter(key, filters[key])
+})
 
 router.beforeEach((to, from, next) => {
   if (to.meta && to.meta.title) {

@@ -9,11 +9,11 @@ const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 if (!fs.existsSync(app.getPath('userData'))) {
   fs.mkdirSync(app.getPath('userData'))
-  fs.writeFileSync(app.getPath('userData') + path.sep + 'db.json', '{}')
-} else if (!fs.existsSync(app.getPath('userData') + path.sep + 'db.json')) {
-  fs.writeFileSync(app.getPath('userData') + path.sep + 'db.json', '{}')
+  fs.writeFileSync(app.getPath('userData') + path.sep + 'enkel_app.json', '{}')
+} else if (!fs.existsSync(app.getPath('userData') + path.sep + 'enkel_app.json')) {
+  fs.writeFileSync(app.getPath('userData') + path.sep + 'enkel_app.json', '{}')
 }
-const adapter = new FileSync(app.getPath('userData') + path.sep + 'db.json')
+const adapter = new FileSync(app.getPath('userData') + path.sep + 'enkel_app.json')
 // const adapter = new FileSync(app.getAppPath() + path.sep + 'db.json')
 const db = low(adapter)
 // console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
@@ -78,6 +78,47 @@ function setRequest (args) {
     requests.splice((args.index || 10000), 0, args.request)
   }
   db.set('requests', requests).write()
+  requestsUpdated(requests)
+  return requests
+}
+function modifyRequest (args) {
+  let v = db.get('requests').find({
+    id: args.request.id
+  }).value()
+  if (v) {
+    db.get('requests').find({
+      id: args.request.id
+    }).assign(Object.assign({}, args.request)).write()
+  } else {
+    let requests = getRequests()
+    requests = requests.map(item => {
+      if (item.type === 'folder') {
+        item.children = item.children.map(itm => {
+          if (itm.id === args.request.id) {
+            itm = JSON.parse(JSON.stringify(args.request))
+          }
+          return itm
+        })
+      }
+      return item
+    })
+    db.set('requests', requests).write()
+  }
+  requestsUpdated()
+  return getRequests()
+  // db.get('request')
+  let requests = getRequests()
+  if (args.parent) {
+    requests.map(item => {
+      if (item.name === args.parent) {
+        item.children.splice((args.index || 10000), 0, args.request)
+      }
+    })
+  } else {
+    requests.splice((args.index || 10000), 0, args.request)
+  }
+  db.set('requests', requests).write()
+  requestsUpdated(requests)
   return requests
 }
 
@@ -90,6 +131,17 @@ function setRequestFolder (args) {
     type: 'folder'
   })
   db.set('requests', requests).write()
+  requestsUpdated(requests)
+  return requests
+}
+function modifyRequestFolder (args) {
+  db.get('requests').find({
+    id: args.id
+  }).assign({
+    label: args.label
+  }).write()
+  let requests = getRequests()
+  requestsUpdated(requests)
   return requests
 }
 
@@ -128,6 +180,13 @@ function removeRequest (args) {
   }
   db.set('requests', requests).write()
   return requests
+}
+
+function requestsUpdated (requests) {
+  BrowserWindow.getAllWindows().forEach(item => {
+    let allRequests = (requests || getRequests())
+    item.webContents.send('requests-updated', allRequests)
+  })
 }
 
 // if (process.mas) app.setName('Enkel')
@@ -384,7 +443,7 @@ ipcMain.on('right-menu-click', (event, arg) => {
   menu.popup(win)
 })
 
-ipcMain.on('context-menu-request-item', (event, args) => {
+ipcMain.on('contextmenu-tool-request', (event, args) => {
   const menu = new Menu()
   menu.append(new MenuItem({
     label: '删除',
@@ -397,13 +456,19 @@ ipcMain.on('context-menu-request-item', (event, args) => {
         buttons: ['取消', '确定']
       })
       if (res.response == 1) {
-        event.reply('context-menu-delete', {
+        event.reply('contextmenu-tool-request-delete', {
           deleted: args,
           requests: removeRequest(args)
         })
       } else {
         event.preventDefault()
       }
+    }
+  }))
+  menu.append(new MenuItem({
+    label: '修改',
+    click: () => {
+      event.reply('contextmenu-tool-request-modify', args)
     }
   }))
   const win = BrowserWindow.fromWebContents(event.sender)
@@ -422,8 +487,20 @@ ipcMain.on('set-requests', (event, args) => {
   }
   event.returnValue = setRequest(args)
 })
+ipcMain.on('modify-requests', (event, args) => {
+  if (args.request) {
+    args.request = Object.assign({
+      type: 'request',
+      id: getUUID()
+    }, args.request)
+  }
+  event.returnValue = modifyRequest(args)
+})
 ipcMain.on('set-requests-folder', (event, args) => {
   event.returnValue = setRequestFolder(args)
+})
+ipcMain.on('modify-requests-folder', (event, args) => {
+  event.returnValue = modifyRequestFolder(args)
 })
 
 ipcMain.on('request', async (event, args) => {
