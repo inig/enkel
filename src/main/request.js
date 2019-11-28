@@ -53,7 +53,7 @@ function getRequests () {
   return db.get('requests').value()
 }
 
-function setRequest (args) {
+function setRequest (event, args) {
   let requests = getRequests()
   if (args.parent) {
     requests.map(item => {
@@ -65,10 +65,10 @@ function setRequest (args) {
     requests.splice((args.index || 10000), 0, args.request)
   }
   db.set('requests', requests).write()
-  requestsUpdated(requests)
+  requestsUpdated(event, requests)
   return requests
 }
-function modifyRequest (args) {
+function modifyRequest (event, args) {
   let v = db.get('requests').find({
     id: args.request.id
   }).value()
@@ -91,11 +91,11 @@ function modifyRequest (args) {
     })
     db.set('requests', requests).write()
   }
-  requestsUpdated()
+  requestsUpdated(event)
   return getRequests()
 }
 
-function setRequestFolder (args) {
+function setRequestFolder (event, args) {
   let requests = getRequests()
   requests.splice((args.index || 10000), 0, {
     label: args.label,
@@ -104,17 +104,17 @@ function setRequestFolder (args) {
     type: 'folder'
   })
   db.set('requests', requests).write()
-  requestsUpdated(requests)
+  requestsUpdated(event, requests)
   return requests
 }
-function modifyRequestFolder (args) {
+function modifyRequestFolder (event, args) {
   db.get('requests').find({
     id: args.id
   }).assign({
     label: args.label
   }).write()
   let requests = getRequests()
-  requestsUpdated(requests)
+  requestsUpdated(event, requests)
   return requests
 }
 
@@ -159,8 +159,7 @@ function removeRequest (event, args) {
 function requestsUpdated (event, requests) {
   BrowserWindow.getAllWindows().forEach(item => {
     let allRequests = (requests || getRequests())
-    console.log(event.sender, '######', (event.sender === item))
-    if (item.id !== event.sender.id) {
+    if (item.webContents !== event.sender) {
       item.webContents.send('requests-updated', allRequests)
     }
   })
@@ -179,7 +178,7 @@ ipcMain.on('set-requests', (event, args) => {
       id: getUUID()
     }, args.request)
   }
-  event.returnValue = setRequest(args)
+  event.returnValue = setRequest(event, args)
 })
 ipcMain.on('modify-requests', (event, args) => {
   if (args.request) {
@@ -188,13 +187,13 @@ ipcMain.on('modify-requests', (event, args) => {
       id: getUUID()
     }, args.request)
   }
-  event.returnValue = modifyRequest(args)
+  event.returnValue = modifyRequest(event, args)
 })
 ipcMain.on('set-requests-folder', (event, args) => {
-  event.returnValue = setRequestFolder(args)
+  event.returnValue = setRequestFolder(event, args)
 })
 ipcMain.on('modify-requests-folder', (event, args) => {
-  event.returnValue = modifyRequestFolder(args)
+  event.returnValue = modifyRequestFolder(event, args)
 })
 
 ipcMain.on('request', async (event, args) => {

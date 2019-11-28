@@ -535,33 +535,18 @@
                 })
               }
             })
-            // if (res.response == 1) {
-            // event.reply('contextmenu-tool-request-delete', {
-            //   deleted: args,
-            //   requests: removeRequest(args)
-            // })
-            // } else {
-            // event.preventDefault()
-            // }
           }
         }))
         menu.append(new MenuItem({
           label: '修改',
           click: () => {
-            alert('修改')
-            // event.reply('contextmenu-tool-request-modify', args)
+            // this.requestsList = ipcRenderer.sendSync('modify-request', item)
+            // this.$Notice.success({
+            //   desc: '【' + item.label + '】修改成功'
+            // })
+            this.requestItemModify(null, item)
           }
         }))
-        // menu.append(new MenuItem({
-        //   label: '移动到',
-        //   submenu: [
-        //     {
-        //       label: '笑话目录',
-        //       type: 'submenu'
-        //     }
-        //   ]
-        // }))
-        // const win = BrowserWindow.fromWebContents(event.sender)
         menu.popup({ window: remote.getCurrentWindow() })
       },
       requestItemDelete (event, data) {
