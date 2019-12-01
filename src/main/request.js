@@ -1,6 +1,7 @@
 import { ipcMain, app, BrowserWindow } from "electron"
 import fs from 'fs'
 import path from 'path'
+import axios from 'axios'
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 if (!fs.existsSync(app.getPath('userData'))) {
@@ -11,7 +12,7 @@ if (!fs.existsSync(app.getPath('userData'))) {
 }
 const adapter = new FileSync(app.getPath('userData') + path.sep + 'enkel_app.json')
 const db = low(adapter)
-
+axios.defaults.timeout = 5000
 db.defaults({
   requests: [
     {

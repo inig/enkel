@@ -44,8 +44,13 @@
 
 <script>
 import { Button } from 'view-design'
-import { ipcRenderer } from 'electron'
+import { ipcRenderer, desktopCapturer, remote, shell } from 'electron'
 import { routes } from '../../router/routes'
+const { screen } = remote
+const fs = require('fs')
+const path = require('path')
+const os = require('os')
+const qrcodeParser = require('qrcode-parser')
 
 export default {
   name: 'PageMenu',
@@ -60,6 +65,7 @@ export default {
   },
   mounted () {
     this.routes = routes
+    ipcRenderer.on('desktop-capturer', this.desktopCapturerHandler)
   },
   methods: {
     closeMenu () {
@@ -71,6 +77,51 @@ export default {
     },
     goto (name) {
       this.$goto(name)
+    },
+    determineScreenShotSize () {
+      const screenSize = screen.getPrimaryDisplay().workAreaSize
+      const maxDimension = Math.max(screenSize.width, screenSize.height)
+      return {
+        width: maxDimension * 2,
+        height: maxDimension * 2
+      }
+    },
+    desktopCapturerHandler () {
+      const thumbSize = this.determineScreenShotSize()
+
+      let options = {
+        types: ['screen'],
+        thumbnailSize: thumbSize
+      }
+      desktopCapturer.getSources(options, (error, sources) => {
+        if (error) {
+          return console.log(error)
+        }
+        sources.forEach(source => {
+          if (source.name === 'Enntire screen' || source.name === 'Screen 1') {
+            const screenshotPath = path.join(os.tmpdir(), 'screenshot.png')
+
+            fs.writeFile(screenshotPath, source.thumbnail.toPNG(), (err) => {
+              if (err) {
+                return console.log(err)
+              }
+              // shell.openExternal(`file://${screenshotPath}`)
+
+              qrcodeParser(`file://${screenshotPath}`).then(res => {
+                // alert(res.data + '+++++' + JSON.stringify(res.location, null, 2))
+                ipcRenderer.send('show-shortcuts', Object.assign({}, res.location, {
+                  dpr: devicePixelRatio || 2,
+                  message: res.data
+                }))
+              }).catch(err => {
+                alert('error: ' + err.message)
+                ipcRenderer.send('hide-modal-loading')
+              })
+
+            })
+          }
+        })
+      })
     }
   }
 }

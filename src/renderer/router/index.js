@@ -16,6 +16,11 @@ export default new Router({
       name: 'menu',
       component: require('@/components/pages/Menu').default
     },
+    {
+      path: '/modal-loading',
+      name: 'modal-loading',
+      component: require('@/components/pages/ModalLoading').default
+    },
     ...developRouter.routes,
     {
       path: '*',

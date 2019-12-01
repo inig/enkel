@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <AppHeader v-if="$route.name !== 'menu'"></AppHeader>
-    <router-view style="height: calc(100% - 48px)"></router-view>
+    <AppHeader v-if="$route.name !== 'menu' && ($route.name !== 'modal-loading')"></AppHeader>
+    <router-view :style="{height: ($route.name !== 'menu' && ($route.name !== 'modal-loading')) ? 'calc(100% - 48px)' : '100%'}"></router-view>
     <all-svgs></all-svgs>
     <!-- <UpdateProgress></UpdateProgress> -->
   </div>

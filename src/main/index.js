@@ -1,19 +1,19 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, net } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, clipboard, globalShortcut } from 'electron'
 // import { autoUpdater } from 'electron-updater'
 import { screenshot } from './puppeteer'
-import axios from 'axios'
+
 import path from 'path'
 
 import os from 'os'
 require('./request')
+require('./npm')
+require('./shortcuts')
 // console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
 // if (!fs.existsSync(app.getAppPath() + path.sep + 'db.json')) {
 //   fs.writeFileSync(app.getAppPath() + path.sep + 'db.json', '')
 // }
 
 // const puppeteer = require('puppeteer')
-
-axios.defaults.timeout = 5000
 
 
 
@@ -158,18 +158,154 @@ function restoreMenuWindow () {
   menuWindow.setBounds(menuWindowNormalBounds, true)
 }
 
+// function createShotcutsWindow (data) {
+//   let shortcutsWindow = new BrowserWindow({
+//     height: 363,
+//     width: 600,
+//     modal: true,
+//     show: true,
+//     // transparent: true,
+//     alwaysOnTop: true,
+//     x: 144 / 2,
+//     y: 394 / 2,
+//     webPreferences: {
+//       javascript: true,
+//       plugins: true,
+//       nodeIntegration: true, // 是否集成 Nodejs
+//       webSecurity: false,
+//       // preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
+//     }
+//   })
+// }
+
+let modalLoadingWindow
+function createModalLoadingWindow () {
+  const modalLoadingUrl = process.env.NODE_ENV === 'development'
+    ? `http://localhost:9080/#/modal-loading`
+    : `file://${__dirname}/index.html?page=modal-loading`
+  modalLoadingWindow = new BrowserWindow({
+    height: 128,
+    width: 128,
+    modal: true,
+    show: false,
+    transparent: true,
+    alwaysOnTop: true,
+    backgroundColor: '#00ffffff',
+    frame: false,
+    webPreferences: {
+      javascript: true,
+      plugins: true,
+      nodeIntegration: true, // 是否集成 Nodejs
+      webSecurity: false
+    }
+  })
+  modalLoadingWindow.loadURL(modalLoadingUrl)
+}
+
+let shortcutsWindow
+function createShotcutsWindow (data) {
+  // const { width, height } = screen.getPrimaryDisplay().workAreaSize
+  // const screenshotQrcodeUrl = process.env.NODE_ENV === 'development'
+  //   ? `http://localhost:9080/#/screenshot-qrcode`
+  //   : `file://${__dirname}/index.html?page=screenshot-qrcode`
+  shortcutsWindow = new BrowserWindow({
+    height: data.height,
+    width: data.width,
+    modal: true,
+    show: true,
+    transparent: true,
+    alwaysOnTop: true,
+    backgroundColor: '#88000000',
+    frame: false,
+    x: data.x,
+    y: data.y,
+    webPreferences: {
+      javascript: true,
+      plugins: true,
+      nodeIntegration: true, // 是否集成 Nodejs
+      webSecurity: false
+    }
+  })
+  shortcutsWindow.on('blur', () => {
+    shortcutsWindow.destroy()
+  })
+  // shortcutsWindow.loadURL(screenshotQrcodeUrl)
+}
+
+ipcMain.on('show-shortcuts', async (event, args) => {
+  if (modalLoadingWindow) {
+    modalLoadingWindow.hide()
+  }
+  dialog.showMessageBox({
+    message: JSON.stringify({
+      width: width,
+      height: height,
+      x: x,
+      y: y
+    }, null, 2)
+  })
+  let dpr = args.dpr || 2
+  let x = (args.topLeftCorner.x).toFixed(2) / dpr
+  let y = (args.topLeftCorner.y).toFixed(2) / dpr
+  let width = ((args.topRightCorner.x).toFixed(2) - (args.topLeftCorner.x).toFixed(2)) / dpr
+  let height = ((args.bottomLeftCorner.y).toFixed(2) - (args.topLeftCorner.y).toFixed(2)) / dpr
+  createShotcutsWindow({
+    width: width,
+    height: height,
+    x: x,
+    y: y
+  })
+
+  let res = await dialog.showMessageBox({
+    title: '二维码解码成功',
+    message: '二维码内容: ' + args.message,
+    defaultId: 1,
+    cancelId: 0,
+    buttons: ['取消', '复制']
+  })
+  if (res.response == 1) {
+    clipboard.writeText(args.message, 'selection')
+  } else {
+    event.preventDefault()
+  }
+})
+
+ipcMain.on('hide-modal-loading', (event) => {
+  if (modalLoadingWindow) {
+    modalLoadingWindow.hide()
+  }
+})
+
 app.on('ready', async () => {
   // if ((process.env.NODE_ENV == 'development') && !process.env.IS_TEST) {
   // Install Vue Devtools
   // await installVueDevtools()
   // }
   // createWindow()
+  // require('./shortcuts')
   createMenuWindow()
+
+  if (!modalLoadingWindow) {
+    createModalLoadingWindow()
+  }
+
+  globalShortcut.register('CommandOrControl+Shift+E', () => {
+    // createModalLoadingWindow()
+    if (shortcutsWindow) {
+      shortcutsWindow.destroy()
+    }
+    modalLoadingWindow.show()
+    // createShotcutsWindow()
+    menuWindow.webContents.send('desktop-capturer')
+  })
 
   // 每次运行APP检测更新。这里设置延时是为了避免还未开始渲染，更新检测就已经完成(网速超快，页面加载跟不上)。
   // setTimeout(() => {
   //   autoUpdater.checkForUpdates()
   // }, 1500)
+})
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll()
 })
 
 app.on('window-all-closed', () => {
@@ -349,9 +485,7 @@ ipcMain.on('close-all-window', (event, args) => {
   })
 })
 
-ipcMain.on('shell-npm-install', (event, args) => {
-  console.log('NPM Install', args)
-})
+
 /**
  * Auto Updater
  *
