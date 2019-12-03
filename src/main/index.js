@@ -5,17 +5,71 @@ import { screenshot } from './puppeteer'
 import path from 'path'
 
 import os from 'os'
+
 require('./request')
 require('./npm')
-require('./shortcuts')
+const { showSettingsWindow } = require('./settings')
+const { showAboutWindow } = require('./about')
 // console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
 // if (!fs.existsSync(app.getAppPath() + path.sep + 'db.json')) {
 //   fs.writeFileSync(app.getAppPath() + path.sep + 'db.json', '')
 // }
-
+const pkg = require('../../package.json')
 // const puppeteer = require('puppeteer')
 
-
+function initMenu () {
+  const isMac = process.platform === 'darwin'
+  const template = [
+    // { role: 'appMenu' }
+    ...(isMac ? [{
+      label: pkg.name,
+      submenu: [
+        {
+          label: '关于 ' + pkg.name,
+          click: () => {
+            showAboutWindow()
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '设置',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => {
+            showSettingsWindow()
+          }
+        },
+        { type: 'separator' },
+        {
+          role: 'quit',
+          label: '退出 ' + pkg.name
+        }
+      ]
+    }] : []),
+    // { role: 'fileMenu' }
+    // {
+    //   label: '文件',
+    //   submenu: [
+    //     isMac ? { role: 'close' } : { role: 'quit' }
+    //   ]
+    // },
+    {
+      label: '帮助',
+      role: 'help',
+      submenu: [
+        {
+          label: 'Learn More',
+          click: async () => {
+            const { shell } = require('electron')
+            await shell.openExternal('https://electronjs.org')
+          }
+        }
+      ]
+    }
+  ]
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+}
+// initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -199,6 +253,13 @@ function createModalLoadingWindow () {
       webSecurity: false
     }
   })
+  modalLoadingWindow.on('close', (event) => {
+    // menuWindow = null
+    if (modalLoadingWindow) {
+      modalLoadingWindow.hide()
+    }
+    event.preventDefault()
+  })
   modalLoadingWindow.loadURL(modalLoadingUrl)
 }
 
@@ -236,6 +297,12 @@ ipcMain.on('show-shortcuts', async (event, args) => {
   if (modalLoadingWindow) {
     modalLoadingWindow.hide()
   }
+
+  let dpr = args.dpr || 2
+  let x = (args.topLeftCorner.x).toFixed(2) / dpr
+  let y = (args.topLeftCorner.y).toFixed(2) / dpr
+  let width = ((args.topRightCorner.x).toFixed(2) - (args.topLeftCorner.x).toFixed(2)) / dpr
+  let height = ((args.bottomLeftCorner.y).toFixed(2) - (args.topLeftCorner.y).toFixed(2)) / dpr
   dialog.showMessageBox({
     message: JSON.stringify({
       width: width,
@@ -244,11 +311,6 @@ ipcMain.on('show-shortcuts', async (event, args) => {
       y: y
     }, null, 2)
   })
-  let dpr = args.dpr || 2
-  let x = (args.topLeftCorner.x).toFixed(2) / dpr
-  let y = (args.topLeftCorner.y).toFixed(2) / dpr
-  let width = ((args.topRightCorner.x).toFixed(2) - (args.topLeftCorner.x).toFixed(2)) / dpr
-  let height = ((args.bottomLeftCorner.y).toFixed(2) - (args.topLeftCorner.y).toFixed(2)) / dpr
   createShotcutsWindow({
     width: width,
     height: height,
@@ -257,8 +319,8 @@ ipcMain.on('show-shortcuts', async (event, args) => {
   })
 
   let res = await dialog.showMessageBox({
-    title: '二维码解码成功',
-    message: '二维码内容: ' + args.message,
+    title: '扫描结果',
+    message: '扫描结果: ' + args.message,
     defaultId: 1,
     cancelId: 0,
     buttons: ['取消', '复制']
@@ -274,6 +336,12 @@ ipcMain.on('hide-modal-loading', (event) => {
   if (modalLoadingWindow) {
     modalLoadingWindow.hide()
   }
+})
+ipcMain.on('show-modal-loading', () => {
+  if (!modalLoadingWindow) {
+    createModalLoadingWindow()
+  }
+  modalLoadingWindow.show()
 })
 
 app.on('ready', async () => {
@@ -294,10 +362,14 @@ app.on('ready', async () => {
     if (shortcutsWindow) {
       shortcutsWindow.destroy()
     }
-    modalLoadingWindow.show()
+
     // createShotcutsWindow()
     menuWindow.webContents.send('desktop-capturer')
   })
+
+  // globalShortcut.register('CommandOrControl+,', () => {
+  //   showSettingsWindow()
+  // })
 
   // 每次运行APP检测更新。这里设置延时是为了避免还未开始渲染，更新检测就已经完成(网速超快，页面加载跟不上)。
   // setTimeout(() => {
@@ -484,7 +556,6 @@ ipcMain.on('close-all-window', (event, args) => {
     }
   })
 })
-
 
 /**
  * Auto Updater

@@ -1,7 +1,7 @@
 {
   "name": "enkel",
   "version": "0.0.1",
-  "author": "梁山 <>",
+  "author": "liangshan <loveliangshan@126.com>",
   "description": "An electron-vue project",
   "license": null,
   "main": "./dist/electron/main.js",
