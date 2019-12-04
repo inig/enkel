@@ -20,7 +20,8 @@ function createAboutWindow () {
         plugins: true,
         nodeIntegration: true, // 是否集成 Nodejs
         webSecurity: false
-      }
+      },
+      id: 'about'
     })
   }
   aboutWindow.on('close', (event) => {

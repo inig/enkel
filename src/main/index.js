@@ -8,7 +8,7 @@ import os from 'os'
 
 require('./request')
 require('./npm')
-const { showSettingsWindow } = require('./settings')
+const { showSettingsWindow, createSettingsWindow } = require('./settings')
 const { showAboutWindow } = require('./about')
 // console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
 // if (!fs.existsSync(app.getAppPath() + path.sep + 'db.json')) {
@@ -46,12 +46,32 @@ function initMenu () {
       ]
     }] : []),
     // { role: 'fileMenu' }
-    // {
-    //   label: '文件',
-    //   submenu: [
-    //     isMac ? { role: 'close' } : { role: 'quit' }
-    //   ]
-    // },
+    {
+      label: '编辑',
+      submenu: [
+        {
+          role: 'undo',
+          label: '撤销'
+        },
+        {
+          role: 'redo',
+          label: '重做'
+        },
+        { type: 'separator' },
+        {
+          role: 'cut',
+          label: '剪切'
+        },
+        {
+          role: 'copy',
+          label: '复制'
+        },
+        {
+          role: 'paste',
+          label: '粘贴'
+        }
+      ]
+    },
     {
       label: '帮助',
       role: 'help',
@@ -69,7 +89,7 @@ function initMenu () {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-// initMenu()
+initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -136,7 +156,7 @@ function createNewWindow (arg) {
     useContentSize: true,
     width: 1000,
     titleBarStyle: 'hidden',
-    show: true,
+    show: false,
     webPreferences: {
       javascript: true,
       plugins: true,
@@ -154,6 +174,10 @@ function createNewWindow (arg) {
     // newWindow = null
     newWindow.destroy()
     // app.quit()
+  })
+
+  newWindow.once('ready-to-show', () => {
+    newWindow.show()
   })
 }
 
@@ -176,7 +200,8 @@ function createMenuWindow () {
       nodeIntegration: true, // 是否集成 Nodejs
       webSecurity: false,
       // preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
-    }
+    },
+    id: 'menu'
   })
 
   const menuURL = process.env.NODE_ENV === 'development'
@@ -251,7 +276,8 @@ function createModalLoadingWindow () {
       plugins: true,
       nodeIntegration: true, // 是否集成 Nodejs
       webSecurity: false
-    }
+    },
+    id: 'modal-loading'
   })
   modalLoadingWindow.on('close', (event) => {
     // menuWindow = null
@@ -366,6 +392,8 @@ app.on('ready', async () => {
     // createShotcutsWindow()
     menuWindow.webContents.send('desktop-capturer')
   })
+
+  createSettingsWindow()
 
   // globalShortcut.register('CommandOrControl+,', () => {
   //   showSettingsWindow()
@@ -546,7 +574,19 @@ ipcMain.on('open-save', async (event, args) => {
 })
 
 ipcMain.on('show-all-window', (event, args) => {
-  BrowserWindow.getAllWindows().forEach(item => item.show())
+  BrowserWindow.getAllWindows().forEach(item => {
+    if (['menu', 'modal-loading', 'settings', 'about'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
+      item.show()
+    }
+  })
+})
+
+ipcMain.on('hide-all-window', (event, args) => {
+  BrowserWindow.getAllWindows().forEach(item => {
+    if (['menu', 'modal-loading', 'settings', 'about'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
+      item.hide()
+    }
+  })
 })
 
 ipcMain.on('close-all-window', (event, args) => {

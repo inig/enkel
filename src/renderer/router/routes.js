@@ -57,20 +57,20 @@ export const developRouter = {
       },
       component: require('@/components/tools/developer/Screenshots/index').default
     },
-    {
-      path: '/shell',
-      name: 'shell',
-      meta: {
-        label: 'NPM包安装',
-        title: 'NPM包安装',
-        icon: '#route-shell',
-        name: 'NPM包安装',
-        desc: '可视化NPM包安装',
-        createTime: '545440088000',
-        hot: false
-      },
-      component: require('@/components/tools/developer/Shell/index').default
-    }
+    // {
+    //   path: '/shell',
+    //   name: 'shell',
+    //   meta: {
+    //     label: 'NPM包安装',
+    //     title: 'NPM包安装',
+    //     icon: '#route-shell',
+    //     name: 'NPM包安装',
+    //     desc: '可视化NPM包安装',
+    //     createTime: '545440088000',
+    //     hot: false
+    //   },
+    //   component: require('@/components/tools/developer/Shell/index').default
+    // }
   ]
 }
 
@@ -87,7 +87,8 @@ export const convenienceRouter = {
         name: 'base64编码解码',
         desc: '字符与base64互转，图片与base64互转',
         createTime: '545440088000',
-        hot: false
+        hot: false,
+        closable: false
       },
       component: require('@/components/tools/developer/Base64').default
     },
@@ -101,7 +102,8 @@ export const convenienceRouter = {
         name: 'base64编码解码',
         desc: '字符与base64互转，图片与base64互转',
         createTime: '545440088000',
-        hot: false
+        hot: false,
+        closable: false
       },
       component: require('@/components/tools/developer/Base64').default
     },
@@ -115,7 +117,8 @@ export const convenienceRouter = {
         name: 'JSON格式化',
         desc: '可以对JSON代码进行格式化和美化',
         createTime: '545440088000',
-        hot: false
+        hot: false,
+        closable: false
       },
       component: require('@/components/tools/developer/Base64').default
     },
@@ -129,7 +132,8 @@ export const convenienceRouter = {
         name: '二维码生成',
         desc: '将字符生成二维码，可下载生成的二维码',
         createTime: '545440088000',
-        hot: false
+        hot: false,
+        closable: false
       },
       component: require('@/components/tools/developer/Base64').default
     },
@@ -143,7 +147,8 @@ export const convenienceRouter = {
         name: 'base64编码解码',
         desc: '字符与base64互转，图片与base64互转',
         createTime: '545440088000',
-        hot: false
+        hot: false,
+        closable: false
       },
       component: require('@/components/tools/developer/Base64').default
     },
@@ -157,7 +162,8 @@ export const convenienceRouter = {
         name: 'JSON格式化',
         desc: '可以对JSON代码进行格式化和美化',
         createTime: '545440088000',
-        hot: false
+        hot: false,
+        closable: false
       },
       component: require('@/components/tools/developer/Base64').default
     },
@@ -171,7 +177,8 @@ export const convenienceRouter = {
         name: '二维码生成',
         desc: '将字符生成二维码，可下载生成的二维码',
         createTime: '545440088000',
-        hot: false
+        hot: false,
+        closable: false
       },
       component: require('@/components/tools/developer/Base64').default
     },
