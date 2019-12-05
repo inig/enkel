@@ -89,7 +89,7 @@ function initMenu () {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-initMenu()
+// initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -216,7 +216,7 @@ function createMenuWindow () {
       menuWindow.destroy()
       app.quit()
     }
-    event.preventDefault()
+    // event.preventDefault()
   })
   menuWindow.once('ready-to-show', () => {
     menuWindow.show()

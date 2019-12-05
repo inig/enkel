@@ -17,7 +17,7 @@
     },
     created () {
       if (location.href.indexOf('page=') > -1) {
-        let pathName = location.href.replace(/^([^?]*\?[^?]*page=)([^&]*)(.*)$/, '$2')
+        let pathName = location.href.replace(/^([^?]*\?[^?]*page=)([^&#/]*)(.*)$/, '$2')
         this.$router.replace({
           name: pathName
         })
@@ -288,5 +288,16 @@
   .emphasize {
     color: #99ff00 !important;
     // color: #ff6600 !important;
+  }
+
+  .requests_footer_btn {
+    &.ivu-btn {
+      span {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+    }
   }
 </style>

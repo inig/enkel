@@ -19,7 +19,7 @@
   },
   "build": {
     "asar": false,
-    "productName": "enkel",
+    "productName": "Enkel",
     "appId": "loveliangshan@126.com",
     "directories": {
       "output": "build"
@@ -60,6 +60,7 @@
   },
   "dependencies": {
     "axios": "^0.19.0",
+    "crypto-js": "^3.1.9-1",
     "electron-updater": "^4.2.0",
     "lowdb": "^1.0.0",
     "puppeteer": "^2.0.0",

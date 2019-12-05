@@ -1,7 +1,11 @@
-import { ipcMain, app, BrowserWindow } from "electron"
+import { ipcMain, app, BrowserWindow, dialog } from "electron"
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 import axios from 'axios'
+const CryptoJS = require('crypto-js')
+const cryptType = 'TripleDES'
+const PRIVATE_KEY = 'ENKEL_LOVES_YOU'
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 if (!fs.existsSync(app.getPath('userData'))) {
@@ -245,4 +249,23 @@ ipcMain.on('request', async (event, args) => {
         headers: {}
       })
   })
+})
+
+ipcMain.on('export-requests', async (event) => {
+  let response = await dialog.showSaveDialogSync({
+    defaultPath: path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + 'requests.inig'),
+    buttonLabel: '导出'
+  })
+  if (response) {
+    let requests = getRequests()
+    let cryptoText = CryptoJS[cryptType].encrypt(JSON.stringify(requests), PRIVATE_KEY).toString()
+    fs.writeFileSync(response, cryptoText)
+    event.returnValue = true
+  } else {
+    event.returnValue = false
+  }
+})
+
+ipcMain.on('import-requests', (event) => {
+  event.returnValue = true
 })
