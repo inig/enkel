@@ -58,6 +58,11 @@ function getRequests () {
   return db.get('requests').value()
 }
 
+function setRequests (event, requests) {
+  db.set('requests', requests).write()
+  requestsUpdated(event, requests)
+}
+
 function setRequest (event, args) {
   let requests = getRequests()
   if (args.parent) {
@@ -266,6 +271,105 @@ ipcMain.on('export-requests', async (event) => {
   }
 })
 
-ipcMain.on('import-requests', (event) => {
-  event.returnValue = true
+function getRequestFromImport (path) {
+  let txt = fs.readFileSync(path, 'utf8')
+  let decodeInfo = CryptoJS[cryptType].decrypt(txt, PRIVATE_KEY).toString(CryptoJS.enc.Utf8)
+  let newRequests = {}
+  try {
+    newRequests = JSON.parse(decodeInfo)
+  } catch (err) {
+    newRequests = {}
+    dialog.showMessageBox({
+      type: 'warning',
+      message: '导入失败，请稍后再试'
+    })
+  }
+  return newRequests
+}
+
+function findIndexById (id, list) {
+  let outIndex = -1
+
+  for (let i = 0; i < list.length; i++) {
+    if (list[i].id === id) {
+      outIndex = i
+      i = list.length
+    }
+  }
+
+  return outIndex
+}
+
+function mergeRequests (requests, newRequests) {
+  let list = requests
+
+  newRequests.forEach(item => {
+    let l = findIndexById(item.id, list)
+    if (!item.children) {
+      if (l === -1) {
+        list.push(item)
+      } else {
+        list.splice(l, 1, item)
+      }
+    } else {
+      if (l === -1) {
+        list.push(item)
+      } else {
+        list.children = mergeRequests(list[l].children, item.children)
+      }
+    }
+  })
+
+  return list
+}
+
+ipcMain.on('import-requests', async (event) => {
+  let response = await dialog.showOpenDialogSync({
+    defaultPath: path.resolve(os.homedir(), '.' + path.sep + 'Downloads'),
+    filters: [
+      {
+        name: 'inig',
+        extensions: ['inig']
+      }
+    ],
+    buttonLabel: '导入',
+    message: '选择请求列表，*.inig'
+  })
+  let requests = getRequests()
+  if (response && response.length > 0 && response[0].match(/\.inig$/)) {
+    let outRequests = requests
+    if (requests && requests.length > 0) {
+      let res = await dialog.showMessageBox({
+        title: '列表已经存在',
+        message: '列表已经存在',
+        defaultId: 1,
+        cancelId: 0,
+        buttons: ['替换', '合并', '取消']
+      })
+      let newRequests
+      if (res.response == 1) {
+        // 合并
+        newRequests = getRequestFromImport(response[0])
+        outRequests = mergeRequests(requests, newRequests)
+        // setRequests(event, outRequests)
+        event.reply('import-requests-success')
+      } else if (res.response == 0) {
+        // 替换
+        newRequests = getRequestFromImport(response[0])
+        outRequests = newRequests
+        // setRequests(event, newRequests)
+        event.reply('import-requests-success')
+      } else if (res.response == 2) {
+        // 取消
+        outRequests = requests
+      }
+    } else {
+      outRequests = getRequestFromImport(response[0])
+      event.reply('import-requests-success')
+    }
+    setRequests(event, outRequests)
+    event.returnValue = outRequests
+  } else {
+    event.returnValue = requests
+  }
 })
