@@ -840,6 +840,8 @@
           &.active {
             background-color: rgba(54, 55, 53, 1);
             border-left: 5px solid #5ea021;
+            border-top-left-radius: 3px;
+            border-bottom-left-radius: 3px;
             .requests_item_content {
               color: rgb(234, 234, 234);
             }
