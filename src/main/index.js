@@ -211,11 +211,14 @@ function createMenuWindow () {
   menuWindow.loadURL(menuURL)
 
   menuWindow.on('close', (event) => {
-    // menuWindow = null
-    if (menuWindow) {
-      menuWindow.destroy()
-      app.quit()
-    }
+    menuWindow = null
+    // if (process.platform !== 'darwin') {
+    app.exit(0)
+    // }
+    // if (menuWindow) {
+    //   menuWindow.destroy()
+    //   app.quit()
+    // }
     // event.preventDefault()
   })
   menuWindow.once('ready-to-show', () => {
@@ -409,9 +412,9 @@ app.on('will-quit', () => {
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  // if (process.platform !== 'darwin') {
+  app.quit()
+  // }
 })
 
 app.on('activate', () => {
