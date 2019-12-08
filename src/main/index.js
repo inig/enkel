@@ -10,6 +10,8 @@ require('./request')
 require('./npm')
 const { showSettingsWindow, createSettingsWindow } = require('./settings')
 const { showAboutWindow } = require('./about')
+
+const { checkUpdate } = require('./autoUpdate')
 // console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
 // if (!fs.existsSync(app.getAppPath() + path.sep + 'db.json')) {
 //   fs.writeFileSync(app.getAppPath() + path.sep + 'db.json', '')
@@ -599,6 +601,8 @@ ipcMain.on('close-all-window', (event, args) => {
     }
   })
 })
+
+checkUpdate()
 
 /**
  * Auto Updater

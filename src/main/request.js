@@ -14,36 +14,12 @@ if (!fs.existsSync(app.getPath('userData'))) {
 } else if (!fs.existsSync(app.getPath('userData') + path.sep + 'enkel_app.json')) {
   fs.writeFileSync(app.getPath('userData') + path.sep + 'enkel_app.json', '{}')
 }
+// console.log('===', app.getPath('userData') + path.sep + 'enkel_app.json')
 const adapter = new FileSync(app.getPath('userData') + path.sep + 'enkel_app.json')
 const db = low(adapter)
 axios.defaults.timeout = 5000
 db.defaults({
   requests: [
-    {
-      id: '9e24bad1c663',
-      url: 'http://gank.io/api/xiandu/data/id/appinn/count/10/page/1',
-      method: 'GET',
-      label: '获取闲读数据',
-      type: 'request',
-      cookie: {},
-      header: {}
-    },
-    {
-      label: '笑话目录',
-      id: '0d29ed42e3ec',
-      type: 'folder',
-      children: [
-        {
-          id: '78f275a046d1',
-          url: 'http://gank.io/api/today',
-          method: 'GET',
-          label: '最新干货',
-          type: 'request',
-          cookie: {},
-          header: {}
-        }
-      ]
-    }
   ]
 }).write()
 

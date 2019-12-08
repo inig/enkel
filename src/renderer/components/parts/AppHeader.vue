@@ -58,7 +58,7 @@
       </svg>
     </div> -->
     <slot>
-      {{$route.meta ? ($route.meta.title || 'Enkel') : 'Enkel'}}
+      <span v-html="renderTitle"></span>
     </slot>
   </div>
 </template>
@@ -74,7 +74,13 @@ export default {
   },
   data () {
     return {
-      menuFolded: false
+      menuFolded: false,
+      title: ''
+    }
+  },
+  computed: {
+    renderTitle () {
+      return this.title ? this.title : (this.$route.meta ? (this.$route.meta.title || 'Enkel') : 'Enkel')
     }
   },
   mounted () {
@@ -82,8 +88,12 @@ export default {
       this.menuFolded = true
     })
     ipcRenderer.on('menu-unfolded', () => { this.menuFolded = false })
+    global.eventHub.$on('set-title', this.setTitle)
   },
   methods: {
+    setTitle (title) {
+      this.title = `<span>【${title.label}】</span><span style="color: #888;">${title.url}</span>`
+    },
     menuFold () {
       ipcRenderer.send(!this.menuFolded ? 'menu-fold' : 'menu-unfold')
     },
@@ -103,6 +113,14 @@ export default {
     },
     closeSettings () {
       ipcRenderer.send('hide-settings')
+    }
+  },
+  watch: {
+    '$route': {
+      immediate: true,
+      handler (val) {
+        this.title = ''
+      }
     }
   }
 }

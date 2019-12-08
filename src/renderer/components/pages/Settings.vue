@@ -1,7 +1,18 @@
 <template>
   <div class="settings_container">
     <div class="settings_items">
-      暂无设置
+      <div class="settings_item_content">
+        <Form :label-width="80">
+          <FormItem label="当前版本">
+            <span class="current_version">{{pkg.version}}</span>
+          </FormItem>
+          <FormItem label="版本更新">
+            <Progress :percent="downloadProgress"
+                      :stroke-color="progressColor"
+                      status="active"></Progress>
+          </FormItem>
+        </Form>
+      </div>
       <!-- <div class="settings_item_title">
         快捷键设置
       </div>
@@ -19,16 +30,24 @@
 </template>
 
 <script>
-import { Form, FormItem, Input } from 'view-design'
+import { Form, FormItem, Input, Progress } from 'view-design'
+import { ipcRenderer } from 'electron'
+const pkg = require('../../../../package.json')
 export default {
   name: 'Settings',
   components: {
-    Form, FormItem, Input
+    Form, FormItem, Input, Progress
   },
   data () {
     return {
-      qrcodeShortcut: ''
+      qrcodeShortcut: '',
+      downloadProgress: 0,
+      progressColor: ['#50D5B7', '#067D68'],
+      pkg: pkg
     }
+  },
+  mounted () {
+    ipcRenderer.on('update-download-progress', this.updateDownloadProgress)
   },
   methods: {
     changeShortcutKey (e) {
@@ -38,6 +57,9 @@ export default {
       } else {
         this.qrcodeShortcut = (!this.qrcodeShortcut ? '' : ' + ') + this.qrcodeShortcut
       }
+    },
+    updateDownloadProgress (event, data) {
+      this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
     }
   }
 }
@@ -47,6 +69,8 @@ export default {
 .settings_container {
   overflow-x: hidden;
   overflow-y: auto;
+  padding-top: 15px;
+  box-sizing: border-box;
   .settings_item_title {
     position: sticky;
     width: 100%;
@@ -77,5 +101,11 @@ export default {
       align-items: center;
     }
   }
+}
+.current_version {
+  height: 34px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 </style>
