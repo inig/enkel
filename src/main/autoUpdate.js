@@ -100,7 +100,7 @@ function getRemoteVersion () {
   })
 }
 
-const adm_zip = require('adm_zip')
+const adm_zip = require('adm-zip')
 async function boardcastUpdateInfo (data) {
   if (data.type === 'update-download-success') {
     // 提示用户安装更新
@@ -121,7 +121,9 @@ async function boardcastUpdateInfo (data) {
       let unzip = new adm_zip(`/Users/liangshan/Downloads/pic/Enkel-${data.message.version}-mac.zip`)
       unzip.extractAllTo(`/Users/liangshan/Downloads/pic/`, true)
 
-      app.exit(0)
+      setTimeout(() => {
+        app.exit(0)
+      }, 500)
       // compressing.zip.uncompress(`/Users/liangshan/Downloads/pic/Enkel-0.0.2-mac.zip`, `/Applications`).then(() => {
       //   console.log('解压成功')
       // }).catch(err => {
