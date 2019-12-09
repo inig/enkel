@@ -13,7 +13,7 @@ if (!fs.existsSync(app.getPath('userData'))) {
 } else if (!fs.existsSync(app.getPath('userData') + path.sep + 'enkel_auto_update.json')) {
   fs.writeFileSync(app.getPath('userData') + path.sep + 'enkel_auto_update.json', '{}')
 }
-// console.log('===', app.getPath('userData') + path.sep + 'enkel_auto_update.json')
+console.log('===', app.getPath('userData') + path.sep + 'enkel_auto_update.json')
 // console.log('==2=', app.getAppPath())
 const adapter = new FileSync(app.getPath('userData') + path.sep + 'enkel_auto_update.json')
 const db = low(adapter)
@@ -34,8 +34,8 @@ let checkUpdateTs = 10 * 1000
 
 function removeCheckUpdateInterval () {
   if (checkUpdateInterval) {
-    checkUpdateInterval = null
     clearInterval(checkUpdateInterval)
+    checkUpdateInterval = null
   }
 }
 
@@ -81,7 +81,7 @@ function getRemoteVersion () {
   return new Promise((resolve) => {
     request({
       method: 'GET',
-      uri: `http://127.0.0.1/version.json`
+      uri: `http://static.dei2.com/enkel/version.json`
       // uri: `http://static.dei2.com/enkel/version.json`
     }, function (err, response, body) {
       // 下载完成
@@ -113,17 +113,17 @@ async function boardcastUpdateInfo (data) {
     })
     if (res.response == 1) {
 
-      console.log('@@@@@@@@', `/Users/liangshan/Downloads/pic/Enkel-${data.message.version}-mac.zip`)
+      // console.log('@@@@@@@@', `/Users/liangshan/Downloads/pic/Enkel-${data.message.version}-mac.zip`)
       // fs.createReadStream(`/Users/liangshan/Downloads/pic/Enkel-${data.message.version}-mac.zip`)
       //   .pipe(zlib.createGunzip())
       //   .pipe(fs.createWriteStream('/Users/liangshan/Downloads/pic/Enkel.app'))
+      console.log(app.getPath('temp'))
+      let unzip = new adm_zip(`${app.getPath('temp')}/Enkel-${data.message.version}-mac.zip`)
+      unzip.extractAllTo(`/Applications`, true)
 
-      let unzip = new adm_zip(`/Users/liangshan/Downloads/pic/Enkel-${data.message.version}-mac.zip`)
-      unzip.extractAllTo(`/Users/liangshan/Downloads/pic/`, true)
-
-      setTimeout(() => {
-        app.exit(0)
-      }, 500)
+      // setTimeout(() => {
+      //   app.exit(0)
+      // }, 500)
       // compressing.zip.uncompress(`/Users/liangshan/Downloads/pic/Enkel-0.0.2-mac.zip`, `/Applications`).then(() => {
       //   console.log('解压成功')
       // }).catch(err => {
@@ -158,7 +158,7 @@ export async function downloadPackage (version) {
   let req = request({
     method: 'GET',
     // uri: `http://static.dei2.com/enkel/versions/Enkel-${downloadVersion}-mac.zip`,
-    uri: `http://127.0.0.1/Enkel-${downloadVersion}-mac.zip`,
+    uri: `http://static.dei2.com/enkel/versions/Enkel-${downloadVersion}-mac.zip`,
     headers: {
       'Range': `bytes=${receivedBytes}-`
     }
@@ -201,7 +201,7 @@ export async function downloadPackage (version) {
       })
     })
   })
-  let stream = fs.createWriteStream(`/Users/liangshan/Downloads/pic/Enkel-${downloadVersion}-mac.zip`, {
+  let stream = fs.createWriteStream(`${app.getPath('temp')}/Enkel-${downloadVersion}-mac.zip`, {
     start: receivedBytes,
     flags: receivedBytes > 0 ? 'a+' : 'w'
   })
@@ -239,7 +239,6 @@ async function _checkUpdate () {
       }
     }
   } else {
-    console.log('1111')
     boardcastUpdateInfo({
       type: 'update-download-success',
       message: {
