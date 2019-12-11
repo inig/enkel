@@ -602,7 +602,7 @@ ipcMain.on('close-all-window', (event, args) => {
   })
 })
 
-checkUpdate()
+// checkUpdate()
 
 /**
  * Auto Updater

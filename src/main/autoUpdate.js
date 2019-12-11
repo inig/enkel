@@ -14,6 +14,7 @@ if (!fs.existsSync(app.getPath('userData'))) {
   fs.writeFileSync(app.getPath('userData') + path.sep + 'enkel_auto_update.json', '{}')
 }
 console.log('===', app.getPath('userData') + path.sep + 'enkel_auto_update.json')
+console.log('===', app.getPath('temp'))
 // console.log('==2=', app.getAppPath())
 const adapter = new FileSync(app.getPath('userData') + path.sep + 'enkel_auto_update.json')
 const db = low(adapter)
@@ -21,8 +22,8 @@ const db = low(adapter)
 db.defaults({
   receivedBytes: 0,
   totalBytes: 0,
-  version: '0.0.1',
-  downloaded: false
+  version: '', // 本地已下载包的版本
+  downloaded: false // 本地是否有下载但未安装的包
 }).write()
 
 let isDownloading = false
@@ -77,11 +78,27 @@ function setDownloadingVersion (version) {
   })
 }
 
+ipcMain.on('get-upgrade-status', (event) => {
+  let downloadedStatus = getDownloadedStatus()
+  if (downloadedStatus) {
+    boardcastUpdateInfo({
+      type: 'upgrade-response',
+      data: {
+        status: 'downloaded',
+        version: getDownloadingVersion(),
+        receivedBytes: Number(getReceivedBytes()),
+        totalBytes: Number(getTotalBytes())
+      }
+    })
+  }
+})
+
 function getRemoteVersion () {
   return new Promise((resolve) => {
     request({
       method: 'GET',
-      uri: `http://static.dei2.com/enkel/version.json`
+      uri: `http://127.0.0.1/version.json`
+      // uri: `http://static.dei2.com/enkel/version.json`
       // uri: `http://static.dei2.com/enkel/version.json`
     }, function (err, response, body) {
       // 下载完成
@@ -145,15 +162,85 @@ async function boardcastUpdateInfo (data) {
   }
   BrowserWindow.getAllWindows().forEach(item => {
     if (['settings'].indexOf(item.webContents.browserWindowOptions.id) > -1) {
-      item.webContents.send(data.type, data.message || {})
+      item.webContents.send(data.type, data.data || {})
     }
   })
 }
 
+export async function download (version) {
+  let receivedBytes = getReceivedBytes()
+  let req = request({
+    method: 'GET',
+    // uri: `http://static.dei2.com/enkel/versions/Enkel-${downloadVersion}-mac.zip`,
+    // uri: `http://static.dei2.com/enkel/versions/Enkel-${version}-mac.zip`,
+    uri: `http://127.0.0.1/Enkel-${version}-mac.zip`,
+    headers: {
+      'Range': `bytes=${receivedBytes}-`
+    }
+  }, function (err, response, body) {
+    if (err) {
+      console.log('error: ', err)
+      return
+    }
+    setDownloadedStatus(true)
+    // setReceivedBytes(0)
+    // setTotalBytes(0)
+    setDownloadingVersion(version)
+
+    boardcastUpdateInfo({
+      type: 'upgrade-response',
+      data: {
+        status: 'downloaded',
+        version: version,
+        receivedBytes: Number(getReceivedBytes()),
+        totalBytes: Number(getTotalBytes())
+      }
+    })
+
+    // setTimeout(checkUpdate, checkUpdateTs)
+
+    // 下载完成
+  }).on('response', (response) => {
+    response.on('data', function (data) {
+      // compressed data as it is received
+      receivedBytes += data.length
+      setReceivedBytes(receivedBytes)
+      let ranges = (response.caseless.get('content-ranges') || response.caseless.get('content-range'))
+      setTotalBytes(ranges.match(/\/(\d*)/)[1])
+
+      boardcastUpdateInfo({
+        type: 'upgrade-response',
+        data: {
+          status: 'downloading',
+          version: version,
+          receivedBytes: Number(receivedBytes),
+          totalBytes: Number(ranges.match(/\/(\d*)/)[1])
+        }
+      })
+    })
+  })
+  let stream = fs.createWriteStream(`${app.getPath('temp')}/Enkel-${version}-mac.zip`, {
+    start: receivedBytes,
+    flags: receivedBytes > 0 ? 'a+' : 'w'
+  })
+  req.pipe(stream)
+}
+
 export async function downloadPackage (version) {
+  let downloadingVersion = getDownloadingVersion()
+  if (version) {
+    download(version)
+  } else if (downloadingVersion) {
+    download(downloadingVersion)
+  } else {
+    let remoteVersion = await getRemoteVersion()
+    download(remoteVersion)
+  }
+
+  return
   let receivedBytes = getReceivedBytes()
   isDownloading = true
-  removeCheckUpdateInterval()
+  // removeCheckUpdateInterval()
   let downloadVersion = version || getDownloadingVersion()
   let req = request({
     method: 'GET',
@@ -176,7 +263,7 @@ export async function downloadPackage (version) {
 
     boardcastUpdateInfo({
       type: 'update-download-success',
-      message: {
+      data: {
         version: downloadVersion
       }
     })
@@ -194,7 +281,7 @@ export async function downloadPackage (version) {
       setTotalBytes(ranges.match(/\/(\d*)/)[1])
       boardcastUpdateInfo({
         type: 'update-download-progress',
-        message: {
+        data: {
           receivedBytes: Number(receivedBytes),
           totalBytes: Number(ranges.match(/\/(\d*)/)[1])
         }
@@ -241,7 +328,7 @@ async function _checkUpdate () {
   } else {
     boardcastUpdateInfo({
       type: 'update-download-success',
-      message: {
+      data: {
         version: getDownloadingVersion()
       }
     })
@@ -258,3 +345,76 @@ export async function checkUpdate () {
     }
   }
 }
+
+ipcMain.on('get-latest-version', async (event, arg) => {
+  event.returnValue = await getRemoteVersion()
+})
+
+ipcMain.on('upgrade', async (event) => {
+  if (getDownloadedStatus()) {
+    let downloadedVersion = getDownloadingVersion()
+    if (isNewVersion(pkg.version, downloadedVersion)) {
+      // 本地已下载好新版本
+      boardcastUpdateInfo({
+        type: 'upgrade-response',
+        data: {
+          status: 'installing',
+          version: downloadedVersion
+        }
+      })
+    }
+  } else {
+    let remoteVersion = await getRemoteVersion()
+    // 开始下载
+    downloadPackage(remoteVersion)
+  }
+})
+
+ipcMain.on('install', async (event) => {
+  // 开始安装
+  boardcastUpdateInfo({
+    type: 'upgrade-response',
+    data: {
+      status: 'installing',
+      version: getDownloadingVersion()
+    }
+  })
+  let res = await dialog.showMessageBox({
+    type: 'info',
+    message: `已下载新版本，是否安装`,
+    defaultId: 1,
+    cancelId: 0,
+    buttons: ['稍后再说', '安装']
+  })
+  if (res.response == 1) {
+
+    // console.log('@@@@@@@@', `/Users/liangshan/Downloads/pic/Enkel-${data.message.version}-mac.zip`)
+    // fs.createReadStream(`/Users/liangshan/Downloads/pic/Enkel-${data.message.version}-mac.zip`)
+    //   .pipe(zlib.createGunzip())
+    //   .pipe(fs.createWriteStream('/Users/liangshan/Downloads/pic/Enkel.app'))
+    console.log(app.getPath('temp'))
+    let version = getDownloadingVersion()
+    let unzip = new adm_zip(`${app.getPath('temp')}/Enkel-${version}-mac.zip`)
+    let unzipped = unzip.extractAllTo(`/Applications`, true)
+    if (unzipped) {
+      // 解压完成
+      boardcastUpdateInfo({
+        type: 'upgrade-response',
+        data: {
+          status: 'installed',
+          version: version
+        }
+      })
+    }
+
+    // setTimeout(() => {
+    //   app.exit(0)
+    // }, 500)
+    // compressing.zip.uncompress(`/Users/liangshan/Downloads/pic/Enkel-0.0.2-mac.zip`, `/Applications`).then(() => {
+    //   console.log('解压成功')
+    // }).catch(err => {
+    //   console.log('解压失败: ', err)
+    // })
+  } else {
+  }
+})

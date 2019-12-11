@@ -2,9 +2,33 @@
   <div class="settings_container">
     <div class="settings_items">
       <div class="settings_item_content">
-        <Form :label-width="80">
+        <Form :label-width="80"
+              style="padding-bottom: 1px;">
           <FormItem label="当前版本">
-            <span class="current_version">{{pkg.version}}</span>
+            <div class="version_container">
+              <span class="current_version">v{{pkg.version}}</span>
+              <div class="new_version"
+                   key="latestVersion1"
+                   v-if="hasNewVersion">
+                可更新至: <span style="margin-left: 4px; color: green;">v{{latestVersion}}</span>
+                <Button type="success"
+                        size="small"
+                        ghost
+                        :loading="upgradeStatus === 'DOWNLOADING' || upgradeStatus === 'INSTALLING'"
+                        @click="upgrade">
+                  <span v-if="upgradeStatus === 'NORMAL'">立即升级</span>
+                  <span v-else-if="upgradeStatus === 'DOWNLOADING'">下载中...</span>
+                  <span v-else-if="upgradeStatus === 'DOWNLOADED'">下载完成,点击安装</span>
+                  <span v-else-if="upgradeStatus === 'INSTALLING'">安装中...</span>
+                  <span v-else-if="upgradeStatus === 'INSTALLED'">安装完成</span>
+                  <span v-else>立即升级</span>
+                </Button>
+              </div>
+              <div class="new_version"
+                   style="color: green;"
+                   key="latestVersion2"
+                   v-if="!hasNewVersion">已经是最新版本</div>
+            </div>
           </FormItem>
           <FormItem label="版本更新">
             <Progress :percent="downloadProgress"
@@ -30,24 +54,37 @@
 </template>
 
 <script>
-import { Form, FormItem, Input, Progress } from 'view-design'
+import { Form, FormItem, Input, Progress, Button } from 'view-design'
 import { ipcRenderer } from 'electron'
 const pkg = require('../../../../package.json')
 export default {
   name: 'Settings',
   components: {
-    Form, FormItem, Input, Progress
+    Form, FormItem, Input, Progress, Button
   },
   data () {
     return {
       qrcodeShortcut: '',
       downloadProgress: 0,
       progressColor: ['#50D5B7', '#067D68'],
-      pkg: pkg
+      pkg: pkg,
+      latestVersion: '0.0.1',
+      upgrading: false, // 正在升级中
+      upgradeStatus: 'NORMAL' // NORMAL: 正常状态；DOWNLOADING: 下载中； DOWNLOADED: 下载完成；INSTALLING: 安装中；INSTALLED: 安装完成
+    }
+  },
+  computed: {
+    hasNewVersion () {
+      let v1 = Number(this.pkg.version.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
+      let v2 = Number(this.latestVersion.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
+      return v1 < v2
     }
   },
   mounted () {
-    ipcRenderer.on('update-download-progress', this.updateDownloadProgress)
+    // ipcRenderer.on('update-download-progress', this.updateDownloadProgress)
+    this.initVersion()
+    ipcRenderer.on('upgrade-response', this.upgradeHandler)
+    ipcRenderer.send('get-upgrade-status')
   },
   methods: {
     changeShortcutKey (e) {
@@ -60,6 +97,28 @@ export default {
     },
     updateDownloadProgress (event, data) {
       this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
+    },
+    initVersion () {
+      this.latestVersion = ipcRenderer.sendSync('get-latest-version')
+    },
+    upgrade () {
+      if (this.upgradeStatus === 'NORMAL') {
+        // this.upgrading = true
+        ipcRenderer.send('upgrade')
+      } else if (this.upgradeStatus === 'DOWNLOADED') {
+        ipcRenderer.send('install')
+      }
+    },
+    upgradeHandler (event, data) {
+      this.upgradeStatus = data.status.toUpperCase()
+      if (data.status === 'downloading') {
+        // 正在下载中
+        this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
+      } else if (data.status === 'downloaded') {
+        // 下载完成
+        // 去安装
+        this.downloadProgress = 100
+      }
     }
   }
 }
@@ -93,6 +152,10 @@ export default {
     padding: 0 15px;
     box-sizing: border-box;
     background-color: #f8f8f8;
+    .ivu-form-item {
+      margin-bottom: 5px;
+      margin-top: 5px;
+    }
     .settings_item {
       width: 100%;
       height: 32px;
@@ -102,10 +165,25 @@ export default {
     }
   }
 }
-.current_version {
+.version_container {
   height: 34px;
+  font-size: 12px;
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: space-between;
+  .new_version {
+    margin-left: 8px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    button {
+      margin-left: 20px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      flex-direction: row;
+    }
+  }
 }
 </style>
