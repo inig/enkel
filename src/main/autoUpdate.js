@@ -117,7 +117,6 @@ function getRemoteVersion () {
   })
 }
 
-const adm_zip = require('adm-zip')
 async function boardcastUpdateInfo (data) {
   if (data.type === 'update-download-success') {
     // 提示用户安装更新
@@ -220,6 +219,7 @@ export async function download (version) {
     })
   })
   let stream = fs.createWriteStream(`${app.getPath('temp')}/Enkel-${version}-mac.zip`, {
+    // let stream = fs.createWriteStream(`${app.getPath('temp')}/Enkel-${version}-mac.zip`, {
     start: receivedBytes,
     flags: receivedBytes > 0 ? 'a+' : 'w'
   })
@@ -394,18 +394,60 @@ ipcMain.on('install', async (event) => {
     //   .pipe(fs.createWriteStream('/Users/liangshan/Downloads/pic/Enkel.app'))
     console.log(app.getPath('temp'))
     let version = getDownloadingVersion()
-    let unzip = new adm_zip(`${app.getPath('temp')}/Enkel-${version}-mac.zip`)
-    let unzipped = unzip.extractAllTo(`/Applications`, true)
-    if (unzipped) {
-      // 解压完成
-      boardcastUpdateInfo({
-        type: 'upgrade-response',
-        data: {
-          status: 'installed',
-          version: version
-        }
-      })
-    }
+    // const { exec } = require('child_process')
+    // exec(`tar -xvzf ${app.getPath('temp')}/Enkel-${version}-mac.zip`, (error, stdout, stderr) => {
+    //   if (error) {
+    //     console.error(`执行的错误: ${error}`);
+    //     return;
+    //   }
+    //   console.log(`stdout: ${stdout}`);
+    //   // console.error(`stderr: ${stderr}`);
+    // })
+    const exec = require('child_process').exec
+    let workerProcess = exec(`tar -xvzf ${app.getPath('temp')}Enkel-${version}-mac.zip`, {})
+    // 打印正常的后台可执行程序输出
+    workerProcess.stdout.on('data', function (data) {
+      console.log('stdout: ' + data);
+    });
+
+    // 打印错误的后台可执行程序输出
+    workerProcess.stderr.on('data', function (data) {
+      console.log('stderr: ' + data);
+    });
+
+    // 退出之后的输出
+    workerProcess.on('close', function (code) {
+      console.log('out code：' + code);
+    })
+
+    // const extract = require('extract-zip')
+    // extract(`${app.getPath('temp')}/Enkel-${version}-mac.zip`, {
+    //   dir: '/Users/liangshan/Downloads/pic'
+    // }, err => {
+    //   if (err) {
+    //     console.log('解压失败: ', err)
+    //   }
+    //   console.log('解压成功')
+    //   boardcastUpdateInfo({
+    //     type: 'upgrade-response',
+    //     data: {
+    //       status: 'installed',
+    //       version: version
+    //     }
+    //   })
+    // })
+    // let unzip = new adm_zip(`${app.getPath('temp')}/Enkel-${version}-mac.zip`)
+    // let unzipped = unzip.extractAllTo(`/Users/liangshan/Downloads/pic`, true)
+    // if (unzipped) {
+    //   // 解压完成
+    // boardcastUpdateInfo({
+    //   type: 'upgrade-response',
+    //   data: {
+    //     status: 'installed',
+    //     version: version
+    //   }
+    // })
+    // }
 
     // setTimeout(() => {
     //   app.exit(0)
