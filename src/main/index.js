@@ -183,6 +183,8 @@ function createNewWindow (arg) {
   })
 }
 
+const autoUpdater = require('electron-updater')
+
 function createMenuWindow () {
   menuWindow = new BrowserWindow({
     height: 667,
@@ -214,17 +216,28 @@ function createMenuWindow () {
 
   menuWindow.on('close', (event) => {
     menuWindow = null
-    // if (process.platform !== 'darwin') {
     app.exit(0)
-    // }
-    // if (menuWindow) {
-    //   menuWindow.destroy()
-    //   app.quit()
-    // }
-    // event.preventDefault()
   })
   menuWindow.once('ready-to-show', () => {
     menuWindow.show()
+
+    // https://www.cnblogs.com/qirui/p/8328069.html
+    // https://segmentfault.com/a/1190000007616641
+    autoUpdater.setFeedURL('http://127.0.0.1')
+    autoUpdater.checkForUpdates()
+    autoUpdater.on('update-downloaded', async () => {
+      let res = await dialog.showMessageBox({
+        message: '已经下载成功，是否更新',
+        defaultId: 1,
+        cancelId: 0,
+        buttons: ['稍后', '更新']
+      })
+      if (res.response == 1) {
+        autoUpdater.quitAndInstall()
+      } else {
+
+      }
+    })
   })
 }
 
