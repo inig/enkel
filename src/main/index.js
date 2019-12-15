@@ -91,7 +91,7 @@ function initMenu () {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-// initMenu()
+initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -183,7 +183,7 @@ function createNewWindow (arg) {
   })
 }
 
-const autoUpdater = require('electron-updater')
+const { autoUpdater } = require('electron-updater')
 
 function createMenuWindow () {
   menuWindow = new BrowserWindow({
@@ -223,21 +223,6 @@ function createMenuWindow () {
 
     // https://www.cnblogs.com/qirui/p/8328069.html
     // https://segmentfault.com/a/1190000007616641
-    autoUpdater.setFeedURL('http://127.0.0.1')
-    autoUpdater.checkForUpdates()
-    autoUpdater.on('update-downloaded', async () => {
-      let res = await dialog.showMessageBox({
-        message: '已经下载成功，是否更新',
-        defaultId: 1,
-        cancelId: 0,
-        buttons: ['稍后', '更新']
-      })
-      if (res.response == 1) {
-        autoUpdater.quitAndInstall()
-      } else {
-
-      }
-    })
   })
 }
 
@@ -388,6 +373,62 @@ ipcMain.on('show-modal-loading', () => {
   modalLoadingWindow.show()
 })
 
+let checkForUpdates = () => {
+  // 配置安装包远端服务器
+  autoUpdater.setFeedURL('http://127.0.0.1')
+
+  // 下面是自动更新的整个生命周期所发生的事件
+  autoUpdater.on('error', async function (message) {
+    sendUpdateMessage('error', message);
+    let res = await dialog.showMessageBox({
+      message: '已经下载成功，是否更新',
+      defaultId: 1,
+      cancelId: 0,
+      buttons: ['稍后', '更新']
+    })
+    if (res.response == 1) {
+      autoUpdater.quitAndInstall()
+    } else {
+
+    }
+  });
+  autoUpdater.on('checking-for-update', function (message) {
+    sendUpdateMessage('checking-for-update', message);
+  });
+  autoUpdater.on('update-available', function (message) {
+    sendUpdateMessage('update-available', message);
+  });
+  autoUpdater.on('update-not-available', function (message) {
+    sendUpdateMessage('update-not-available', message);
+  });
+
+  // 更新下载进度事件
+  autoUpdater.on('download-progress', function (progressObj) {
+    sendUpdateMessage('downloadProgress', progressObj);
+  });
+  // 更新下载完成事件
+  autoUpdater.on('update-downloaded', async function (event, releaseNotes, releaseName, releaseDate, updateUrl, quitAndUpdate) {
+    sendUpdateMessage('isUpdateNow');
+    let res = await dialog.showMessageBox({
+      message: '已经下载成功，是否更新',
+      defaultId: 1,
+      cancelId: 0,
+      buttons: ['稍后', '更新']
+    })
+    if (res.response == 1) {
+      autoUpdater.quitAndInstall()
+    } else {
+
+    }
+  })
+
+  //执行自动更新检查
+  autoUpdater.checkForUpdates()
+}
+function sendUpdateMessage (message, data) {
+  console.log({ message, data });
+  menuWindow.webContents.send('update-message', { message, data });
+}
 app.on('ready', async () => {
   // if ((process.env.NODE_ENV == 'development') && !process.env.IS_TEST) {
   // Install Vue Devtools
@@ -412,6 +453,8 @@ app.on('ready', async () => {
   })
 
   createSettingsWindow()
+
+  // checkForUpdates()
 
   // globalShortcut.register('CommandOrControl+,', () => {
   //   showSettingsWindow()

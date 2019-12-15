@@ -16,7 +16,7 @@
                         ghost
                         :loading="upgradeStatus === 'DOWNLOADING' || upgradeStatus === 'INSTALLING'"
                         @click="upgrade">
-                  <span v-if="upgradeStatus === 'NORMAL'">立即升级</span>
+                  <span v-if="upgradeStatus === 'NORMAL'">{{downloadProgress > 0 ? '继续升级' : '立即升级'}}</span>
                   <span v-else-if="upgradeStatus === 'DOWNLOADING'">下载中...</span>
                   <span v-else-if="upgradeStatus === 'DOWNLOADED'">下载完成,点击安装</span>
                   <span v-else-if="upgradeStatus === 'INSTALLING'">安装中...</span>
@@ -33,7 +33,20 @@
           <FormItem label="版本更新">
             <Progress :percent="downloadProgress"
                       :stroke-color="progressColor"
-                      status="active"></Progress>
+                      status="active">
+              <span style="width: 60px; display: flex; flex-direction: row; align-items: center; justify-content: center;">{{receivedBytes | capacityFilter}}</span><span> / </span><span style="width: 60px; display: flex; flex-direction: row; align-items: center; justify-content: center;">{{totalBytes | capacityFilter}}</span>
+            </Progress>
+          </FormItem>
+
+          <FormItem label="暂停下载">
+            <Button type="primary"
+                    :disabled="upgradeStatus !== 'DOWNLOADING'"
+                    @click="cancelDownload">暂停</Button>
+          </FormItem>
+          <FormItem label="清除缓存">
+            <Button type="primary"
+                    :disabled="upgradeStatus === 'DOWNLOADING' || upgradeStatus === 'INSTALLING'"
+                    @click="removeDownloadInfo">清除</Button>
           </FormItem>
         </Form>
       </div>
@@ -69,6 +82,8 @@ export default {
       progressColor: ['#50D5B7', '#067D68'],
       pkg: pkg,
       latestVersion: '0.0.1',
+      receivedBytes: 0,
+      totalBytes: 0,
       upgrading: false, // 正在升级中
       upgradeStatus: 'NORMAL' // NORMAL: 正常状态；DOWNLOADING: 下载中； DOWNLOADED: 下载完成；INSTALLING: 安装中；INSTALLED: 安装完成
     }
@@ -83,8 +98,12 @@ export default {
   mounted () {
     // ipcRenderer.on('update-download-progress', this.updateDownloadProgress)
     this.initVersion()
-    ipcRenderer.on('upgrade-response', this.upgradeHandler)
+    this.initDownloadingProgress()
+
     ipcRenderer.send('get-upgrade-status')
+    this.upgrade()
+
+    ipcRenderer.on('upgrade-response', this.upgradeHandler)
   },
   methods: {
     changeShortcutKey (e) {
@@ -96,21 +115,37 @@ export default {
       }
     },
     updateDownloadProgress (event, data) {
+      this.receivedBytes = data.receivedBytes
+      this.totalBytes = data.totalBytes
       this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
     },
     initVersion () {
       this.latestVersion = ipcRenderer.sendSync('get-latest-version')
+    },
+    initDownloadingProgress (event, data) {
+      let initProgress = ipcRenderer.sendSync('init-downloading-progrress')
+      this.receivedBytes = initProgress.receivedBytes
+      this.totalBytes = initProgress.totalBytes
+      if (initProgress.totalBytes == 0) {
+        this.downloadProgress = 0
+      } else {
+        this.downloadProgress = parseFloat((initProgress.receivedBytes / initProgress.totalBytes * 100).toFixed(2))
+      }
     },
     upgrade () {
       if (this.upgradeStatus === 'NORMAL') {
         // this.upgrading = true
         ipcRenderer.send('upgrade')
       } else if (this.upgradeStatus === 'DOWNLOADED') {
-        ipcRenderer.send('install')
+        ipcRenderer.send('install', {
+          version: this.latestVersion
+        })
       }
     },
     upgradeHandler (event, data) {
       this.upgradeStatus = data.status.toUpperCase()
+      this.receivedBytes = data.receivedBytes
+      this.totalBytes = data.totalBytes
       if (data.status === 'downloading') {
         // 正在下载中
         this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
@@ -119,6 +154,16 @@ export default {
         // 去安装
         this.downloadProgress = 100
       }
+    },
+    removeDownloadInfo () {
+      ipcRenderer.send('remove-download-info')
+      this.downloadProgress = 0
+      this.receivedBytes = 0
+      this.totalBytes = 0
+    },
+    cancelDownload () {
+      ipcRenderer.send('cancel-download')
+      this.upgradeStatus = 'NORMAL'
     }
   }
 }
@@ -151,7 +196,8 @@ export default {
     width: 100%;
     padding: 0 15px;
     box-sizing: border-box;
-    background-color: #f8f8f8;
+    background-color: #fafafa;
+
     .ivu-form-item {
       margin-bottom: 5px;
       margin-top: 5px;
