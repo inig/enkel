@@ -43,63 +43,63 @@
 </template>
 
 <script>
-import { Button } from 'view-design'
-import { ipcRenderer, desktopCapturer, remote, shell } from 'electron'
-import { routes } from '../../router/routes'
-const { screen } = remote
-const fs = require('fs')
-const path = require('path')
-const os = require('os')
-const qrcodeParser = require('qrcode-parser')
+  import { Button } from 'view-design'
+  import { ipcRenderer, desktopCapturer, remote, shell } from 'electron'
+  import { routes } from '../../router/routes'
+  const { screen } = remote
+  const fs = require('fs')
+  const path = require('path')
+  const os = require('os')
+  const qrcodeParser = require('qrcode-parser')
 
-export default {
-  name: 'PageMenu',
-  components: {
-    Button,
-    AppHeader: () => import('../parts/AppHeader')
-  },
-  data () {
-    return {
-      routes: []
-    }
-  },
-  mounted () {
-    this.routes = routes
-    ipcRenderer.on('desktop-capturer', this.desktopCapturerHandler)
-    ipcRenderer.on('update-message', this.updateMessage)
-  },
-  methods: {
-    closeMenu () {
-      ipcRenderer.send('close-menu')
+  export default {
+    name: 'PageMenu',
+    components: {
+      Button,
+      AppHeader: () => import('../parts/AppHeader')
     },
-    setBounds () {
-      // ipcRenderer.send('close-menu')
-      ipcRenderer.send('set-bounds', { width: 300, x: 400 })
-    },
-    goto (name) {
-      this.$goto(name)
-    },
-    determineScreenShotSize () {
-      const screenSize = screen.getPrimaryDisplay().workAreaSize
-      const maxDimension = Math.max(screenSize.width, screenSize.height)
+    data () {
       return {
-        width: maxDimension * devicePixelRatio,
-        height: maxDimension * devicePixelRatio
+        routes: []
       }
     },
-    desktopCapturerHandler () {
-      const thumbSize = this.determineScreenShotSize()
-
-      let options = {
-        types: ['screen'],
-        thumbnailSize: thumbSize
-      }
-      desktopCapturer.getSources(options, (error, sources) => {
-        if (error) {
-          return console.log(error)
+    mounted () {
+      this.routes = routes
+      ipcRenderer.on('desktop-capturer', this.desktopCapturerHandler)
+      ipcRenderer.on('update-message', this.updateMessage)
+    },
+    methods: {
+      closeMenu () {
+        ipcRenderer.send('close-menu')
+      },
+      setBounds () {
+        // ipcRenderer.send('close-menu')
+        ipcRenderer.send('set-bounds', { width: 300, x: 400 })
+      },
+      goto (name) {
+        this.$goto(name)
+      },
+      determineScreenShotSize () {
+        const screenSize = screen.getPrimaryDisplay().workAreaSize
+        const maxDimension = Math.max(screenSize.width, screenSize.height)
+        return {
+          width: maxDimension * devicePixelRatio,
+          height: maxDimension * devicePixelRatio
         }
-        sources.forEach(source => {
-          if (source.name === 'Enntire screen' || source.name === 'Screen 1') {
+      },
+      desktopCapturerHandler () {
+        const thumbSize = this.determineScreenShotSize()
+
+        let options = {
+          types: ['screen'],
+          thumbnailSize: thumbSize
+        }
+        desktopCapturer.getSources(options, (error, sources) => {
+          if (error) {
+            return console.log(error)
+          }
+          sources.forEach(source => {
+            // if (source.name === 'Enntire screen' || source.name === 'Screen 1') {
             const screenshotPath = path.join(os.tmpdir(), 'screenshot.png')
             ipcRenderer.send('show-modal-loading')
             fs.writeFile(screenshotPath, source.thumbnail.toPNG(), (err) => {
@@ -122,128 +122,128 @@ export default {
               }, 50)
 
             })
-          }
+            // }
+          })
         })
-      })
-    },
-    updateMessage (event, data) {
-      console.log('update-message', JSON.stringify(data, null, 2))
+      },
+      updateMessage (event, data) {
+        console.log('update-message', JSON.stringify(data, null, 2))
+      }
     }
   }
-}
 </script>
 
 <style lang="less" scoped>
-.page_menu {
-  width: 100%;
-  height: 100%;
-  background-color: #ffffff;
-  .page_menu_content {
+  .page_menu {
     width: 100%;
-    height: calc(~"100% - 48px");
-    overflow-x: hidden;
-    overflow-y: auto;
-    .menu_item {
-      cursor: pointer;
+    height: 100%;
+    background-color: #ffffff;
+    .page_menu_content {
       width: 100%;
-      .menu_item_title {
-        position: sticky;
+      height: calc(~"100% - 48px");
+      overflow-x: hidden;
+      overflow-y: auto;
+      .menu_item {
+        cursor: pointer;
         width: 100%;
-        height: 32px;
-        left: 0;
-        top: 0;
-        border-bottom: 1px solid #f8f8f8;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 0 10px;
-        box-sizing: border-box;
-        background-color: #ffffff;
-        color: #333;
-      }
-      .menu_item_content {
-        width: 100%;
-        background-color: #fafafa;
-        padding: 15px;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        .menu_card_item {
-          width: 165px;
-          height: 64px;
-          border: 1px solid #eeeeee;
-          border-radius: 4px;
+        .menu_item_title {
+          position: sticky;
+          width: 100%;
+          height: 32px;
+          left: 0;
+          top: 0;
+          border-bottom: 1px solid #f8f8f8;
           box-sizing: border-box;
           display: flex;
           flex-direction: row;
           align-items: center;
-          justify-content: space-between;
-          &:hover {
-            background-color: #eeeeee;
-          }
-          &:nth-child(even) {
-            margin-left: 15px;
-          }
-          &:nth-child(n + 3) {
-            margin-top: 15px;
-          }
-          .menu_card_item_left {
-            width: 48px;
+          justify-content: flex-start;
+          padding: 0 10px;
+          box-sizing: border-box;
+          background-color: #ffffff;
+          color: #333;
+        }
+        .menu_item_content {
+          width: 100%;
+          background-color: #fafafa;
+          padding: 15px;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: flex-start;
+          flex-wrap: wrap;
+          .menu_card_item {
+            width: 165px;
             height: 64px;
+            border: 1px solid #eeeeee;
+            border-radius: 4px;
+            box-sizing: border-box;
             display: flex;
             flex-direction: row;
             align-items: center;
-            justify-content: center;
-            svg {
-              width: 32px;
-              height: 32px;
-              fill: #888;
+            justify-content: space-between;
+            &:hover {
+              background-color: #eeeeee;
             }
-          }
-          .menu_card_item_right {
-            width: 117px;
-            height: 64px;
-            padding: 0 5px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            .menu_card_item_title {
-              width: 100%;
-              height: 28px;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
+            &:nth-child(even) {
+              margin-left: 15px;
+            }
+            &:nth-child(n + 3) {
+              margin-top: 15px;
+            }
+            .menu_card_item_left {
+              width: 48px;
+              height: 64px;
               display: flex;
               flex-direction: row;
               align-items: center;
-              justify-content: flex-start;
+              justify-content: center;
+              svg {
+                width: 32px;
+                height: 32px;
+                fill: #888;
+              }
             }
-            .menu_card_item_desc {
-              width: 100%;
-              height: 36px;
-              font-size: 10px;
-              text-overflow: ellipsis;
-              display: -webkit-box;
-              -webkit-box-orient: vertical;
-              overflow: hidden;
-              -webkit-line-clamp: 2;
-              word-break: break-all;
-              color: #888;
-              // display: flex;
-              // flex-direction: row;
-              // align-items: center;
-              // justify-content: flex-start;
+            .menu_card_item_right {
+              width: 117px;
+              height: 64px;
+              padding: 0 5px;
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-start;
+              .menu_card_item_title {
+                width: 100%;
+                height: 28px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+              }
+              .menu_card_item_desc {
+                width: 100%;
+                height: 36px;
+                font-size: 10px;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                -webkit-line-clamp: 2;
+                word-break: break-all;
+                color: #888;
+                // display: flex;
+                // flex-direction: row;
+                // align-items: center;
+                // justify-content: flex-start;
+              }
             }
           }
         }
       }
     }
   }
-}
 </style>

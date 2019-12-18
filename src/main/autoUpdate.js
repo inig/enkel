@@ -386,11 +386,15 @@ export async function checkUpdate () {
 }
 
 ipcMain.on('get-latest-version', async (event, arg) => {
-  event.returnValue = await getRemoteVersion()
+  event.reply('response-latest-version', {
+    version: await getRemoteVersion()
+  })
+  // event.returnValue = await getRemoteVersion()
 })
 
-ipcMain.on('init-downloading-progrress', async (event) => {
-  event.returnValue = await getDownloadingProgress()
+ipcMain.on('init-downloading-progress', async (event) => {
+  // event.returnValue = await getDownloadingProgress()
+  event.reply('response-downloading-progress', await getDownloadingProgress())
 })
 
 ipcMain.on('cancel-download', (event) => {

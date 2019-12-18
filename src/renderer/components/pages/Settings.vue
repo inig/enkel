@@ -30,7 +30,8 @@
                    v-if="!hasNewVersion">已经是最新版本</div>
             </div>
           </FormItem>
-          <FormItem label="版本更新">
+          <FormItem label="版本更新"
+                    v-if="hasNewVersion">
             <Progress :percent="downloadProgress"
                       :stroke-color="progressColor"
                       status="active">
@@ -38,7 +39,8 @@
             </Progress>
           </FormItem>
 
-          <FormItem label="暂停下载">
+          <FormItem label="暂停下载"
+                    v-if="hasNewVersion">
             <Button type="primary"
                     :disabled="upgradeStatus !== 'DOWNLOADING'"
                     @click="cancelDownload">暂停</Button>
@@ -67,169 +69,174 @@
 </template>
 
 <script>
-import { Form, FormItem, Input, Progress, Button } from 'view-design'
-import { ipcRenderer } from 'electron'
-const pkg = require('../../../../package.json')
-export default {
-  name: 'Settings',
-  components: {
-    Form, FormItem, Input, Progress, Button
-  },
-  data () {
-    return {
-      qrcodeShortcut: '',
-      downloadProgress: 0,
-      progressColor: ['#50D5B7', '#067D68'],
-      pkg: pkg,
-      latestVersion: '0.0.1',
-      receivedBytes: 0,
-      totalBytes: 0,
-      upgrading: false, // 正在升级中
-      upgradeStatus: 'NORMAL' // NORMAL: 正常状态；DOWNLOADING: 下载中； DOWNLOADED: 下载完成；INSTALLING: 安装中；INSTALLED: 安装完成
-    }
-  },
-  computed: {
-    hasNewVersion () {
-      let v1 = Number(this.pkg.version.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
-      let v2 = Number(this.latestVersion.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
-      return v1 < v2
-    }
-  },
-  mounted () {
-    // ipcRenderer.on('update-download-progress', this.updateDownloadProgress)
-    this.initVersion()
-    this.initDownloadingProgress()
+  import { Form, FormItem, Input, Progress, Button } from 'view-design'
+  import { ipcRenderer } from 'electron'
+  const pkg = require('../../../../package.json')
+  export default {
+    name: 'Settings',
+    components: {
+      Form, FormItem, Input, Progress, Button
+    },
+    data () {
+      return {
+        qrcodeShortcut: '',
+        downloadProgress: 0,
+        progressColor: ['#50D5B7', '#067D68'],
+        pkg: pkg,
+        latestVersion: '0.0.1',
+        receivedBytes: 0,
+        totalBytes: 0,
+        upgrading: false, // 正在升级中
+        upgradeStatus: 'NORMAL' // NORMAL: 正常状态；DOWNLOADING: 下载中； DOWNLOADED: 下载完成；INSTALLING: 安装中；INSTALLED: 安装完成
+      }
+    },
+    computed: {
+      hasNewVersion () {
+        let v1 = Number(this.pkg.version.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
+        let v2 = Number(this.latestVersion.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
+        return v1 < v2
+      }
+    },
+    mounted () {
+      // ipcRenderer.on('update-download-progress', this.updateDownloadProgress)
+      ipcRenderer.send('get-latest-version')
+      // this.initDownloadingProgress()
+      ipcRenderer.send('init-downloading-progress')
 
-    ipcRenderer.send('get-upgrade-status')
-    this.upgrade()
+      ipcRenderer.send('get-upgrade-status')
+      this.upgrade()
 
-    ipcRenderer.on('upgrade-response', this.upgradeHandler)
-  },
-  methods: {
-    changeShortcutKey (e) {
-      console.log(e.key)
-      if (e.key === 'Backspace') {
-        this.qrcodeShortcut = ''
-      } else {
-        this.qrcodeShortcut = (!this.qrcodeShortcut ? '' : ' + ') + this.qrcodeShortcut
-      }
+      ipcRenderer.on('upgrade-response', this.upgradeHandler)
+      ipcRenderer.on('response-latest-version', this.initVersion)
+      ipcRenderer.on('response-downloading-progress', this.initDownloadingProgress)
     },
-    updateDownloadProgress (event, data) {
-      this.receivedBytes = data.receivedBytes
-      this.totalBytes = data.totalBytes
-      this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
-    },
-    initVersion () {
-      this.latestVersion = ipcRenderer.sendSync('get-latest-version')
-    },
-    initDownloadingProgress (event, data) {
-      let initProgress = ipcRenderer.sendSync('init-downloading-progrress')
-      this.receivedBytes = initProgress.receivedBytes
-      this.totalBytes = initProgress.totalBytes
-      if (initProgress.totalBytes == 0) {
-        this.downloadProgress = 0
-      } else {
-        this.downloadProgress = parseFloat((initProgress.receivedBytes / initProgress.totalBytes * 100).toFixed(2))
-      }
-    },
-    upgrade () {
-      if (this.upgradeStatus === 'NORMAL') {
-        // this.upgrading = true
-        ipcRenderer.send('upgrade')
-      } else if (this.upgradeStatus === 'DOWNLOADED') {
-        ipcRenderer.send('install', {
-          version: this.latestVersion
-        })
-      }
-    },
-    upgradeHandler (event, data) {
-      this.upgradeStatus = data.status.toUpperCase()
-      this.receivedBytes = data.receivedBytes
-      this.totalBytes = data.totalBytes
-      if (data.status === 'downloading') {
-        // 正在下载中
+    methods: {
+      changeShortcutKey (e) {
+        console.log(e.key)
+        if (e.key === 'Backspace') {
+          this.qrcodeShortcut = ''
+        } else {
+          this.qrcodeShortcut = (!this.qrcodeShortcut ? '' : ' + ') + this.qrcodeShortcut
+        }
+      },
+      updateDownloadProgress (event, data) {
+        this.receivedBytes = data.receivedBytes
+        this.totalBytes = data.totalBytes
         this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
-      } else if (data.status === 'downloaded') {
-        // 下载完成
-        // 去安装
-        this.downloadProgress = 100
+      },
+      initVersion (event, data) {
+        this.latestVersion = data.version
+      },
+      initDownloadingProgress (event, data) {
+        // let initProgress = ipcRenderer.sendSync('init-downloading-progrress')
+        this.receivedBytes = data.receivedBytes
+        this.totalBytes = data.totalBytes
+        if (data.totalBytes == 0) {
+          this.downloadProgress = 0
+        } else {
+          this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
+        }
+      },
+      upgrade () {
+        if (this.hasNewVersion) {
+          if (this.upgradeStatus === 'NORMAL') {
+            // this.upgrading = true
+            ipcRenderer.send('upgrade')
+          } else if (this.upgradeStatus === 'DOWNLOADED') {
+            ipcRenderer.send('install', {
+              version: this.latestVersion
+            })
+          }
+        }
+      },
+      upgradeHandler (event, data) {
+        this.upgradeStatus = data.status.toUpperCase()
+        this.receivedBytes = data.receivedBytes
+        this.totalBytes = data.totalBytes
+        if (data.status === 'downloading') {
+          // 正在下载中
+          this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
+        } else if (data.status === 'downloaded') {
+          // 下载完成
+          // 去安装
+          this.downloadProgress = 100
+        }
+      },
+      removeDownloadInfo () {
+        ipcRenderer.send('remove-download-info')
+        this.downloadProgress = 0
+        this.receivedBytes = 0
+        this.totalBytes = 0
+      },
+      cancelDownload () {
+        ipcRenderer.send('cancel-download')
+        this.upgradeStatus = 'NORMAL'
       }
-    },
-    removeDownloadInfo () {
-      ipcRenderer.send('remove-download-info')
-      this.downloadProgress = 0
-      this.receivedBytes = 0
-      this.totalBytes = 0
-    },
-    cancelDownload () {
-      ipcRenderer.send('cancel-download')
-      this.upgradeStatus = 'NORMAL'
     }
   }
-}
 </script>
 
 <style lang="less" scoped>
-.settings_container {
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding-top: 15px;
-  box-sizing: border-box;
-  .settings_item_title {
-    position: sticky;
-    width: 100%;
-    height: 32px;
-    left: 0;
-    top: 0;
-    border-bottom: 1px solid #f8f8f8;
+  .settings_container {
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-top: 15px;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 0 10px;
-    box-sizing: border-box;
-    background-color: #ffffff;
-    color: #333;
-  }
-  .settings_item_content {
-    width: 100%;
-    padding: 0 15px;
-    box-sizing: border-box;
-    background-color: #fafafa;
-
-    .ivu-form-item {
-      margin-bottom: 5px;
-      margin-top: 5px;
-    }
-    .settings_item {
+    .settings_item_title {
+      position: sticky;
       width: 100%;
       height: 32px;
+      left: 0;
+      top: 0;
+      border-bottom: 1px solid #f8f8f8;
+      box-sizing: border-box;
       display: flex;
       flex-direction: row;
       align-items: center;
+      justify-content: flex-start;
+      padding: 0 10px;
+      box-sizing: border-box;
+      background-color: #ffffff;
+      color: #333;
+    }
+    .settings_item_content {
+      width: 100%;
+      padding: 0 15px;
+      box-sizing: border-box;
+      background-color: #fafafa;
+
+      .ivu-form-item {
+        margin-bottom: 5px;
+        margin-top: 5px;
+      }
+      .settings_item {
+        width: 100%;
+        height: 32px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
     }
   }
-}
-.version_container {
-  height: 34px;
-  font-size: 12px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  .new_version {
-    margin-left: 8px;
+  .version_container {
+    height: 34px;
+    font-size: 12px;
     display: flex;
     flex-direction: row;
     align-items: center;
-    button {
-      margin-left: 20px;
-      font-size: 11px;
+    justify-content: space-between;
+    .new_version {
+      margin-left: 8px;
       display: flex;
-      align-items: center;
       flex-direction: row;
+      align-items: center;
+      button {
+        margin-left: 20px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+      }
     }
   }
-}
 </style>

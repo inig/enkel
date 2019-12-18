@@ -11,7 +11,7 @@ require('./npm')
 const { showSettingsWindow, createSettingsWindow } = require('./settings')
 const { showAboutWindow } = require('./about')
 
-const { checkUpdate } = require('./autoUpdate')
+// const { checkUpdate } = require('./autoUpdate')
 // console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
 // if (!fs.existsSync(app.getAppPath() + path.sep + 'db.json')) {
 //   fs.writeFileSync(app.getAppPath() + path.sep + 'db.json', '')
@@ -71,6 +71,10 @@ function initMenu () {
         {
           role: 'paste',
           label: '粘贴'
+        },
+        {
+          role: 'close',
+          label: '关闭'
         }
       ]
     },
@@ -91,7 +95,7 @@ function initMenu () {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-initMenu()
+// initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -106,6 +110,8 @@ let mainWindow
 let menuWindow
 
 let menuWindowNormalBounds = {}
+let menuWindowMinimumBounds = {}
+let menuWindowStatus = 'normal' // normal; minimum
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
@@ -228,15 +234,18 @@ function createMenuWindow () {
 
 function minimizeMenuWindow () {
   menuWindowNormalBounds = menuWindow.getNormalBounds()
+  menuWindowStatus = 'minimum'
   menuWindow.setBounds({
-    x: 20,
-    y: 20,
-    height: 48,
-    width: 48
+    x: menuWindowMinimumBounds.x || 20,
+    y: menuWindowMinimumBounds.y || 20,
+    height: menuWindowMinimumBounds.height || 48,
+    width: menuWindowMinimumBounds.width || 48
   }, true)
 }
 
 function restoreMenuWindow () {
+  menuWindowMinimumBounds = menuWindow.getNormalBounds()
+  menuWindowStatus = 'normal'
   menuWindow.setBounds(menuWindowNormalBounds, true)
 }
 
@@ -328,23 +337,16 @@ ipcMain.on('show-shortcuts', async (event, args) => {
   }
 
   let dpr = args.dpr || 2
-  let x = (args.topLeftCorner.x).toFixed(2) / dpr
-  let y = (args.topLeftCorner.y).toFixed(2) / dpr
-  let width = ((args.topRightCorner.x).toFixed(2) - (args.topLeftCorner.x).toFixed(2)) / dpr
-  let height = ((args.bottomLeftCorner.y).toFixed(2) - (args.topLeftCorner.y).toFixed(2)) / dpr
-  dialog.showMessageBox({
-    message: JSON.stringify({
-      width: width,
-      height: height,
-      x: x,
-      y: y
-    }, null, 2)
-  })
+  let x = (args.topLeftCorner.x / dpr).toFixed(2)
+  let y = (args.topLeftCorner.y / dpr).toFixed(2)
+  let width = ((args.topRightCorner.x - args.topLeftCorner.x) / dpr).toFixed(2)
+  let height = ((args.bottomLeftCorner.y - args.topLeftCorner.y) / dpr).toFixed(2)
+
   createShotcutsWindow({
-    width: width,
-    height: height,
-    x: x,
-    y: y
+    width: Math.ceil(width),
+    height: Math.ceil(height),
+    x: Math.ceil(x),
+    y: Math.ceil(y)
   })
 
   let res = await dialog.showMessageBox({
@@ -450,6 +452,15 @@ app.on('ready', async () => {
 
     // createShotcutsWindow()
     menuWindow.webContents.send('desktop-capturer')
+  })
+  globalShortcut.register('CommandOrControl+Shift+S', () => {
+    if (menuWindowStatus === 'normal') {
+      minimizeMenuWindow()
+      menuWindow.webContents.send('menu-folded')
+    } else {
+      restoreMenuWindow()
+      menuWindow.webContents.send('menu-unfolded')
+    }
   })
 
   createSettingsWindow()
