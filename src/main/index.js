@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, clipboard, globalShortcut } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, clipboard, globalShortcut, screen } from 'electron'
 // import { autoUpdater } from 'electron-updater'
 import { screenshot } from './puppeteer'
 
@@ -281,6 +281,7 @@ function createModalLoadingWindow () {
     show: false,
     transparent: true,
     alwaysOnTop: true,
+    resizable: false,
     backgroundColor: '#00ffffff',
     frame: false,
     webPreferences: {
@@ -314,6 +315,7 @@ function createShotcutsWindow (data) {
     show: true,
     transparent: true,
     alwaysOnTop: true,
+    resizable: false,
     backgroundColor: '#88000000',
     frame: false,
     x: data.x,
@@ -342,25 +344,71 @@ ipcMain.on('show-shortcuts', async (event, args) => {
   let width = ((args.topRightCorner.x - args.topLeftCorner.x) / dpr).toFixed(2)
   let height = ((args.bottomLeftCorner.y - args.topLeftCorner.y) / dpr).toFixed(2)
 
-  createShotcutsWindow({
-    width: Math.ceil(width),
-    height: Math.ceil(height),
-    x: Math.ceil(x),
-    y: Math.ceil(y)
-  })
+  let opts = {}
 
-  let res = await dialog.showMessageBox({
-    title: '扫描结果',
-    message: '扫描结果: ' + args.message,
-    defaultId: 1,
-    cancelId: 0,
-    buttons: ['取消', '复制']
-  })
-  if (res.response == 1) {
-    clipboard.writeText(args.message, 'selection')
+  let f = false
+
+  let primaryDisplay = screen.getPrimaryDisplay()
+  if (String(primaryDisplay.id) === String(args.screenId)) {
+    opts = {
+      width: Math.ceil(width),
+      height: Math.ceil(height),
+      x: Math.ceil(x),
+      y: Math.ceil(y)
+    }
+    f = true
   } else {
-    event.preventDefault()
+
+    let displays = screen.getAllDisplays()
+    let externalDisplay = displays.find((display) => {
+      return display.bounds.x !== 0 || display.bounds.y !== 0
+    })
+
+    if (externalDisplay && (String(externalDisplay.id) === String(args.screenId))) {
+      let r = externalDisplay.workArea.width / primaryDisplay.workArea.width
+      if (args.scaled === 'small') {
+        opts = {
+          width: Math.ceil(width * r) * 2 * dpr,
+          height: Math.ceil(width * r) * 2 * dpr,
+          x: Math.floor(Number(externalDisplay.bounds.x) + Number(x * r) * 2 * dpr),
+          y: Math.floor(Number(externalDisplay.bounds.y) + Number(y * r) * 2 * dpr)
+        }
+      } else if (args.scaled === 'large') {
+        opts = {
+          width: Math.ceil(width * r) / 2 / dpr,
+          height: Math.ceil(width * r) / 2 / dpr,
+          x: Math.floor(Number(externalDisplay.bounds.x) + Number(x * r) / 2 / dpr),
+          y: Math.floor(Number(externalDisplay.bounds.y) + Number(y * r) / 2 / dpr)
+        }
+      } else {
+        opts = {
+          width: Math.ceil(width * r),
+          height: Math.ceil(width * r),
+          x: Math.floor(Number(externalDisplay.bounds.x) + Number(x * r)),
+          y: Math.floor(Number(externalDisplay.bounds.y) + Number(y * r))
+        }
+      }
+      f = true
+    }
   }
+
+  if (f) {
+    createShotcutsWindow(opts)
+
+    let res = await dialog.showMessageBox({
+      title: '扫描结果',
+      message: '扫描结果: 【' + args.message + '】',
+      defaultId: 1,
+      cancelId: 0,
+      buttons: ['取消', '复制']
+    })
+    if (res.response == 1) {
+      clipboard.writeText(args.message, 'selection')
+    } else {
+      event.preventDefault()
+    }
+  }
+
 })
 
 ipcMain.on('hide-modal-loading', (event) => {
