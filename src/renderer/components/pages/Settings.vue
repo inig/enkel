@@ -50,6 +50,27 @@
                     :disabled="upgradeStatus === 'DOWNLOADING' || upgradeStatus === 'INSTALLING'"
                     @click="removeDownloadInfo">清除</Button>
           </FormItem>
+          <FormItem label=""
+                    :label-width="0">
+            <div style="width: 100%; height: 1px; background-color: #eee;"></div>
+          </FormItem>
+          <FormItem label="全局快捷键"
+                    :label-width="90"
+                    class="table_header"></FormItem>
+          <FormItem :label-width="0">
+            <Table :columns="globalShortcutsColumns"
+                   :data="globalShortcuts"
+                   border></Table>
+          </FormItem>
+
+          <FormItem label="局部快捷键"
+                    :label-width="90"
+                    class="table_header"></FormItem>
+          <FormItem :label-width="0">
+            <Table :columns="globalShortcutsColumns"
+                   :data="shortcuts"
+                   border></Table>
+          </FormItem>
         </Form>
       </div>
       <!-- <div class="settings_item_title">
@@ -69,13 +90,13 @@
 </template>
 
 <script>
-  import { Form, FormItem, Input, Progress, Button } from 'view-design'
+  import { Form, FormItem, Input, Progress, Button, Table } from 'view-design'
   import { ipcRenderer } from 'electron'
   const pkg = require('../../../../package.json')
   export default {
     name: 'Settings',
     components: {
-      Form, FormItem, Input, Progress, Button
+      Form, FormItem, Input, Progress, Button, Table
     },
     data () {
       return {
@@ -87,7 +108,35 @@
         receivedBytes: 0,
         totalBytes: 0,
         upgrading: false, // 正在升级中
-        upgradeStatus: 'NORMAL' // NORMAL: 正常状态；DOWNLOADING: 下载中； DOWNLOADED: 下载完成；INSTALLING: 安装中；INSTALLED: 安装完成
+        upgradeStatus: 'NORMAL', // NORMAL: 正常状态；DOWNLOADING: 下载中； DOWNLOADED: 下载完成；INSTALLING: 安装中；INSTALLED: 安装完成
+        globalShortcuts: [
+          {
+            title: '打开/关闭菜单',
+            value: 'Command + Shift + S'
+          },
+          {
+            title: '识别屏幕中二维码',
+            value: 'Command + Shift + E'
+          }
+        ],
+        shortcuts: [
+          {
+            title: '打开设置面板',
+            value: 'Command + ,'
+          }
+        ],
+        globalShortcutsColumns: [
+          {
+            title: '命令',
+            key: 'title'
+          },
+          {
+            title: '快捷键',
+            key: 'value',
+            width: 190,
+            align: 'center'
+          }
+        ]
       }
     },
     computed: {
@@ -203,7 +252,7 @@
       width: 100%;
       padding: 0 15px;
       box-sizing: border-box;
-      background-color: #fafafa;
+      // background-color: #fafafa;
 
       .ivu-form-item {
         margin-bottom: 5px;

@@ -272,6 +272,7 @@
               -webkit-line-clamp: 2;
               word-break: break-all;
               color: #888;
+              line-height: 16px;
               // display: flex;
               // flex-direction: row;
               // align-items: center;

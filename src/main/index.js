@@ -95,7 +95,7 @@ function initMenu () {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-// initMenu()
+initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -479,6 +479,16 @@ function sendUpdateMessage (message, data) {
   console.log({ message, data });
   menuWindow.webContents.send('update-message', { message, data });
 }
+
+function desktopCapturer () {
+  if (shortcutsWindow) {
+    shortcutsWindow.destroy()
+  }
+
+  // createShotcutsWindow()
+  menuWindow.webContents.send('desktop-capturer')
+}
+
 app.on('ready', async () => {
   // if ((process.env.NODE_ENV == 'development') && !process.env.IS_TEST) {
   // Install Vue Devtools
@@ -494,12 +504,7 @@ app.on('ready', async () => {
 
   globalShortcut.register('CommandOrControl+Shift+E', () => {
     // createModalLoadingWindow()
-    if (shortcutsWindow) {
-      shortcutsWindow.destroy()
-    }
-
-    // createShotcutsWindow()
-    menuWindow.webContents.send('desktop-capturer')
+    desktopCapturer()
   })
   globalShortcut.register('CommandOrControl+Shift+S', () => {
     if (menuWindowStatus === 'normal') {
@@ -715,6 +720,10 @@ ipcMain.on('close-all-window', (event, args) => {
       item.destroy()
     }
   })
+})
+
+ipcMain.on('capture-screen-qrcode', (event) => {
+  desktopCapturer()
 })
 
 // checkUpdate()

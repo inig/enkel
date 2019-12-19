@@ -57,6 +57,20 @@ export const developRouter = {
       },
       component: require('@/components/tools/developer/Screenshots/index').default
     },
+    {
+      path: '/qrcode',
+      name: 'qrcode',
+      meta: {
+        label: '二维码工具',
+        title: '二维码工具',
+        icon: '#route-qrcode',
+        name: '二维码工具',
+        desc: '识别屏幕中的二维码，生成二维码，解析二维码',
+        createTime: '1576724461449',
+        hot: false
+      },
+      component: require('@/components/tools/developer/Qrcode/index').default
+    }
     // {
     //   path: '/shell',
     //   name: 'shell',
