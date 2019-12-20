@@ -34,7 +34,7 @@ export const developRouter = {
       name: 'request',
       meta: {
         label: '网络请求',
-        title: '模拟网络请求',
+        title: '网络请求',
         icon: '#route-request',
         name: '模拟网络请求',
         desc: '模拟网络请求',

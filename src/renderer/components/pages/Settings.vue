@@ -50,6 +50,16 @@
                     :disabled="upgradeStatus === 'DOWNLOADING' || upgradeStatus === 'INSTALLING'"
                     @click="removeDownloadInfo">清除</Button>
           </FormItem>
+
+          <FormItem label="快捷键">
+            <div class="shortcut_item"
+                 @click="showShortcutsPanel">
+              <span>快捷键设置</span>
+              <Icon type="ios-arrow-forward"
+                    color="#888" />
+            </div>
+          </FormItem>
+
           <FormItem label=""
                     :label-width="0">
             <div style="width: 100%; height: 1px; background-color: #eee;"></div>
@@ -86,17 +96,21 @@
         </Form>
       </div> -->
     </div>
+
+    <Shortcuts :show="shortcutsPanelShown"
+               @hide="hideShortcutsPanel"></Shortcuts>
   </div>
 </template>
 
 <script>
-  import { Form, FormItem, Input, Progress, Button, Table } from 'view-design'
+  import { Form, FormItem, Input, Progress, Button, Table, Icon } from 'view-design'
   import { ipcRenderer } from 'electron'
   const pkg = require('../../../../package.json')
   export default {
     name: 'Settings',
     components: {
-      Form, FormItem, Input, Progress, Button, Table
+      Form, FormItem, Input, Progress, Button, Table, Icon,
+      Shortcuts: () => import('./Shortcuts')
     },
     data () {
       return {
@@ -136,7 +150,8 @@
             width: 190,
             align: 'center'
           }
-        ]
+        ],
+        shortcutsPanelShown: false
       }
     },
     computed: {
@@ -160,6 +175,12 @@
       ipcRenderer.on('response-downloading-progress', this.initDownloadingProgress)
     },
     methods: {
+      showShortcutsPanel () {
+        this.shortcutsPanelShown = true
+      },
+      hideShortcutsPanel () {
+        this.shortcutsPanelShown = false
+      },
       changeShortcutKey (e) {
         console.log(e.key)
         if (e.key === 'Backspace') {
@@ -264,6 +285,21 @@
         display: flex;
         flex-direction: row;
         align-items: center;
+      }
+    }
+
+    .shortcut_item {
+      width: 100%;
+      height: 34px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      span {
+        margin-right: 8px;
+        font-size: 12px;
+        color: #c8c8c8;
       }
     }
   }
