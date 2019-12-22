@@ -45,6 +45,14 @@ export default new Router({
       },
       component: require('@/components/pages/About').default
     },
+    {
+      path: '/qrcode-result',
+      name: 'qrcode-result',
+      meta: {
+        withoutHeader: true
+      },
+      component: require('@/components/pages/QrcodeResult').default
+    },
     ...developRouter.routes,
     {
       path: '*',

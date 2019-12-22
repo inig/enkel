@@ -393,7 +393,9 @@ ipcMain.on('show-shortcuts', async (event, args) => {
   }
 
   if (f) {
-    createShotcutsWindow(opts)
+    createShotcutsWindow(Object.assign({}, opts, {
+      message: args.message
+    }))
 
     let res = await dialog.showMessageBox({
       title: '扫描结果',
