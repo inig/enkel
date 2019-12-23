@@ -103,225 +103,229 @@
 </template>
 
 <script>
-import { Form, FormItem, Input, Progress, Button, Table, Icon } from 'view-design'
-import { ipcRenderer } from 'electron'
-const pkg = require('../../../../package.json')
-export default {
-  name: 'Settings',
-  components: {
-    Form, FormItem, Input, Progress, Button, Table, Icon,
-    Shortcuts: () => import('./Shortcuts')
-  },
-  data () {
-    return {
-      qrcodeShortcut: '',
-      downloadProgress: 0,
-      progressColor: ['#50D5B7', '#067D68'],
-      pkg: pkg,
-      latestVersion: '0.0.1',
-      receivedBytes: 0,
-      totalBytes: 0,
-      upgrading: false, // 正在升级中
-      upgradeStatus: 'NORMAL', // NORMAL: 正常状态；DOWNLOADING: 下载中； DOWNLOADED: 下载完成；INSTALLING: 安装中；INSTALLED: 安装完成
-      globalShortcuts: [
-        {
-          command: '打开/关闭菜单',
-          key: 'Command + Shift + S'
-        },
-        {
-          command: '识别屏幕中二维码',
-          key: 'Command + Shift + E'
-        }
-      ],
-      shortcuts: [
-        {
-          command: '打开设置面板',
-          key: 'Command + ,'
-        }
-      ],
-      globalShortcutsColumns: [
-        {
-          title: '命令',
-          key: 'command'
-        },
-        {
-          title: '快捷键',
-          key: 'key',
-          width: 200,
-          align: 'center'
-        }
-      ],
-      shortcutsPanelShown: false
-    }
-  },
-  computed: {
-    hasNewVersion () {
-      let v1 = Number(this.pkg.version.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
-      let v2 = Number(this.latestVersion.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
-      return v1 < v2
-    }
-  },
-  mounted () {
-    // ipcRenderer.on('update-download-progress', this.updateDownloadProgress)
-    ipcRenderer.send('get-latest-version')
-    // this.initDownloadingProgress()
-    ipcRenderer.send('init-downloading-progress')
-
-    ipcRenderer.send('get-upgrade-status')
-    this.upgrade()
-
-    ipcRenderer.on('upgrade-response', this.upgradeHandler)
-    ipcRenderer.on('response-latest-version', this.initVersion)
-    ipcRenderer.on('response-downloading-progress', this.initDownloadingProgress)
-  },
-  methods: {
-    showShortcutsPanel () {
-      this.shortcutsPanelShown = true
+  import { Form, FormItem, Input, Progress, Button, Table, Icon } from 'view-design'
+  import { ipcRenderer } from 'electron'
+  const pkg = require('../../../../package.json')
+  export default {
+    name: 'Settings',
+    components: {
+      Form, FormItem, Input, Progress, Button, Table, Icon,
+      Shortcuts: () => import('./Shortcuts')
     },
-    hideShortcutsPanel () {
-      this.shortcutsPanelShown = false
-    },
-    changeShortcutKey (e) {
-      console.log(e.key)
-      if (e.key === 'Backspace') {
-        this.qrcodeShortcut = ''
-      } else {
-        this.qrcodeShortcut = (!this.qrcodeShortcut ? '' : ' + ') + this.qrcodeShortcut
+    data () {
+      return {
+        qrcodeShortcut: '',
+        downloadProgress: 0,
+        progressColor: ['#50D5B7', '#067D68'],
+        pkg: pkg,
+        latestVersion: '0.0.1',
+        receivedBytes: 0,
+        totalBytes: 0,
+        upgrading: false, // 正在升级中
+        upgradeStatus: 'NORMAL', // NORMAL: 正常状态；DOWNLOADING: 下载中； DOWNLOADED: 下载完成；INSTALLING: 安装中；INSTALLED: 安装完成
+        globalShortcuts: [
+          {
+            command: '打开/关闭菜单',
+            key: 'Command + Shift + S'
+          },
+          {
+            command: '识别屏幕中二维码',
+            key: 'Command + Shift + E'
+          },
+          {
+            command: '网络请求',
+            key: 'Command + Shift + R'
+          }
+        ],
+        shortcuts: [
+          {
+            command: '打开设置面板',
+            key: 'Command + ,'
+          }
+        ],
+        globalShortcutsColumns: [
+          {
+            title: '命令',
+            key: 'command'
+          },
+          {
+            title: '快捷键',
+            key: 'key',
+            width: 200,
+            align: 'center'
+          }
+        ],
+        shortcutsPanelShown: false
       }
     },
-    updateDownloadProgress (event, data) {
-      this.receivedBytes = data.receivedBytes
-      this.totalBytes = data.totalBytes
-      this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
+    computed: {
+      hasNewVersion () {
+        let v1 = Number(this.pkg.version.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
+        let v2 = Number(this.latestVersion.replace(/(\d{1,}\.)/g, item => { if (Number(item) < 10) { return '0' + item } else { return item } }).replace(/\./g, ''))
+        return v1 < v2
+      }
     },
-    initVersion (event, data) {
-      this.latestVersion = data.version
+    mounted () {
+      // ipcRenderer.on('update-download-progress', this.updateDownloadProgress)
+      ipcRenderer.send('get-latest-version')
+      // this.initDownloadingProgress()
+      ipcRenderer.send('init-downloading-progress')
+
+      ipcRenderer.send('get-upgrade-status')
+      this.upgrade()
+
+      ipcRenderer.on('upgrade-response', this.upgradeHandler)
+      ipcRenderer.on('response-latest-version', this.initVersion)
+      ipcRenderer.on('response-downloading-progress', this.initDownloadingProgress)
     },
-    initDownloadingProgress (event, data) {
-      // let initProgress = ipcRenderer.sendSync('init-downloading-progrress')
-      this.receivedBytes = data.receivedBytes
-      this.totalBytes = data.totalBytes
-      if (data.totalBytes == 0) {
+    methods: {
+      showShortcutsPanel () {
+        this.shortcutsPanelShown = true
+      },
+      hideShortcutsPanel () {
+        this.shortcutsPanelShown = false
+      },
+      changeShortcutKey (e) {
+        console.log(e.key)
+        if (e.key === 'Backspace') {
+          this.qrcodeShortcut = ''
+        } else {
+          this.qrcodeShortcut = (!this.qrcodeShortcut ? '' : ' + ') + this.qrcodeShortcut
+        }
+      },
+      updateDownloadProgress (event, data) {
+        this.receivedBytes = data.receivedBytes
+        this.totalBytes = data.totalBytes
+        this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
+      },
+      initVersion (event, data) {
+        this.latestVersion = data.version
+      },
+      initDownloadingProgress (event, data) {
+        // let initProgress = ipcRenderer.sendSync('init-downloading-progrress')
+        this.receivedBytes = data.receivedBytes
+        this.totalBytes = data.totalBytes
+        if (data.totalBytes == 0) {
+          this.downloadProgress = 0
+        } else {
+          this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
+        }
+      },
+      upgrade () {
+        if (this.hasNewVersion) {
+          if (this.upgradeStatus === 'NORMAL') {
+            // this.upgrading = true
+            ipcRenderer.send('upgrade')
+          } else if (this.upgradeStatus === 'DOWNLOADED') {
+            ipcRenderer.send('install', {
+              version: this.latestVersion
+            })
+          }
+        }
+      },
+      upgradeHandler (event, data) {
+        this.upgradeStatus = data.status.toUpperCase()
+        this.receivedBytes = data.receivedBytes
+        this.totalBytes = data.totalBytes
+        if (data.status === 'downloading') {
+          // 正在下载中
+          this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
+        } else if (data.status === 'downloaded') {
+          // 下载完成
+          // 去安装
+          this.downloadProgress = 100
+        }
+      },
+      removeDownloadInfo () {
+        ipcRenderer.send('remove-download-info')
         this.downloadProgress = 0
-      } else {
-        this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
+        this.receivedBytes = 0
+        this.totalBytes = 0
+      },
+      cancelDownload () {
+        ipcRenderer.send('cancel-download')
+        this.upgradeStatus = 'NORMAL'
       }
-    },
-    upgrade () {
-      if (this.hasNewVersion) {
-        if (this.upgradeStatus === 'NORMAL') {
-          // this.upgrading = true
-          ipcRenderer.send('upgrade')
-        } else if (this.upgradeStatus === 'DOWNLOADED') {
-          ipcRenderer.send('install', {
-            version: this.latestVersion
-          })
-        }
-      }
-    },
-    upgradeHandler (event, data) {
-      this.upgradeStatus = data.status.toUpperCase()
-      this.receivedBytes = data.receivedBytes
-      this.totalBytes = data.totalBytes
-      if (data.status === 'downloading') {
-        // 正在下载中
-        this.downloadProgress = parseFloat((data.receivedBytes / data.totalBytes * 100).toFixed(2))
-      } else if (data.status === 'downloaded') {
-        // 下载完成
-        // 去安装
-        this.downloadProgress = 100
-      }
-    },
-    removeDownloadInfo () {
-      ipcRenderer.send('remove-download-info')
-      this.downloadProgress = 0
-      this.receivedBytes = 0
-      this.totalBytes = 0
-    },
-    cancelDownload () {
-      ipcRenderer.send('cancel-download')
-      this.upgradeStatus = 'NORMAL'
     }
   }
-}
 </script>
 
 <style lang="less" scoped>
-.settings_container {
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding-top: 15px;
-  box-sizing: border-box;
-  .settings_item_title {
-    position: sticky;
-    width: 100%;
-    height: 32px;
-    left: 0;
-    top: 0;
-    border-bottom: 1px solid #f8f8f8;
+  .settings_container {
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-top: 15px;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 0 10px;
-    box-sizing: border-box;
-    background-color: #ffffff;
-    color: #333;
-  }
-  .settings_item_content {
-    width: 100%;
-    padding: 0 15px;
-    box-sizing: border-box;
-    // background-color: #fafafa;
-
-    .ivu-form-item {
-      margin-bottom: 5px;
-      margin-top: 5px;
-    }
-    .settings_item {
+    .settings_item_title {
+      position: sticky;
       width: 100%;
       height: 32px;
+      left: 0;
+      top: 0;
+      border-bottom: 1px solid #f8f8f8;
+      box-sizing: border-box;
       display: flex;
       flex-direction: row;
       align-items: center;
+      justify-content: flex-start;
+      padding: 0 10px;
+      box-sizing: border-box;
+      background-color: #ffffff;
+      color: #333;
     }
-  }
+    .settings_item_content {
+      width: 100%;
+      padding: 0 15px;
+      box-sizing: border-box;
+      // background-color: #fafafa;
 
-  .shortcut_item {
-    width: 100%;
-    height: 34px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-end;
-    span {
-      margin-right: 8px;
-      font-size: 12px;
-      color: #c8c8c8;
+      .ivu-form-item {
+        margin-bottom: 5px;
+        margin-top: 5px;
+      }
+      .settings_item {
+        width: 100%;
+        height: 32px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
     }
-  }
-}
-.version_container {
-  height: 34px;
-  font-size: 12px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  .new_version {
-    margin-left: 8px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    button {
-      margin-left: 20px;
-      font-size: 11px;
+
+    .shortcut_item {
+      width: 100%;
+      height: 34px;
+      cursor: pointer;
       display: flex;
-      align-items: center;
       flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      span {
+        margin-right: 8px;
+        font-size: 12px;
+        color: #c8c8c8;
+      }
     }
   }
-}
+  .version_container {
+    height: 34px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    .new_version {
+      margin-left: 8px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      button {
+        margin-left: 20px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+      }
+    }
+  }
 </style>

@@ -64,14 +64,19 @@
       resize: none;
       height: 100% !important;
       background-color: #fcfcfc !important;
-      border-color: #eeeeee;
+      border-color: #dcdee2;
       &:focus {
         box-shadow: none;
+        border-color: #dcdee2;
+      }
+      &:hover {
+        box-shadow: none;
+        border-color: #dcdee2;
       }
     }
     &.disabled {
       textarea {
-        border-color: #eeeeee;
+        border-color: #dcdee2;
       }
     }
   }

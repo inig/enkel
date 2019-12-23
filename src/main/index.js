@@ -517,6 +517,12 @@ app.on('ready', async () => {
       menuWindow.webContents.send('menu-unfolded')
     }
   })
+  globalShortcut.register('CommandOrControl+Shift+R', () => {
+    // createModalLoadingWindow()
+    createNewWindow({
+      path: 'request'
+    })
+  })
 
   createSettingsWindow()
 
