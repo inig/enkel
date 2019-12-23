@@ -5,10 +5,32 @@
     <pre style="margin-top: 16px;">快捷键：<code style="color: green;">Command + Shift + E</code></pre> -->
     <div class="qrcode_container_left">
       <div class="qrcode_wrapper">
-        <div class="qrocde_wrapper_blank"
-             v-if="!qrcodeMessage">此处生成二维码</div>
+        <div class="qrocde_wrapper_blank pen"
+             v-if="!qrcodeMessage && !previewQrcodeFile">此处生成二维码</div>
         <canvas id="qrcodeWrapperRef"
-                v-else></canvas>
+                class="pen"
+                v-if="qrcodeMessage && !previewQrcodeFile"></canvas>
+        <!-- <Upload type="drag"
+                class="qrcode_drag_container"
+                :style="{opacity: qrcodeFile ? 1 : 0}"
+                :accept="accept"
+                :format="format"
+                action="/"
+                :before-upload="qrcodeFileBeforeUpload"
+                :on-success="qrcodeFileUploadSuccess"
+                :on-error="qrcodeFileUploadError"
+                :on-format-error="qrcodeMessageFormatError"> -->
+        <input type="file"
+               class="qrcode_drag_container"
+               :accept="accept"
+               @change="changeQrcodeFile">
+        <img :src="previewQrcodeFile"
+             class="qrcode_img_previewer"
+             v-if="previewQrcodeFile && !qrcodeMessage">
+
+        <!-- <div class="qrcode_drag_wrapper"
+             :style="{opacity: qrcodeFile ? 1 : 0}"></div>
+        </Upload> -->
       </div>
       <Button type="primary"
               long
@@ -35,18 +57,26 @@
 </template>
 
 <script>
-  import { Button, Input } from 'view-design'
+  import { Button, Input, Upload } from 'view-design'
   import { ipcRenderer } from 'electron'
   import QRCode from 'qrcode'
   export default {
     name: 'Qrcode',
     components: {
-      Button, Input
+      Button, Input, Upload
     },
     data () {
       return {
         captureBtnDisabled: false,
-        qrcodeMessage: ''
+        qrcodeMessage: '',
+        qrcodeFile: null,
+        accept: 'image/png,image/jpeg',
+        format: ['png', 'jpeg', 'jpg']
+      }
+    },
+    computed: {
+      previewQrcodeFile () {
+        return this.qrcodeFile ? URL.createObjectURL(this.qrcodeFile) : ''
       }
     },
     methods: {
@@ -84,6 +114,25 @@
       change (e) {
         e.target.value = e.target.value.replace(/\r/ig, '').replace(/\n|\s/ig, '')
         this.qrcodeMessage = e.target.value
+        this.qrcodeFile = null
+      },
+      qrcodeFileBeforeUpload () {
+        // return false
+      },
+      qrcodeFileUploadSuccess (response, file, fileList) {
+        console.log('success: ', response, file)
+      },
+      qrcodeFileUploadError (error, file, fileList) {
+        console.log('error: ', error, file)
+      },
+      qrcodeMessageFormatError (file, fileList) {
+        console.log('format error: ', file)
+      },
+      changeQrcodeFile (event) {
+        if (event.target.files.length > 0) {
+          this.qrcodeFile = event.target.files[0]
+        }
+        console.log('change file: ', event.target.files)
       }
     },
     watch: {
@@ -97,6 +146,9 @@
 </script>
 
 <style lang="less" scoped>
+  .pen {
+    pointer-events: none;
+  }
   .qrcode_container {
     padding: 15px;
     box-sizing: border-box;
@@ -128,6 +180,22 @@
           align-items: center;
           justify-content: center;
           font-size: 13px;
+        }
+        .qrcode_drag_container {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 256px;
+          opacity: 0;
+        }
+        .qrcode_img_previewer {
+          width: 100%;
+          height: 100%;
+          position: absolute;
+          left: 0;
+          top: 0;
+          pointer-events: none;
         }
       }
       .qrcode_download_btn {
