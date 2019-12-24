@@ -15,7 +15,8 @@ export default new Router({
       path: '/menu',
       name: 'menu',
       meta: {
-        withoutHeader: true
+        withoutHeader: true,
+        unresizable: true
       },
       component: require('@/components/pages/Menu').default
     },
@@ -32,7 +33,8 @@ export default new Router({
       name: 'settings',
       meta: {
         title: '设置',
-        closable: true
+        closable: true,
+        unresizable: true // 双击header不能最大化
       },
       component: require('@/components/pages/Settings').default
     },
@@ -41,7 +43,8 @@ export default new Router({
       name: 'about',
       meta: {
         title: '关于',
-        withoutHeader: true
+        withoutHeader: true,
+        unresizable: true
       },
       component: require('@/components/pages/About').default
     },

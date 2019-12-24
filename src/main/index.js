@@ -734,6 +734,13 @@ ipcMain.on('capture-screen-qrcode', (event) => {
   desktopCapturer()
 })
 
+ipcMain.on('toggle-window-size', (event) => {
+  let win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    win.isMaximized() ? win.unmaximize() : win.maximize()
+  }
+})
+
 // checkUpdate()
 
 /**

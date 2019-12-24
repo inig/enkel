@@ -1,5 +1,6 @@
 <template>
-  <div class="app_header">
+  <div class="app_header"
+       @dblclick="toggleWindowSize">
     <div class="close_wrapper"
          v-if="$route.meta && $route.meta.closable"
          @click="closeSettings">
@@ -115,6 +116,11 @@
       },
       closeSettings () {
         ipcRenderer.send('hide-settings')
+      },
+      toggleWindowSize () {
+        if (!this.$route.meta || !this.$route.meta.unresizable) {
+          ipcRenderer.send('toggle-window-size')
+        }
       }
     },
     watch: {
