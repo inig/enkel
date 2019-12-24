@@ -328,4 +328,33 @@
       }
     }
   }
+
+  .custom_input {
+    .ivu-input {
+      background-color: transparent;
+      border: none;
+      color: #aaa;
+    }
+    .ivu-input-search {
+      background: transparent;
+      border-color: transparent;
+    }
+    .ivu-input:hover,
+    .ivu-input:focus {
+      border-color: transparent;
+    }
+    .ivu-input:focus {
+      box-shadow: none;
+    }
+    .ivu-input::placeholder {
+      font-size: 12px;
+    }
+    .ivu-input-group-prepend {
+      background-color: transparent;
+      border: none;
+      font-size: 12px;
+      color: #888;
+      padding-top: 3px !important;
+    }
+  }
 </style>
