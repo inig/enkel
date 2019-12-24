@@ -172,11 +172,16 @@
       ipcRenderer.send('init-downloading-progress')
 
       ipcRenderer.send('get-upgrade-status')
-      this.upgrade()
 
       ipcRenderer.on('upgrade-response', this.upgradeHandler)
       ipcRenderer.on('response-latest-version', this.initVersion)
       ipcRenderer.on('response-downloading-progress', this.initDownloadingProgress)
+
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.upgrade()
+        }, 2000)
+      })
     },
     methods: {
       showShortcutsPanel () {
