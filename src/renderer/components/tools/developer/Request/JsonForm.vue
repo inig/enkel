@@ -1,5 +1,11 @@
 <template>
   <div class="json_form">
+    <div class="json_form_url">
+      <div class="json_form_url_inner">{{url || 'http://capi.zhaopin.com/capi/resume/GetUserInfoInfoIndexPage?at=284bda19c75145959328230b20620a00&rt=3a243f2e191646b4bdb2979c7008532f'}}</div>
+      <copy style="position: absolute; right: 20px; top: 5px;"
+            :data="url"
+            bg-color="rgb(40, 41, 38)"></copy>
+    </div>
     <div class="json_form_item"
          v-for="(item, index) in params"
          :key="index"
@@ -54,10 +60,12 @@
 
 <script>
   import { Checkbox, Icon, Input } from 'view-design'
+  import Copy from '../../../custom/Copy'
   export default {
     name: 'JsonForm',
     components: {
-      Checkbox, Icon, Input
+      Checkbox, Icon, Input,
+      Copy
     },
     model: {
       prop: 'value',
@@ -75,6 +83,10 @@
         default () {
           return {}
         }
+      },
+      url: {
+        type: String,
+        default: 'http://capi.zhaopin.com/capi/resume/GetUserInfoInfoIndexPage?at=284bda19c75145959328230b20620a00&rt=3a243f2e191646b4bdb2979c7008532f'
       }
     },
     data () {
@@ -132,6 +144,34 @@
     overflow-y: auto;
     padding-bottom: 128px;
     box-sizing: border-box;
+    .json_form_url {
+      position: sticky;
+      left: 0;
+      top: 0;
+      z-index: 2;
+      background-color: rgb(40, 41, 38);
+      width: 100%;
+      // height: 64px;
+      padding: 0 16px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      .json_form_url_inner {
+        width: 100%;
+        height: 100%;
+        max-height: 150px;
+        overflow-y: auto;
+        padding: 6px;
+        box-sizing: border-box;
+        word-break: break-all;
+        font-size: 12px;
+        color: rgb(168, 168, 168);
+        border: 1px solid rgb(61, 61, 59);
+        background-color: rgb(46, 47, 44);
+      }
+    }
     .json_form_item {
       width: 100%;
       height: 36px;

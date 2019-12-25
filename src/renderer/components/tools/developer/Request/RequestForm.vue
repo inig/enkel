@@ -24,8 +24,12 @@
     </div>
     <div class="request_send_form">
       <Tabs :animated="true">
-        <TabPane label="body">
-          <JsonForm v-model="formatedParams"></JsonForm>
+        <TabPane label="Query">
+          <JsonForm v-model="formatedParams"
+                    :url="currentRequest.url"></JsonForm>
+        </TabPane>
+        <TabPane label="Body">
+          <RequestBody v-model="formatedHeaders"></RequestBody>
         </TabPane>
         <TabPane label="Header">
           <JsonForm v-model="formatedHeaders"></JsonForm>
@@ -74,7 +78,8 @@
     },
     components: {
       Select, Option, Input, Button, Tabs, TabPane,
-      JsonForm: () => import('./JsonForm')
+      JsonForm: () => import('./JsonForm'),
+      RequestBody: () => import('./RequestBody')
     },
     data () {
       return {
@@ -83,6 +88,7 @@
           "id": "",
           "url": "",
           "method": "GET",
+          "body": {},
           "label": "",
           "type": "request",
           "header": {},

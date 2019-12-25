@@ -4,17 +4,26 @@
          :style="containerStyles"
          @click="clickFunc"
          v-if="show">
-      <svg :style="svgStyles">
-        <use xlink:href="#copy"></use>
-      </svg>
+      <Tooltip content="复制"
+               placement="left"
+               transfer
+               :style="svgStyles">
+        <svg :style="svgStyles">
+          <use xlink:href="#copy"></use>
+        </svg>
+      </Tooltip>
     </div>
   </transition>
 </template>
 
 <script>
   import { clipboard } from 'electron'
+  import { Tooltip } from 'view-design'
   export default {
     name: 'Copy',
+    components: {
+      Tooltip
+    },
     props: {
       size: {
         type: [String, Number],
@@ -75,7 +84,9 @@
         this.show = true
       },
       hideFunc () {
-        this.show = this.alwaysShow
+        setTimeout(() => {
+          this.show = this.alwaysShow
+        }, 300)
       },
       clickFunc () {
         // if (this.data) {

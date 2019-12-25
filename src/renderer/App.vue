@@ -357,4 +357,7 @@
       padding-top: 3px !important;
     }
   }
+  .ivu-tooltip-rel {
+    height: 100%;
+  }
 </style>
