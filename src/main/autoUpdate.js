@@ -435,7 +435,11 @@ async function showInstallTip (data) {
 }
 
 ipcMain.on('install', async (event, data) => {
-  showInstallTip(data)
+  let remoteVersion = await getRemoteVersion()
+  let hasNewVersion = isNewVersion(pkg.version, remoteVersion)
+  if (hasNewVersion) {
+    showInstallTip(data)
+  }
   // return
   // // 开始安装
   // boardcastUpdateInfo({
