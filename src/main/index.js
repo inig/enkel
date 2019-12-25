@@ -724,7 +724,7 @@ ipcMain.on('hide-all-window', (event, args) => {
 
 ipcMain.on('close-all-window', (event, args) => {
   BrowserWindow.getAllWindows().forEach(item => {
-    if (item.id != menuWindow.id) {
+    if (['menu', 'modal-loading', 'settings', 'about'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
       item.destroy()
     }
   })
