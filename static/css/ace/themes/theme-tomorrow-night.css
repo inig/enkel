@@ -1,0 +1,125 @@
+
+
+.ace-jsoneditor .ace_gutter {
+  color: #CCC
+}
+
+.ace-jsoneditor .ace_print-margin {
+  width: 1px;
+  background: #272727
+}
+
+.ace-jsoneditor {
+  background-color: #2D2D2D;
+  color: #CCCCCC
+}
+
+.ace-jsoneditor .ace_constant.ace_other,
+.ace-jsoneditor .ace_cursor {
+  color: #C8C8C8;
+}
+
+.ace-jsoneditor .ace_marker-layer .ace_selection {
+  background: #515151
+}
+
+.ace-jsoneditor.ace_multiselect .ace_selection.ace_start {
+  box-shadow: 0 0 3px 0px #2D2D2D;
+}
+
+.ace-jsoneditor .ace_marker-layer .ace_step {
+  background: rgb(102, 82, 0)
+}
+
+.ace-jsoneditor .ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #6A6A6A
+}
+
+.ace-tomorrow-night-bright .ace_stack {
+  background: rgb(66, 90, 44)
+}
+
+.ace-jsoneditor .ace_marker-layer .ace_active-line {
+  background: #393939
+}
+
+.ace-jsoneditor .ace_gutter-active-line {
+  background-color: #393939
+}
+
+.ace-jsoneditor .ace_marker-layer .ace_selected-word {
+  border: 1px solid #515151
+}
+
+.ace-jsoneditor .ace_invisible {
+  color: #6A6A6A
+}
+
+.ace-jsoneditor .ace_keyword,
+.ace-jsoneditor .ace_meta,
+.ace-jsoneditor .ace_storage,
+.ace-jsoneditor .ace_storage.ace_type,
+.ace-jsoneditor .ace_support.ace_type {
+  color: #CC99CC
+}
+
+.ace-jsoneditor .ace_keyword.ace_operator {
+  color: #66CCCC
+}
+
+.ace-jsoneditor .ace_constant.ace_character,
+.ace-jsoneditor .ace_constant.ace_language,
+.ace-jsoneditor .ace_constant.ace_numeric,
+.ace-jsoneditor .ace_keyword.ace_other.ace_unit,
+.ace-jsoneditor .ace_support.ace_constant,
+.ace-jsoneditor .ace_variable.ace_parameter {
+  color: #F99157
+}
+
+.ace-jsoneditor .ace_invalid {
+  color: #CDCDCD;
+  background-color: #F2777A
+}
+
+.ace-jsoneditor .ace_invalid.ace_deprecated {
+  color: #CDCDCD;
+  background-color: #CC99CC
+}
+
+.ace-jsoneditor .ace_fold {
+  background-color: #6699CC;
+  border-color: #CCCCCC
+}
+
+.ace-jsoneditor .ace_entity.ace_name.ace_function,
+.ace-jsoneditor .ace_support.ace_function,
+.ace-jsoneditor .ace_variable {
+  color: #6699CC
+}
+
+.ace-jsoneditor .ace_support.ace_class,
+.ace-jsoneditor .ace_support.ace_type {
+  color: #FFCC66
+}
+
+.ace-jsoneditor .ace_heading,
+.ace-jsoneditor .ace_markup.ace_heading,
+.ace-jsoneditor .ace_string {
+  color: #99CC99
+}
+
+.ace-jsoneditor .ace_comment {
+  color: #999999
+}
+
+.ace-jsoneditor .ace_entity.ace_name.ace_tag,
+.ace-jsoneditor .ace_entity.ace_other.ace_attribute-name,
+.ace-jsoneditor .ace_meta.ace_tag,
+.ace-jsoneditor .ace_variable {
+  color: #F2777A
+}
+
+.ace-jsoneditor .ace_indent-guide {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWPQ09NrYAgMjP4PAAtGAwchHMyAAAAAAElFTkSuQmCC) right repeat-y
+}

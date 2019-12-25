@@ -1,11 +1,14 @@
 <template>
   <div class="json_form">
-    <div class="json_form_url">
-      <div class="json_form_url_inner">{{url || 'http://capi.zhaopin.com/capi/resume/GetUserInfoInfoIndexPage?at=284bda19c75145959328230b20620a00&rt=3a243f2e191646b4bdb2979c7008532f'}}</div>
-      <copy style="position: absolute; right: 20px; top: 5px;"
-            :data="url"
-            bg-color="rgb(40, 41, 38)"></copy>
-    </div>
+    <transition name="fade">
+      <div class="json_form_url"
+           v-if="url">
+        <div class="json_form_url_inner">{{url}}</div>
+        <copy style="position: absolute; right: 20px; top: 5px;"
+              :data="url"
+              bg-color="rgb(40, 41, 38)"></copy>
+      </div>
+    </transition>
     <div class="json_form_item"
          v-for="(item, index) in params"
          :key="index"
@@ -86,7 +89,7 @@
       },
       url: {
         type: String,
-        default: 'http://capi.zhaopin.com/capi/resume/GetUserInfoInfoIndexPage?at=284bda19c75145959328230b20620a00&rt=3a243f2e191646b4bdb2979c7008532f'
+        default: ''
       }
     },
     data () {

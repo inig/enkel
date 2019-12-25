@@ -27,6 +27,7 @@
 </script>
 
 <style lang="less">
+  @import url("/static/css/ace/themes/theme-tomorrow-night.css");
   /* CSS */
   * {
     margin: 0;
@@ -359,5 +360,15 @@
   }
   .ivu-tooltip-rel {
     height: 100%;
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
   }
+
+  // .custom_json_editor {
+  //   .jsoneditor-menu {
+  //     display: none !important;
+  //   }
+  // }
 </style>

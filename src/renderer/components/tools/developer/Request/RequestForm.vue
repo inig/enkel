@@ -29,7 +29,7 @@
                     :url="currentRequest.url"></JsonForm>
         </TabPane>
         <TabPane label="Body">
-          <RequestBody v-model="formatedHeaders"></RequestBody>
+          <RequestBody v-model="currentRequest.body"></RequestBody>
         </TabPane>
         <TabPane label="Header">
           <JsonForm v-model="formatedHeaders"></JsonForm>
@@ -107,8 +107,15 @@
     mounted () {
       // alert(this.currentRequest.url)
       // this.formatedParams = this.formatParams(this.currentRequest.url)
+      // global.eventHub.$on('request-modified', this.requestModified)
+      ipcRenderer.on('request-modified', this.requestModified)
     },
     methods: {
+      requestModified (event, request) {
+        if (request.id === this.currentRequest.id) {
+          this.currentRequest = JSON.parse(JSON.stringify(request))
+        }
+      },
       formatParams (str) {
         if (!str || !str.trim() || (str.indexOf('?') < 0)) {
           return []
@@ -153,7 +160,8 @@
       request () {
         ipcRenderer.send('request', {
           method: this.currentRequest.method,
-          url: this.currentRequest.url
+          url: this.currentRequest.url,
+          data: this.currentRequest.body || {}
         })
       }
     },
@@ -161,8 +169,10 @@
       activeRequest: {
         immediate: true,
         handler (val) {
-          this.currentRequest = JSON.parse(JSON.stringify(val))
-          this.formatedParams = this.formatParams(this.currentRequest.url)
+          if (val.url) {
+            this.currentRequest = JSON.parse(JSON.stringify(val))
+            this.formatedParams = this.formatParams(this.currentRequest.url)
+          }
         }
       },
       'currentRequest.url': {

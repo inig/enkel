@@ -172,6 +172,11 @@ ipcMain.on('modify-requests', (event, args) => {
       id: getUUID()
     }, args.request)
   }
+  BrowserWindow.getAllWindows().forEach(item => {
+    if (['request'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
+      event.reply('request-modified', args.request)
+    }
+  })
   event.returnValue = modifyRequest(event, args)
 })
 ipcMain.on('set-requests-folder', (event, args) => {
@@ -200,7 +205,6 @@ ipcMain.on('move-request-out-from-dir', (event, args) => {
   if (args.request.id && args.dir.id) {
     let index = findRequestIndex(args.request.id, requests)
     let dirIndex = findRequestIndex(args.dir.id, requests)
-    console.log(index, dirIndex)
     if (index[0] !== -1 && index[1] !== -1 && dirIndex[0] !== -1) {
       requests.push(args.request)
       requests[dirIndex[0]].children.splice(index[1], 1)

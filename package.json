@@ -71,6 +71,7 @@
     "electron-find": "^1.0.6",
     "electron-updater": "^4.2.0",
     "extract-zip": "^1.6.7",
+    "jsoneditor": "^8.1.0",
     "lowdb": "^1.0.0",
     "puppeteer": "^2.0.0",
     "qrcode": "^1.4.4",

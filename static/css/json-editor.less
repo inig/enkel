@@ -1,0 +1,300 @@
+.json_editor {
+  &.dark {
+    .jsoneditor {
+      border: none !important;
+    }
+    .ace-jsoneditor .ace_gutter {
+      background: #272727;
+    }
+    .ace-jsoneditor .ace_scroller {
+      background-color: #222 !important;
+    }
+    .jsoneditor-statusbar {
+      background-color: #222 !important;
+      border-top: 1px solid #000 !important;
+      padding: 0 5px !important;
+    }
+    .ace-jsoneditor .ace_constant.ace_other,
+    .ace-jsoneditor .ace_cursor {
+      border-color: #ccc !important;
+    }
+
+    .jsoneditor-statusbar > .jsoneditor-parse-error-icon {
+      margin-right: 30px !important;
+    }
+
+    /**
+     * 第三方
+     */
+
+    .ace-jsoneditor .ace_gutter {
+      color: #CCC
+    }
+
+    .ace-jsoneditor .ace_print-margin {
+      width: 1px;
+      background: #272727
+    }
+
+    .ace-jsoneditor {
+      background-color: #2D2D2D;
+      color: #CCCCCC
+    }
+
+    .ace-jsoneditor .ace_constant.ace_other,
+    .ace-jsoneditor .ace_cursor {
+      color: #C8C8C8;
+    }
+
+    .ace-jsoneditor .ace_marker-layer .ace_selection {
+      background: #515151
+    }
+
+    .ace-jsoneditor.ace_multiselect .ace_selection.ace_start {
+      box-shadow: 0 0 3px 0px #2D2D2D;
+    }
+
+    .ace-jsoneditor .ace_marker-layer .ace_step {
+      background: rgb(102, 82, 0)
+    }
+
+    .ace-jsoneditor .ace_marker-layer .ace_bracket {
+      margin: -1px 0 0 -1px;
+      border: 1px solid #6A6A6A
+    }
+
+    .ace-tomorrow-night-bright .ace_stack {
+      background: rgb(66, 90, 44)
+    }
+
+    .ace-jsoneditor .ace_marker-layer .ace_active-line {
+      background: #393939
+    }
+
+    .ace-jsoneditor .ace_gutter-active-line {
+      background-color: #393939
+    }
+
+    .ace-jsoneditor .ace_marker-layer .ace_selected-word {
+      border: 1px solid #515151
+    }
+
+    .ace-jsoneditor .ace_invisible {
+      color: #6A6A6A
+    }
+
+    .ace-jsoneditor .ace_keyword,
+    .ace-jsoneditor .ace_meta,
+    .ace-jsoneditor .ace_storage,
+    .ace-jsoneditor .ace_storage.ace_type,
+    .ace-jsoneditor .ace_support.ace_type {
+      color: #CC99CC
+    }
+
+    .ace-jsoneditor .ace_keyword.ace_operator {
+      color: #66CCCC
+    }
+
+    .ace-jsoneditor .ace_constant.ace_character,
+    .ace-jsoneditor .ace_constant.ace_language,
+    .ace-jsoneditor .ace_constant.ace_numeric,
+    .ace-jsoneditor .ace_keyword.ace_other.ace_unit,
+    .ace-jsoneditor .ace_support.ace_constant,
+    .ace-jsoneditor .ace_variable.ace_parameter {
+      color: #F99157
+    }
+
+    .ace-jsoneditor .ace_invalid {
+      color: #CDCDCD;
+      background-color: #F2777A
+    }
+
+    .ace-jsoneditor .ace_invalid.ace_deprecated {
+      color: #CDCDCD;
+      background-color: #CC99CC
+    }
+
+    .ace-jsoneditor .ace_fold {
+      background-color: #6699CC;
+      border-color: #CCCCCC
+    }
+
+    .ace-jsoneditor .ace_entity.ace_name.ace_function,
+    .ace-jsoneditor .ace_support.ace_function,
+    .ace-jsoneditor .ace_variable {
+      color: #6699CC
+    }
+
+    .ace-jsoneditor .ace_support.ace_class,
+    .ace-jsoneditor .ace_support.ace_type {
+      color: #FFCC66
+    }
+
+    .ace-jsoneditor .ace_heading,
+    .ace-jsoneditor .ace_markup.ace_heading,
+    .ace-jsoneditor .ace_string {
+      color: #99CC99
+    }
+
+    .ace-jsoneditor .ace_comment {
+      color: #999999
+    }
+
+    .ace-jsoneditor .ace_entity.ace_name.ace_tag,
+    .ace-jsoneditor .ace_entity.ace_other.ace_attribute-name,
+    .ace-jsoneditor .ace_meta.ace_tag,
+    .ace-jsoneditor .ace_variable {
+      color: #F2777A
+    }
+
+    .ace-jsoneditor .ace_indent-guide {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWPQ09NrYAgMjP4PAAtGAwchHMyAAAAAAElFTkSuQmCC) right repeat-y
+    }
+  }
+  &.light {
+    .jsoneditor {
+      border: none !important;
+    }
+    .ace-jsoneditor .ace_gutter {
+      background: #f5f5f5;
+    }
+    .ace-jsoneditor .ace_scroller {
+      background-color: #fff !important;
+    }
+    .jsoneditor-statusbar {
+      background-color: #f5f5f5 !important;
+      border-top: 1px solid #fff !important;
+      padding: 0 5px !important;
+    }
+    .ace-jsoneditor .ace_constant.ace_other,
+    .ace-jsoneditor .ace_cursor {
+      border-color: #888 !important;
+    }
+    .jsoneditor-statusbar > .jsoneditor-parse-error-icon {
+      margin-right: 30px !important;
+    }
+    .ace-jsoneditor .ace_marker-layer .ace_active-line {
+      background: #eee;
+    }
+    .ace-jsoneditor .ace_gutter-active-line {
+      background-color: #eee;
+    }
+    .ace-jsoneditor .ace_marker-layer .ace_selection {
+      background: #ddd !important;
+    }
+    .ace-jsoneditor .ace_indent-guide {
+      opacity: 0.2;
+    }
+    .ace-jsoneditor .ace_marker-layer .ace_bracket {
+      border: 1px solid #aaa !important;
+    }
+    .ace-jsoneditor .ace_marker-layer .ace_selected-word {
+      border: none;
+      border-radius: 0;
+    }
+
+    /**
+     * 第三方 light
+     */
+     .ace-jsoneditor .ace_gutter {
+      background: #e8e8e8;
+      color: #333
+    }
+    
+    .ace-jsoneditor .ace_print-margin {
+      width: 1px;
+      background: #e8e8e8
+    }
+    
+    .ace-jsoneditor {
+      background-color: #FFFFFF;
+      color: #000000
+    }
+    
+    .ace-jsoneditor .ace_cursor {
+      color: #000000
+    }
+    
+    .ace-jsoneditor .ace_marker-layer .ace_selection {
+      background: #B5D5FF
+    }
+    
+    .ace-jsoneditor.ace_multiselect .ace_selection.ace_start {
+      box-shadow: 0 0 3px 0px #FFFFFF;
+    }
+    
+    .ace-jsoneditor .ace_marker-layer .ace_step {
+      background: rgb(198, 219, 174)
+    }
+    
+    .ace-jsoneditor .ace_marker-layer .ace_bracket {
+      margin: -1px 0 0 -1px;
+      border: 1px solid #BFBFBF
+    }
+    
+    .ace-jsoneditor .ace_marker-layer .ace_active-line {
+      background: rgba(0, 0, 0, 0.071)
+    }
+    
+    .ace-jsoneditor .ace_gutter-active-line {
+      background-color: rgba(0, 0, 0, 0.071)
+    }
+    
+    .ace-jsoneditor .ace_marker-layer .ace_selected-word {
+      border: 1px solid #B5D5FF
+    }
+    
+    .ace-jsoneditor .ace_constant.ace_language,
+    .ace-jsoneditor .ace_keyword,
+    .ace-jsoneditor .ace_meta,
+    .ace-jsoneditor .ace_variable.ace_language {
+      color: #C800A4
+    }
+    
+    .ace-jsoneditor .ace_invisible {
+      color: #BFBFBF
+    }
+    
+    .ace-jsoneditor .ace_constant.ace_character,
+    .ace-jsoneditor .ace_constant.ace_other {
+      color: #275A5E
+    }
+    
+    .ace-jsoneditor .ace_constant.ace_numeric {
+      color: #3A00DC
+    }
+    
+    .ace-jsoneditor .ace_entity.ace_other.ace_attribute-name,
+    .ace-jsoneditor .ace_support.ace_constant,
+    .ace-jsoneditor .ace_support.ace_function {
+      color: #450084
+    }
+    
+    .ace-jsoneditor .ace_fold {
+      background-color: #C800A4;
+      border-color: #000000
+    }
+    
+    .ace-jsoneditor .ace_entity.ace_name.ace_tag,
+    .ace-jsoneditor .ace_support.ace_class,
+    .ace-jsoneditor .ace_support.ace_type {
+      color: #790EAD
+    }
+    
+    .ace-jsoneditor .ace_storage {
+      color: #C900A4
+    }
+    
+    .ace-jsoneditor .ace_string {
+      color: #DF0002
+    }
+    
+    .ace-jsoneditor .ace_comment {
+      color: #008E00
+    }
+    
+    .ace-jsoneditor .ace_indent-guide {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==) right repeat-y
+    }
+  }
+}
