@@ -239,6 +239,9 @@
           // 下载完成
           // 去安装
           this.downloadProgress = 100
+          ipcRenderer.send('install', {
+            version: data.version
+          })
         }
       },
       removeDownloadInfo () {

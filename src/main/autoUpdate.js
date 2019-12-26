@@ -112,9 +112,9 @@ function resetDownloadInfo () {
 ipcMain.on('get-upgrade-status', (event) => {
   let downloadedStatus = getDownloadedStatus()
   if (downloadedStatus) {
-    showInstallTip({
-      version: getDownloadingVersion()
-    })
+    // showInstallTip({
+    //   version: getDownloadingVersion()
+    // })
     boardcastUpdateInfo({
       type: 'upgrade-response',
       data: {

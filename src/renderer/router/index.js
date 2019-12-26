@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import { developRouter } from './routes'
+import { developRouter, mediaRouter } from './routes'
 
 Vue.use(Router)
 
@@ -57,6 +57,7 @@ export default new Router({
       component: require('@/components/pages/QrcodeResult').default
     },
     ...developRouter.routes,
+    ...mediaRouter.routes,
     {
       path: '*',
       redirect: '/'

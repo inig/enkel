@@ -95,7 +95,7 @@ function initMenu () {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-initMenu()
+// initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -159,6 +159,7 @@ function createWindow () {
 }
 
 function createNewWindow (arg) {
+  console.log('=========', (arg.resources && arg.resources.js && (arg.resources.js.length > 0)) ? path.join(__dirname, `../renderer/assets/preload/js/${arg.resources.js[0]}`) : '')
   let newWindow = new BrowserWindow({
     height: 563,
     useContentSize: true,
@@ -170,13 +171,34 @@ function createNewWindow (arg) {
       plugins: true,
       nodeIntegration: true, // 是否集成 Nodejs
       webSecurity: false,
+      // preload: (arg.resources && arg.resources.js && (arg.resources.js.length > 0)) ? path.join(__dirname, `../renderer/assets/preload/js/${arg.resources.js[0]}`) : ''
       // preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
     }
   })
+
   const url = process.env.NODE_ENV === 'development'
     ? `http://localhost:9080/#/${arg.path}`
     : `file://${__dirname}/index.html?page=${arg.path}`
   newWindow.loadURL(url)
+
+  // if (arg.resources) {
+  //   let webContents = newWindow.webContents
+  //   webContents.executeJavaScript(`var dynamicLoading={css:function(path){if(!path||path.length===0){throw new Error('argument "path" is required !')}var head=document.getElementsByTagName("head")[0];var link=document.createElement("link");link.href=path;link.rel="stylesheet";link.type="text/css";head.appendChild(link)},js:function(path){if(!path||path.length===0){throw new Error('argument "path" is required !')}var head=document.getElementsByTagName("head")[0];var script=document.createElement("script");script.src=path;script.type="text/javascript";head.appendChild(script)}};`)
+  //   if (arg.resources.css && arg.resources.css.length > 0) {
+  //     let j = 0
+  //     for (j; j < arg.resources.css.length; j++) {
+  //       webContents.executeJavaScript(`dynamicLoading.css("${arg.resources.css[j]}")`, true)
+  //     }
+  //   }
+  //   if (arg.resources.js && arg.resources.js.length > 0) {
+  //     let i = 0
+  //     for (i; i < arg.resources.js.length; i++) {
+  //       webContents.executeJavaScript(`dynamicLoading.js("${arg.resources.js[i]}")`, true)
+  //     }
+  //   }
+  // }
+
+
 
   newWindow.on('closed', () => {
     // newWindow = null
