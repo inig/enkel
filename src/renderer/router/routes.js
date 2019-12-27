@@ -103,8 +103,9 @@ export const mediaRouter = {
         createTime: '1577350336459',
         hot: false,
         closable: false,
+        withoutHeader: true,
         resources: {
-          js: ['http://vjs.zencdn.net/5.19/video.min.js'],
+          js: ['http://vjs.zencdn.net/5.19/video.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.15.0/videojs-contrib-hls.min.js'],
           css: ['http://vjs.zencdn.net/5.19/video-js.min.css']
         }
       },

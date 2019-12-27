@@ -1,7 +1,8 @@
 <template>
   <div id="app">
     <AppHeader v-if="(!$route.meta || (!$route.meta.withoutHeader))"></AppHeader>
-    <router-view :style="{height: ($route.name !== 'menu' && ($route.name !== 'modal-loading')) ? 'calc(100% - 48px)' : '100%'}"></router-view>
+    <router-view :style="containerHeight"></router-view>
+    <!-- <router-view :style="{height: ($route.name !== 'menu' && ($route.name !== 'modal-loading')) ? 'calc(100% - 48px)' : '100%'}"></router-view> -->
     <all-svgs></all-svgs>
     <!-- <UpdateProgress></UpdateProgress> -->
   </div>
@@ -21,6 +22,19 @@
         this.$router.replace({
           name: pathName
         })
+      }
+    },
+    computed: {
+      containerHeight () {
+        if (this.$route.meta && this.$route.meta.withoutHeader) {
+          return {
+            height: '100%'
+          }
+        } else {
+          return {
+            height: 'calc(100% - 48px)'
+          }
+        }
       }
     }
   }

@@ -11,6 +11,7 @@ require('./npm')
 const { showSettingsWindow, createSettingsWindow } = require('./settings')
 const { showAboutWindow } = require('./about')
 require('./autoUpdate')
+require('./video')
 // const { checkUpdate } = require('./autoUpdate')
 // console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
 // if (!fs.existsSync(app.getAppPath() + path.sep + 'db.json')) {
@@ -159,7 +160,6 @@ function createWindow () {
 }
 
 function createNewWindow (arg) {
-  console.log('=========', (arg.resources && arg.resources.js && (arg.resources.js.length > 0)) ? path.join(__dirname, `../renderer/assets/preload/js/${arg.resources.js[0]}`) : '')
   let newWindow = new BrowserWindow({
     height: 563,
     useContentSize: true,
