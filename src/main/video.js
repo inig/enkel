@@ -17,11 +17,13 @@ ipcMain.on('get-play-list', (event, data) => {
   let groupTitle = ''
   let title = ''
   let url = ''
+  let type = ''
   for (i; i < list.length; i++) {
     if (list[i].trim() && (list[i].indexOf('#EXTINF:') === 0)) {
       groupTitle = list[i].replace(/^(.*)(group\-title\=)([^,]*)(,.*)$/, '$3')
       title = list[i].replace(/^(.*)(title\=)([^,]*)(,.*)$/, '$3')
       url = list[i].replace(/^(.*)(url\=)([^,]*)(,?.*)$/, '$3')
+      type = list[i].replace(/^(.*)(type\=)([^,]*)(,?.*)$/, '$3')
       if (!indexMap.hasOwnProperty(groupTitle)) {
         outList.push({
           label: groupTitle,
@@ -29,7 +31,7 @@ ipcMain.on('get-play-list', (event, data) => {
             {
               label: title,
               url: url,
-              type: 'application/x-mpegURL'
+              type: type
             }
           ]
         })
