@@ -40,7 +40,7 @@ ipcMain.on('get-play-list', (event, data) => {
         outList[indexMap[groupTitle]].children.push({
           label: title,
           url: url,
-          type: 'application/x-mpegURL'
+          type: type
         })
       }
     }

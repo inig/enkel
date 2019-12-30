@@ -104,10 +104,14 @@ export const mediaRouter = {
         hot: false,
         closable: false,
         withoutHeader: true,
-        resources: {
-          js: ['http://vjs.zencdn.net/5.19/video.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.15.0/videojs-contrib-hls.min.js'],
-          css: ['http://vjs.zencdn.net/5.19/video-js.min.css']
-        }
+        // resources: {
+        //   js: ['http://vjs.zencdn.net/7.7.4/video.min.js', 'https://cdn.jsdelivr.net/npm/videojs-flash@2/dist/videojs-flash.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.15.0/videojs-contrib-hls.min.js'],
+        //   css: ['http://vjs.zencdn.net/7.7.4/video-js.min.css']
+        // }
+        // resources: {
+        //   js: ['http://vjs.zencdn.net/5.19/video.min.js', 'https://cdn.jsdelivr.net/npm/videojs-flash@2/dist/videojs-flash.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.15.0/videojs-contrib-hls.min.js'],
+        //   css: ['http://vjs.zencdn.net/5.19/video-js.min.css']
+        // }
       },
       component: require('@/components/tools/media/Video/index').default
     }
