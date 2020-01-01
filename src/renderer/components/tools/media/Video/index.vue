@@ -1,40 +1,69 @@
 <template>
   <div class="media_video">
-    <div id="videoBox"
-         style="width: 100%; height: 100%;">
-      <video class="video-js vjs-big-play-centered"
-             controls
-             preload="auto"
-             id="my-player"
-             data-setup='{}'
-             style="width: 100%; height: 100%;">
-        <source id="source"
-                :src="activeSource.url"
-                :type="activeSource.type">
-        </source>
-      </video>
-    </div>
-    <div class="playlist_container"
-         :class="[playlistShown ? 'shown' : 'hidden']"
-         @click.stop="hidePlaylist">
-      <div class="playlist_inner">
-        <div class="playlist_header"></div>
-        <div class="playlist_wrapper">
-          <div class="playlist_item_group"
-               v-for="(group, index) in playlist"
-               :key="index">
-            <p class="playlist_item_group_label">{{group.label}}</p>
-            <div class="playlist_item"
-                 v-for="(item, idx) in group.children"
-                 :key="idx"
-                 :class="[(activePlaylist[0] === index) && (activePlaylist[1] === idx) ? 'active' : '']"
-                 @click.stop="play(index, idx)">
-              <p class="playlist_item_label">{{item.label}}</p>
+    <transition name="fade">
+      <div id="videoBox"
+           style="width: 100%; height: 100%;"
+           v-if="canPlay">
+        <video class="video-js vjs-big-play-centered"
+               controls
+               preload="auto"
+               id="my-player"
+               data-setup='{}'
+               style="width: 100%; height: 100%;">
+          <source id="source"
+                  :src="activeSource.url"
+                  :type="activeSource.type">
+          </source>
+        </video>
+      </div>
+    </transition>
+
+    <transition name="fade">
+      <div class="playlist_container"
+           :class="[playlistShown ? 'shown' : 'hidden']"
+           @click.stop="hidePlaylist"
+           v-if="canPlay">
+        <div class="playlist_inner">
+          <div class="playlist_header"></div>
+          <div class="playlist_wrapper">
+            <div class="playlist_item_group"
+                 v-for="(group, index) in playlist"
+                 :key="index">
+              <p class="playlist_item_group_label"
+                 :class="[(activePlaylist[0] === index) ? 'active' : '']">{{group.label}}</p>
+              <div class="playlist_item"
+                   v-for="(item, idx) in group.children"
+                   :key="idx"
+                   :class="[(activePlaylist[0] === index) && (activePlaylist[1] === idx) ? 'active' : '']"
+                   @click.stop="play(index, idx)">
+                <p class="playlist_item_label">{{item.label}}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </transition>
+
+    <transition name="fade">
+      <div class="player_code_container"
+           v-if="!canPlay">
+        <div class="player_code_box">
+          <div class="player_code_box_img">
+            <img src="~@/assets/logo.png"
+                 alt="Enkel">
+          </div>
+          <Input placeholder="xxxxxxxx-xxxxxxxx-xxxxxxxx"
+                 type="text"
+                 class="custom_input"
+                 style="width: 250px; border: 1px solid #333; border-radius: 3px;"
+                 autofocus
+                 clearable
+                 v-model="code" />
+          <Button type="primary"
+                  @click="goPlay">进入播放</Button>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -57,7 +86,9 @@ export default {
       player: null,
       playlist: [],
       activePlaylist: [4, 2],
-      playlistShown: true
+      playlistShown: true,
+      canPlay: false,
+      code: ''
     }
   },
   computed: {
@@ -102,6 +133,15 @@ export default {
 
     })
   },
+  beforeRouteEnter (to, from, next) {
+    let code = ipcRenderer.sendSync('init-code')
+    next(vm => {
+      if (code) {
+        vm.code = code
+        vm.goPlay()
+      }
+    })
+  },
   beforeDestroy () {
     if (this.player) {
       this.player.dispose()
@@ -128,6 +168,10 @@ export default {
         // poster: 'http://www.ttkzm.com/uploadfile/201912/15/E213231985.jpg'
       }
 
+      if (!this.canPlay) {
+        return
+      }
+
       this.player = videojs('my-player')
       if (this.player) {
         this.player.pause()
@@ -149,12 +193,32 @@ export default {
       </video>`
       videoBox.innerHTML = videoStr
 
+      const that = this
+
       this.player = videojs('my-player', options, function onPlayerReady () {
+        document.querySelector('.vjs-picture-in-picture-control').style.display = 'none'
+        let playlistEle = document.createElement('div')
+        playlistEle.style.width = '40px'
+        playlistEle.style.height = '30px'
+        playlistEle.style.cursor = 'pointer'
+        playlistEle.style.display = 'flex'
+        playlistEle.style.flexDirection = 'row'
+        playlistEle.style.alignItems = 'center'
+        playlistEle.style.justifyContent = 'center'
+        playlistEle.setAttribute('title', '播放列表')
+        playlistEle.onclick = () => {
+          that.togglePlaylist()
+        }
+        let playlistImgEle = document.createElement('img')
+        playlistImgEle.setAttribute('src', '/static/img/playlist.png')
+        playlistImgEle.style.width = '18px'
+        playlistImgEle.style.height = '18px'
+        playlistEle.appendChild(playlistImgEle)
+        let volumeEle = document.querySelector('.vjs-volume-panel')
+        volumeEle.parentNode.insertBefore(playlistEle, volumeEle)
+
         videojs.log('Your player is ready!')
 
-        console.log('>>>>>>>', this)
-
-        // In this context, `this` is the player that was created by Video.js.
         this.play()
 
         // How about an event listener?
@@ -163,7 +227,7 @@ export default {
         })
         this.on('error', function () {//请求数据时遇到错误
           console.log("请求数据时遇到错误")
-          // this.pause()
+          this.pause()
         })
 
         // this.on('pause', () => {
@@ -206,6 +270,27 @@ export default {
     },
     togglePlaylist () {
       this.playlistShown = !this.playlistShown
+    },
+    goPlay () {
+      let res = ipcRenderer.sendSync('verify-code', {
+        code: this.code
+      })
+      if (res.status !== 200 || !res.data || (this.code !== res.data.code)) {
+        this.$Notice.error({
+          desc: res.message || 'Code不正确'
+        })
+      } else {
+        this.canPlay = true
+      }
+    }
+  },
+  watch: {
+    canPlay (val) {
+      if (val) {
+        setTimeout(() => {
+          this.initPlayer()
+        }, 300)
+      }
     }
   }
 }
@@ -273,6 +358,9 @@ export default {
             font-size: 15px;
             font-weight: bolder;
             color: #c8c8c8;
+            &.active {
+              color: #99ff00;
+            }
           }
           .playlist_item {
             padding-left: 15px;
@@ -348,17 +436,42 @@ export default {
     margin-top: -1em;
     margin-left: -1.5em;
   }
-}
 
-// .vjs-my-fancy-modal {
-//   position: absolute;
-//   width: 300px;
-//   height: 200px;
-//   left: 0;
-//   top: 0;
-//   right: 0;
-//   bottom: 0;
-//   margin: auto;
-//   background: red;
-// }
+  .player_code_container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 98;
+    left: 0;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    .player_code_box {
+      width: 300px;
+      height: 200px;
+      background-color: rgba(0, 0, 0, 1);
+      box-shadow: 0 0 20px 1px #222;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-around;
+      .player_code_box_img {
+        width: 100%;
+        // height: 80px;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: center;
+        img {
+          width: 56px;
+          height: 56px;
+        }
+      }
+    }
+  }
+}
 </style>

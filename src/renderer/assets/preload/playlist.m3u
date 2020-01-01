@@ -143,23 +143,6 @@
 #EXTINF:0,group-title=Enkel,title=Newtv欢笑剧场,url=http://huaweicdn.hb.chinamobile.com/PLTV/88888888/224/3221225776/3.m3u8,type=application/x-mpegURL
 #EXTINF:0,group-title=Enkel,title=Newtv都市剧场,url=http://huaweicdn.hb.chinamobile.com/PLTV/88888888/224/3221225754/3.m3u8,type=application/x-mpegURL
 
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-2财经,url=http://112.50.243.10/PLTV/88888888/224/3221225800/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-3综艺,url=http://183.207.249.14/PLTV/3/224/3221225588/index.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-4中文国际,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-4-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-#EXTINF:-1,group-title=BY,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
-
 #EXTINF:-1,group-title=BY,title=CIETV,url=http://hlsmgzblive.miguvideo.com:8080/envivo_v/2018/SD/cctv/alabo/350/index.m3u8?msisdn=F5A2FB819E7F2A18F52F2B7E0BD6D3FE&mdspid=&spid=699004&netType=0&sid=2200179303&pid=2028597139&timestamp=20191229004206&Channel_ID=H5_&ProgramID=609154345&ParentNodeID=-99&assertID=2200179303&client_ip=43.226.43.2&SecurityKey=20191229004206&promotionId=&mvid=&mcid=&mpid=&playurlVersion=SJ-H1-0.0.3&userid=&jmhm=&videocodec=h264&encrypt=8ba837f152d383d199e3f14d69cb352f,type=application/x-mpegURL
 #EXTINF:-1,group-title=BY,title=CCTV-1高清,url=http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8,type=application/x-mpegURL
 #EXTINF:-1,group-title=BY,title=CCTV-3高清,url=http://ivi.bupt.edu.cn/hls/cctv3hd.m3u8,type=application/x-mpegURL
