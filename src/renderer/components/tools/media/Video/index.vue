@@ -210,7 +210,7 @@ export default {
           that.togglePlaylist()
         }
         let playlistImgEle = document.createElement('img')
-        playlistImgEle.setAttribute('src', '/static/img/playlist.png')
+        playlistImgEle.setAttribute('src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABuklEQVR4Xu1aoU4FMRCcsWgClp94YEHyLUgUCr4Ai+MH+AUSSLAYwgdgSTDgcEsuORLE5WWbtnsbOqe3nensdK/dO2Lwh4OvHxJADhhcAW2BwQ2gIqgtULIFzOwAwIbkXcm4zLFFDjCzNwCTCPcALkg+Z16ch5tbADM7BvDwZ9KvWYQbD1DWmBoBftd0C+CM5HfWRW7j1UKAaf7XWYSnbWBmdgngEMBOJ7E+AbyQvPLO30qAX7xzktdL4Ga2C+DDS6wybo+kC6u1ABPvRfCFGlK5xq3DT0g+egAkgEelKcaZwWG3gLcITsVp89+K4LCvweEOQvsA3ueaMd5ReC6EpwCOSg4a3iK7Vpz7NbgWwd64EqC3wtnnlwOyZ6g3PzmgROGA+3wJnaXYrv2AyPt8rRCr9gNqybcYv2o/oMUCaufoIsDYW2C+C/S+z9dmvl8RrGWWdbzOAVkzE8VLDohSOiuOHJA1M1G85IAopbPiyAElmVE/IO77fklelmLVD1jz/4Da7LUYr35A819k1A9oYcyEc+gckDApoZTkgFC5E4LJAQmTEkpJDgiVOyGYHJAwKaGU5IBQuROC/QCYYaxB0em3QwAAAABJRU5ErkJggg==')
         playlistImgEle.style.width = '18px'
         playlistImgEle.style.height = '18px'
         playlistEle.appendChild(playlistImgEle)
