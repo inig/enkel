@@ -1,5 +1,6 @@
 <template>
   <div class="media_video">
+
     <transition name="fade">
       <div id="videoBox"
            style="width: 100%; height: 100%;"
@@ -15,6 +16,7 @@
                   :type="activeSource.type">
           </source>
         </video>
+
       </div>
     </transition>
 
@@ -64,6 +66,18 @@
         </div>
       </div>
     </transition>
+
+    <div class="play_file_container"
+         :class="[playFileShown ? 'shown' : 'hidden']"
+         @click.stop="hidePlayFile">
+      <div class="play_file_inner"
+           @click.stop="noop">
+        <input type="file"
+               class="video_input"
+               style="opacity: 0;"
+               @change="changeVideo" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -86,14 +100,29 @@ export default {
       player: null,
       playlist: [],
       activePlaylist: [4, 2],
-      playlistShown: true,
+      playlistShown: false,
+      playFileShown: true,
       canPlay: false,
-      code: ''
+      code: '',
+      videoFile: null
     }
   },
   computed: {
     activeSource () {
-      if (this.playlist && this.playlist[this.activePlaylist[0]] && this.playlist[this.activePlaylist[0]].children) {
+      if (this.videoFile) {
+        console.log('=======', URL.createObjectURL(this.videoFile))
+        return Object.assign({}, this.videoFile, {
+          url: URL.createObjectURL(this.videoFile),
+          label: this.videoFile.name,
+          lastModified: this.videoFile.lastModified,
+          lastModifiedDate: this.videoFile.lastModifiedDate,
+          name: this.videoFile.name,
+          path: this.videoFile.path,
+          size: this.videoFile.size,
+          type: this.videoFile.type,
+          webkitRelativePath: this.videoFile.webkitRelativePath
+        })
+      } else if (this.playlist && this.playlist[this.activePlaylist[0]] && this.playlist[this.activePlaylist[0]].children) {
         return this.playlist[this.activePlaylist[0]].children[this.activePlaylist[1]]
       } else {
         return {
@@ -148,7 +177,9 @@ export default {
     }
   },
   methods: {
+    noop () { },
     play (groupIndex, childrenIndex) {
+      this.videoFile = null
       this.activePlaylist = [Number(groupIndex), Number(childrenIndex)]
       setTimeout(() => {
         this.initPlayer()
@@ -165,6 +196,7 @@ export default {
         notSupportedMessage: '此视频暂无法播放，请稍后再试',
         preload: 'auto',
         language: 'zh-CN',
+        // muted: true
         // poster: 'http://www.ttkzm.com/uploadfile/201912/15/E213231985.jpg'
       }
 
@@ -174,8 +206,10 @@ export default {
 
       this.player = videojs('my-player')
       if (this.player) {
-        this.player.pause()
-        this.player.dispose()
+        try {
+          this.player.pause()
+          this.player.dispose()
+        } catch (err) { }
       }
 
       let videoBox = document.querySelector('#videoBox')
@@ -197,25 +231,23 @@ export default {
 
       this.player = videojs('my-player', options, function onPlayerReady () {
         document.querySelector('.vjs-picture-in-picture-control').style.display = 'none'
-        let playlistEle = document.createElement('div')
-        playlistEle.style.width = '40px'
-        playlistEle.style.height = '30px'
-        playlistEle.style.cursor = 'pointer'
-        playlistEle.style.display = 'flex'
-        playlistEle.style.flexDirection = 'row'
-        playlistEle.style.alignItems = 'center'
-        playlistEle.style.justifyContent = 'center'
-        playlistEle.setAttribute('title', '播放列表')
-        playlistEle.onclick = () => {
-          that.togglePlaylist()
+        // document.querySelector('.video-js .vjs-tech').style.zIndex = 2
+        document.querySelector('.video-js .vjs-control-bar').style.zIndex = 3
+
+        that.addItemPlaylist()
+        that.addItemPlayFile()
+
+        // http://v.bootstrapmb.com/2019/4/u0d54217
+        // http://v.bootstrapmb.com/2018/12/0twha3250
+        // http://v.bootstrapmb.com/2019/10/5s65c6354
+        // http://v.bootstrapmb.com/2018/11/t36ed2742
+        // http://v.bootstrapmb.com/2019/5/lm53h4838
+        // http://v.bootstrapmb.com/2019/10/x6xcs6480
+        // http://v.bootstrapmb.com/2019/4/lm8y53989
+        // http://v.bootstrapmb.com/2019/3/wxmoy3693
+        if (that.videoFile && that.videoFile.type && !!that.videoFile.type.match(/^audio/)) {
+          that.addMusicBox('http://v.bootstrapmb.com/2019/3/wxmoy3693')
         }
-        let playlistImgEle = document.createElement('img')
-        playlistImgEle.setAttribute('src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABuklEQVR4Xu1aoU4FMRCcsWgClp94YEHyLUgUCr4Ai+MH+AUSSLAYwgdgSTDgcEsuORLE5WWbtnsbOqe3nensdK/dO2Lwh4OvHxJADhhcAW2BwQ2gIqgtULIFzOwAwIbkXcm4zLFFDjCzNwCTCPcALkg+Z16ch5tbADM7BvDwZ9KvWYQbD1DWmBoBftd0C+CM5HfWRW7j1UKAaf7XWYSnbWBmdgngEMBOJ7E+AbyQvPLO30qAX7xzktdL4Ga2C+DDS6wybo+kC6u1ABPvRfCFGlK5xq3DT0g+egAkgEelKcaZwWG3gLcITsVp89+K4LCvweEOQvsA3ueaMd5ReC6EpwCOSg4a3iK7Vpz7NbgWwd64EqC3wtnnlwOyZ6g3PzmgROGA+3wJnaXYrv2AyPt8rRCr9gNqybcYv2o/oMUCaufoIsDYW2C+C/S+z9dmvl8RrGWWdbzOAVkzE8VLDohSOiuOHJA1M1G85IAopbPiyAElmVE/IO77fklelmLVD1jz/4Da7LUYr35A819k1A9oYcyEc+gckDApoZTkgFC5E4LJAQmTEkpJDgiVOyGYHJAwKaGU5IBQuROC/QCYYaxB0em3QwAAAABJRU5ErkJggg==')
-        playlistImgEle.style.width = '18px'
-        playlistImgEle.style.height = '18px'
-        playlistEle.appendChild(playlistImgEle)
-        let volumeEle = document.querySelector('.vjs-volume-panel')
-        volumeEle.parentNode.insertBefore(playlistEle, volumeEle)
 
         videojs.log('Your player is ready!')
 
@@ -271,6 +303,15 @@ export default {
     togglePlaylist () {
       this.playlistShown = !this.playlistShown
     },
+    hidePlayFile () {
+      this.playFileShown = false
+    },
+    showPlayFile () {
+      this.playFileShown = true
+    },
+    togglePlayFile () {
+      this.playFileShown = !this.playFileShown
+    },
     goPlay () {
       let res = ipcRenderer.sendSync('verify-code', {
         code: this.code
@@ -282,7 +323,60 @@ export default {
       } else {
         this.canPlay = true
       }
-    }
+    },
+    addItemPlaylist () {
+      const that = this
+      let playlistEle = document.createElement('div')
+      !playlistEle.classList.contains('video_control_item') && playlistEle.classList.add('video_control_item')
+      playlistEle.setAttribute('title', '播放列表')
+      playlistEle.onclick = () => {
+        that.togglePlaylist()
+      }
+      let playlistImgEle = document.createElement('img')
+      playlistImgEle.setAttribute('src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABuklEQVR4Xu1aoU4FMRCcsWgClp94YEHyLUgUCr4Ai+MH+AUSSLAYwgdgSTDgcEsuORLE5WWbtnsbOqe3nensdK/dO2Lwh4OvHxJADhhcAW2BwQ2gIqgtULIFzOwAwIbkXcm4zLFFDjCzNwCTCPcALkg+Z16ch5tbADM7BvDwZ9KvWYQbD1DWmBoBftd0C+CM5HfWRW7j1UKAaf7XWYSnbWBmdgngEMBOJ7E+AbyQvPLO30qAX7xzktdL4Ga2C+DDS6wybo+kC6u1ABPvRfCFGlK5xq3DT0g+egAkgEelKcaZwWG3gLcITsVp89+K4LCvweEOQvsA3ueaMd5ReC6EpwCOSg4a3iK7Vpz7NbgWwd64EqC3wtnnlwOyZ6g3PzmgROGA+3wJnaXYrv2AyPt8rRCr9gNqybcYv2o/oMUCaufoIsDYW2C+C/S+z9dmvl8RrGWWdbzOAVkzE8VLDohSOiuOHJA1M1G85IAopbPiyAElmVE/IO77fklelmLVD1jz/4Da7LUYr35A819k1A9oYcyEc+gckDApoZTkgFC5E4LJAQmTEkpJDgiVOyGYHJAwKaGU5IBQuROC/QCYYaxB0em3QwAAAABJRU5ErkJggg==')
+      playlistEle.appendChild(playlistImgEle)
+      let volumeEle = document.querySelector('.vjs-volume-panel')
+      volumeEle.parentNode.insertBefore(playlistEle, volumeEle)
+    },
+    addItemPlayFile () {
+      const that = this
+      let playlistEle = document.createElement('div')
+      !playlistEle.classList.contains('video_control_item') && playlistEle.classList.add('video_control_item')
+      playlistEle.setAttribute('title', '播放文件')
+      playlistEle.onclick = () => {
+        that.togglePlayFile()
+      }
+      let playlistImgEle = document.createElement('img')
+      playlistImgEle.setAttribute('src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACt0lEQVR4Xu2bwYoUMRCG/+89FFwQBB9FUPAieFqFPYiwigjiRd1FQUTwoIIuuKBePHjUB/HiyYML+h4lWXtktp3uSk9nunsyyXE6naS+qaqkqtIoopnZI0nXJJ2J6N6rC8D8AGZmkr5JOgDe9hp8wcsnJls0eCX8XuqJm8ZrADDrvg8kXUsMgF+STk0EQFhGUggxAIIKDtYcDUiuCesKIJkmrDOAJBDWHUBvCDkACBD2gP1lHFUuAJaGkBOApSDkBqAzhBwBdIKQK4Do3SFnAAHCReBr2+6QO4AvwKVNBqB6bFGHMXkNWOZw0+WdyQGQdBr43UWIPn2nCCBpvO/BmSKA431c0gfgyBOg7/OpAugr17/3184JJpO8GqgAqGWZJ78NFg1ITKCYQDGBk5Wm4gNqBMo5wPM5VXHS6zbZ58UJFic4jBMMRYl3y4axZhaqzzuSwj2EtvYKuGVm5yRdlvTUs70hTCBZ+GpmIQpsgvAAeDIvsJndkfSiNeU1gAlspQpbzSzcQPm5QKB7wPP672Z2XtL3UQF4Kuap6AKh6vcRbgMvm8bxdilvfb3PAd4EPQHcBN60jZEzgB3g0AOYK4Bt4KMnfHieI4CrwKcY4bMEECv4rF92GlAAdCRQNODvVdrG5m3TUzwHbLYTrFT6OvA+xhqyM4E5gW4ABx6EnAEE2XeB15t6FJ7JfRdoDHlH14CU9fwqMRKu59fbfeDZgsjxrKQfo+4CKe/vOwmRh8DjeWHNbFdSY6gc+q58G6wW1KueXyVCtqt7AW1/6GfgSpUIuSDpvyRJ/eWhAHjOerTnBcAAOcHR/t2YiYsGFA0YpjASo42j9CkmUEygmEBrziMmIRJKVSv/aHpFDuII2GqNFbyJh/542ltPx+du4dbVgDBhBSGUrwf7iLqjoPXu4bb5YcyX5n8A0eH+UJvaI00AAAAASUVORK5CYII=')
+      playlistImgEle.style.width = '14px'
+      playlistImgEle.style.height = '14px'
+      playlistEle.appendChild(playlistImgEle)
+      let volumeEle = document.querySelector('.vjs-volume-panel')
+      volumeEle.parentNode.insertBefore(playlistEle, volumeEle)
+    },
+    addMusicBox (src) {
+      // vjs-tech
+      const that = this
+      let playlistEle = document.createElement('div')
+      !playlistEle.classList.contains('music_container') && playlistEle.classList.add('music_container')
+      let musicBox = document.createElement('iframe')
+      musicBox.src = src || 'http://v.bootstrapmb.com/2019/4/u0d54217/'
+      playlistEle.appendChild(musicBox)
+      let volumeEle = document.querySelector('.vjs-tech')
+      volumeEle.parentNode.insertBefore(playlistEle, volumeEle)
+      // document.querySelector('.video-js').innerHTML += '<div class="music_container"></div>'
+    },
+    changeVideo (event) {
+      if (event.target.files.length > 0) {
+        this.videoFile = event.target.files[0]
+        this.activePlaylist = [-1, -1]
+        setTimeout(() => {
+          this.initPlayer()
+        }, 100)
+        // this.initPlayer()
+        console.log('File: ', event)
+      }
+    },
   },
   watch: {
     canPlay (val) {
@@ -315,6 +409,7 @@ export default {
     transition: left 0.2s ease-in-out;
     width: 100%;
     height: 100%;
+    z-index: 9;
     .playlist_inner {
       position: absolute;
       top: 0;
@@ -472,6 +567,69 @@ export default {
         }
       }
     }
+  }
+
+  .play_file_container {
+    position: absolute;
+    top: 0;
+    transition: left 0.2s ease-in-out;
+    width: 100%;
+    height: 100%;
+    z-index: 9;
+    .play_file_inner {
+      position: absolute;
+      top: 0;
+      width: 200px;
+      height: 100%;
+      padding: 48px 0 15px 0;
+      transition: left 0.25s ease-in-out;
+      box-sizing: border-box;
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+    &.shown {
+      left: 0;
+      transition-delay: 0;
+      .play_file_inner {
+        left: 0;
+        transition-delay: 0.2s;
+      }
+    }
+    &.hidden {
+      left: -5000px;
+      transition-delay: 0.5s;
+      .play_file_inner {
+        left: -300px;
+        transition-delay: 0;
+      }
+    }
+  }
+}
+
+.video_input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  z-index: 999;
+  // pointer-events: none;
+  &:focus {
+    outline: none;
+  }
+}
+
+.music_container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  background-color: #000;
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
   }
 }
 </style>

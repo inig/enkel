@@ -381,9 +381,17 @@ body {
   justify-content: center;
 }
 
-// .custom_json_editor {
-//   .jsoneditor-menu {
-//     display: none !important;
-//   }
-// }
+.video_control_item {
+  width: 40px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  img {
+    width: 18px;
+    height: 18px;
+  }
+}
 </style>
