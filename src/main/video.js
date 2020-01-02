@@ -409,3 +409,10 @@ ipcMain.on('verify-code', async (event, data) => {
     event.returnValue = res.data
   }
 })
+
+// https://www.jianshu.com/p/c0f368fd0388
+ipcMain.on('get-fm-home-list', async (event, data) => {
+  let res = await axios.get('http://yiapi.xinli001.com/fm/home-list.json?key=046b6a2a43dc6ff6e770255f57328f89')
+  console.log('======', res.data)
+  event.returnValue = res.data
+})

@@ -78,6 +78,36 @@
                @change="changeVideo" />
       </div>
     </div>
+
+    <transition name="fade">
+      <div class="fm_container"
+           v-if="fmShown">
+        <div class="fm_header">Enkel电台</div>
+        <div class="fm_content">
+          <div class="recommend_container">
+            <swiper :options="swiperOptionTop"
+                    class="gallery-top"
+                    ref="swiperTop">
+              <swiper-slide v-for="(item, index) in fmData.recommend"
+                            :key="index"
+                            :style="{backgroundImage: 'url(' + item.cover + ')'}"></swiper-slide>
+              <!-- <div class="swiper-button-next swiper-button-white"
+                   slot="button-next"></div>
+              <div class="swiper-button-prev swiper-button-white"
+                   slot="button-prev"></div> -->
+            </swiper>
+            <!-- swiper2 Thumbs -->
+            <!-- <swiper :options="swiperOptionThumbs"
+                    class="gallery-thumbs"
+                    ref="swiperThumbs">
+              <swiper-slide v-for="(item, index) in fmData.recommend"
+                            :key="index"
+                            :style="{backgroundImage: 'url(' + item.cover + ')'}"></swiper-slide>
+            </swiper> -->
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -88,11 +118,13 @@ require('video.js/dist/video-js.min.css')
 import videojs from 'video.js'
 import 'videojs-flash'
 import '@videojs/http-streaming'
-
+import { swiper, swiperSlide } from 'vue-awesome-swiper'
+import 'swiper/dist/css/swiper.css'
 export default {
   name: 'MediaVideo',
   components: {
-    Input, Button
+    Input, Button,
+    swiper, swiperSlide
   },
   data () {
     return {
@@ -101,16 +133,61 @@ export default {
       playlist: [],
       activePlaylist: [4, 2],
       playlistShown: false,
-      playFileShown: true,
+      playFileShown: false,
+      fmShown: true,
       canPlay: false,
       code: '',
-      videoFile: null
+      videoFile: null,
+      fmData: {
+        recommend: [],
+        category: []
+      },
+      // https://swiperjs.com/api/#initialize
+      swiperOptionTop: {
+        // spaceBetween: 10,
+        // loop: true,
+        // loopedSlides: 3, //looped slides should be the same
+        // navigation: {
+        //   nextEl: '.swiper-button-next',
+        //   prevEl: '.swiper-button-prev'
+        // }
+        // loop: true,
+        autoplay: {
+          delay: 5000,
+        },
+        lazy: {
+          loadPrevNext: true,
+        },
+        slideToClickedSlide: true,
+        speed: 500,
+        effect: 'coverflow',
+        grabCursor: true,
+        centeredSlides: true,
+        slidesPerView: 'auto',
+        coverflowEffect: {
+          rotate: 50,
+          stretch: 0,
+          depth: 300,
+          modifier: 3,
+          slideShadows: true
+        },
+        pagination: {
+          el: '.swiper-pagination'
+        }
+      },
+      swiperOptionThumbs: {
+        spaceBetween: 10,
+        slidesPerView: 4,
+        touchRatio: 0.2,
+        loop: true,
+        loopedSlides: 5, //looped slides should be the same
+        slideToClickedSlide: true,
+      }
     }
   },
   computed: {
     activeSource () {
       if (this.videoFile) {
-        console.log('=======', URL.createObjectURL(this.videoFile))
         return Object.assign({}, this.videoFile, {
           url: URL.createObjectURL(this.videoFile),
           label: this.videoFile.name,
@@ -196,7 +273,7 @@ export default {
         notSupportedMessage: '此视频暂无法播放，请稍后再试',
         preload: 'auto',
         language: 'zh-CN',
-        // muted: true
+        muted: true
         // poster: 'http://www.ttkzm.com/uploadfile/201912/15/E213231985.jpg'
       }
 
@@ -236,6 +313,7 @@ export default {
 
         that.addItemPlaylist()
         that.addItemPlayFile()
+        that.addItemFm()
 
         // http://v.bootstrapmb.com/2019/4/u0d54217
         // http://v.bootstrapmb.com/2018/12/0twha3250
@@ -312,6 +390,15 @@ export default {
     togglePlayFile () {
       this.playFileShown = !this.playFileShown
     },
+    hideFm () {
+      this.fmShown = false
+    },
+    showFm () {
+      this.fmShown = true
+    },
+    toggleFm () {
+      this.fmShown = !this.fmShown
+    },
     goPlay () {
       let res = ipcRenderer.sendSync('verify-code', {
         code: this.code
@@ -354,6 +441,22 @@ export default {
       let volumeEle = document.querySelector('.vjs-volume-panel')
       volumeEle.parentNode.insertBefore(playlistEle, volumeEle)
     },
+    addItemFm () {
+      const that = this
+      let playlistEle = document.createElement('div')
+      !playlistEle.classList.contains('video_control_item') && playlistEle.classList.add('video_control_item')
+      playlistEle.setAttribute('title', '电台')
+      playlistEle.onclick = () => {
+        that.toggleFm()
+      }
+      let playlistImgEle = document.createElement('img')
+      playlistImgEle.setAttribute('src', 'data:image/png;base64,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')
+      playlistImgEle.style.width = '18px'
+      playlistImgEle.style.height = '18px'
+      playlistEle.appendChild(playlistImgEle)
+      let volumeEle = document.querySelector('.vjs-volume-panel')
+      volumeEle.parentNode.insertBefore(playlistEle, volumeEle)
+    },
     addMusicBox (src) {
       // vjs-tech
       const that = this
@@ -377,6 +480,26 @@ export default {
         console.log('File: ', event)
       }
     },
+    getFmHomeList () {
+      let fmHomeListData = ipcRenderer.sendSync('get-fm-home-list')
+      if (fmHomeListData.code === 0 && fmHomeListData.data) {
+        this.fmData = {
+          recommend: fmHomeListData.data.tuijian,
+          category: fmHomeListData.data.category
+        }
+        setTimeout(() => {
+          this.initRecommendSwiper()
+        }, 100)
+      } else { }
+    },
+    initRecommendSwiper () {
+      this.$nextTick(() => {
+        // const swiperTop = this.$refs.swiperTop.swiper
+        // const swiperThumbs = this.$refs.swiperThumbs.swiper
+        // swiperTop.controller.control = swiperThumbs
+        // swiperThumbs.controller.control = swiperTop
+      })
+    }
   },
   watch: {
     canPlay (val) {
@@ -384,6 +507,14 @@ export default {
         setTimeout(() => {
           this.initPlayer()
         }, 300)
+      }
+    },
+    fmShown: {
+      immediate: true,
+      handler (val) {
+        if (val) {
+          this.getFmHomeList()
+        }
       }
     }
   }
@@ -600,6 +731,87 @@ export default {
       .play_file_inner {
         left: -300px;
         transition-delay: 0;
+      }
+    }
+  }
+
+  .fm_container {
+    position: absolute;
+    z-index: 2;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    .fm_header {
+      width: 100%;
+      height: 48px;
+      background-color: #c02414;
+      color: #fff;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .fm_content {
+      width: 100%;
+      // max-width: 1000px;
+      height: calc(~"100% - 48px");
+      margin: 0 auto;
+      overflow-x: hidden;
+      overflow-y: auto;
+      .recommend_container {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        -webkit-app-region: none;
+      }
+      .swiper-container {
+        // background-color: #000;
+        // display: flex;
+        // flex-direction: row;
+        // align-items: center;
+        margin-top: 15px;
+      }
+      .gallery-thumbs {
+        .swiper-slide {
+          background-size: cover;
+          background-position: center;
+        }
+      }
+      .gallery-top {
+        .swiper-slide {
+          // background-size: contain;
+          // background-position: center;
+          // background-repeat: no-repeat;
+          background-position: center;
+          background-size: cover;
+          // width: 60%;
+          width: 600px;
+          height: 260px;
+          margin-top: 30px;
+          border-radius: 4px;
+          box-shadow: 0 0 10px 1px #000;
+        }
+      }
+
+      .gallery-top {
+        height: 80% !important;
+        width: 100%;
+      }
+      .gallery-thumbs {
+        height: 20% !important;
+        box-sizing: border-box;
+        padding: 10px 0;
+      }
+      .gallery-thumbs .swiper-slide {
+        width: 25%;
+        height: 100%;
+        opacity: 0.4;
+      }
+      .gallery-thumbs .swiper-slide-active {
+        opacity: 1;
       }
     }
   }
