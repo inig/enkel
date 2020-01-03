@@ -413,6 +413,23 @@ ipcMain.on('verify-code', async (event, data) => {
 // https://www.jianshu.com/p/c0f368fd0388
 ipcMain.on('get-fm-home-list', async (event, data) => {
   let res = await axios.get('http://yiapi.xinli001.com/fm/home-list.json?key=046b6a2a43dc6ff6e770255f57328f89')
-  console.log('======', res.data)
+  // console.log('======', res.data)
   event.returnValue = res.data
+})
+
+ipcMain.on('get-fm-recommend-detail', async (event, data) => {
+  if (!data || !data.tag) {
+    event.returnValue = {
+      code: 1,
+      count: 0,
+      data: []
+    }
+  } else {
+    // %E6%8A%91%E9%83%81%E7%97%87%E6%98%AF%E6%9D%A1%E9%BB%91%E7%8B%97
+    let res = await axios.get(`http://bapi.xinli001.com/fm2/broadcast_list.json/?offset=${(data.pageIndex || 0) * (data.pageSize || 20)}&speaker_id=0&tag=${encodeURIComponent(data.tag)}&rows=${data.pageSize || 20}&key=046b6a2a43dc6ff6e770255f57328f89`)
+    event.returnValue = Object.assign({}, res.data, {
+      pageIndex: data.pageIndex || 1,
+      pageSize: data.pageSize || 20
+    })
+  }
 })
