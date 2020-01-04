@@ -10,6 +10,8 @@ const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 const playlist = `#EXTM3U
 
+#EXTINF:0,group-title=radio,title=深圳新闻广播,url=http://ngcdn001.cnr.cn/live/zgzs/index.m3u8,type=application/x-mpegURL
+
 #EXTINF:0,group-title=Enkel,title=CCTV-1综合,url=http://223.110.242.130:6610/gitv/live1/G_CCTV-1-HQ/1.m3u8,type=application/x-mpegURL
 #EXTINF:0,group-title=Enkel,title=CCTV-2财经,url=http://112.50.243.10/PLTV/88888888/224/3221225800/1.m3u8,type=application/x-mpegURL
 #EXTINF:0,group-title=Enkel,title=CCTV-3综艺,url=http://183.207.249.14/PLTV/3/224/3221225588/index.m3u8,type=application/x-mpegURL
@@ -328,6 +330,9 @@ const db = low(adapter)
 db.defaults({
   video: {
     code: ''
+  },
+  fm: {
+    mood: '迷茫', // 1: 烦躁；2: 悲伤；3: 孤独；4: 已弃疗；5: 减压；6: 无奈；7: 快乐；8: 感动；9: 迷茫
   }
 }).write()
 
@@ -338,6 +343,16 @@ function getCode () {
 function setCode (code) {
   db.get('video').assign({
     code: code
+  }).write()
+}
+
+function getMood () {
+  return db.get('fm.mood').value()
+}
+
+function setMood (mood) {
+  db.get('fm').assign({
+    mood: mood
   }).write()
 }
 
@@ -426,10 +441,56 @@ ipcMain.on('get-fm-recommend-detail', async (event, data) => {
     }
   } else {
     // %E6%8A%91%E9%83%81%E7%97%87%E6%98%AF%E6%9D%A1%E9%BB%91%E7%8B%97
-    let res = await axios.get(`http://bapi.xinli001.com/fm2/broadcast_list.json/?offset=${(data.pageIndex || 0) * (data.pageSize || 20)}&speaker_id=0&tag=${encodeURIComponent(data.tag)}&rows=${data.pageSize || 20}&key=046b6a2a43dc6ff6e770255f57328f89`)
+    let res = await axios.get(`http://bapi.xinli001.com/fm2/broadcast_list.json/?offset=${((data.pageIndex - 1) || 0) * (data.pageSize || 20)}&speaker_id=0&tag=${encodeURIComponent(data.tag)}&rows=${data.pageSize || 20}&key=046b6a2a43dc6ff6e770255f57328f89`)
     event.returnValue = Object.assign({}, res.data, {
       pageIndex: data.pageIndex || 1,
       pageSize: data.pageSize || 20
     })
   }
+})
+
+ipcMain.on('fm-get-mood', (event) => {
+  event.returnValue = getMood()
+})
+
+ipcMain.on('fm-set-mood', (event, mood) => {
+  setMood(mood || '迷茫')
+})
+
+ipcMain.on('fm-get-recommend', async (event, data) => {
+  let offset = ((data.pageIndex - 1) || 0) * (data.pageSize || 20)
+  let limit = data.pageSize || 20
+  let res = await axios.get(`http://yiapi.xinli001.com/fm/newfm-list.json?offset=${offset}&limit=${limit}&key=046b6a2a43dc6ff6e770255f57328f89`)
+  event.returnValue = Object.assign({}, res.data, {
+    pageIndex: data.pageIndex || 1,
+    pageSize: data.pageSize || 20
+  })
+})
+
+ipcMain.on('fm-get-list-by-mood', async (event, data) => {
+  let offset = ((data.pageIndex - 1) || 0) * (data.pageSize || 20)
+  let limit = data.pageSize || 20
+  let res = await axios.get(`http://bapi.xinli001.com/fm2/broadcast_list.json/?offset=${offset}&speaker_id=0&tag=${encodeURIComponent(data.mood || getMood())}&rows=${limit}&key=046b6a2a43dc6ff6e770255f57328f89`)
+  event.returnValue = Object.assign({}, res.data, {
+    pageIndex: data.pageIndex || 1,
+    pageSize: data.pageSize || 20
+  })
+})
+
+// ipcMain.on('fm-get-detail', async (event, d))
+
+ipcMain.on('fm-get-radio-by-place', async (event, data) => {
+  // http://tacc.radio.cn/pcpages/radiopages?callback=jQuery11220497578513847472_1578151724973&place_id=3225&date=2020-01-04&_=1578151724974
+  let now = new Date()
+  let date = now.getFullYear() + '-' + (now.getMonth() + 1 < 10 ? '0' + (now.getMonth() + 1) : now.getMonth() + 1) + '-' + (now.getDate() < 10 ? '0' + now.getDate() : now.getDate())
+  let ts = now.getTime()
+  console.log(`http://tacc.radio.cn/pcpages/radiopages?callback=jQuery11220497578513847472_${ts}&place_id=${data.place || 3225}&date=${date}&_=${ts}`)
+  let res = await axios.get(`http://tacc.radio.cn/pcpages/radiopages?callback=jQuery11220497578513847472_${ts}&place_id=${data.place || 3225}&date=${date}&_=${ts}`)
+  res.data = res.data.replace(new RegExp('^jQuery11220497578513847472_' + ts + '\\\('), '').replace(/\)$/, '')
+  try {
+    res.data = JSON.parse(res.data)
+  } catch (err) {
+    res.data = {}
+  }
+  event.returnValue = res.data
 })

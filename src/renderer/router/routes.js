@@ -114,6 +114,22 @@ export const mediaRouter = {
         // }
       },
       component: require('@/components/tools/media/Video/index').default
+    },
+    {
+      path: '/fm',
+      name: 'fm',
+      meta: {
+        label: 'Enkel FM',
+        title: 'Enkel FM',
+        icon: '#route-fm',
+        name: 'Enkel电台',
+        desc: '听各种心情',
+        createTime: '1577350336459',
+        hot: false,
+        closable: false,
+        withoutHeader: true
+      },
+      component: require('@/components/tools/media/Fm/index').default
     }
   ]
 }
