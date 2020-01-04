@@ -18,7 +18,7 @@
              :key="index"
              :title="item.name">
           <div class="media_fm_radio_channel_item_inner"
-               @click="play(item.streams[0].url)">
+               @click="play(item.streams[0].url, item.id)">
             <img :src="item.icon[0].url"
                  :alt="item.name">
           </div>
@@ -100,7 +100,13 @@ export default {
         this.channel = res.data.top || []
       }
     },
-    play (url) {
+    modifyUrl (id) {
+      let idMap = {
+        '1': '',
+        '2': 'http://ngcdn002.cnr.cn/live/jjzs/index.m3u8'
+      }
+    },
+    play (url, id) {
       this.activeSource.url = url
       this.initPlayer()
       console.log('play: ', url)
