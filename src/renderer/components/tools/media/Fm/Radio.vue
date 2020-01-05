@@ -18,7 +18,7 @@
              :key="index"
              :title="item.name">
           <div class="media_fm_radio_channel_item_inner"
-               @click="play(item.streams[0].url, item.id)">
+               @click="play(item.streams[0].url, item)">
             <img :src="item.icon[0].url"
                  :alt="item.name">
           </div>
@@ -31,7 +31,7 @@
               type="application/x-mpegURL">
     </video> -->
 
-    <div class="hidden_video_box"
+    <!-- <div class="hidden_video_box"
          id="videoBox">
       <video class="video-js vjs-big-play-centered"
              controls
@@ -44,7 +44,7 @@
                 :type="activeSource.type">
         </source>
       </video>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -53,7 +53,6 @@ import { Select, Option } from 'view-design'
 import { ipcRenderer } from 'electron'
 require('video.js/dist/video-js.min.css')
 import videojs from 'video.js'
-// import 'videojs-flash'
 import '@videojs/http-streaming'
 export default {
   name: 'MediaFmRadio',
@@ -106,10 +105,11 @@ export default {
         '2': 'http://ngcdn002.cnr.cn/live/jjzs/index.m3u8'
       }
     },
-    play (url, id) {
+    play (url, item) {
       this.activeSource.url = url
-      this.initPlayer()
-      console.log('play: ', url)
+      // this.initPlayer()
+      this.$emit('play', Object.assign({ currentCategory: 'radio' }, this.activeSource, item))
+      // console.log('play: ', 'http://127.0.0.1:3000/videos?url=' + encodeURIComponent(url))
     },
     changePlace (id) {
       this.currentPlace = id

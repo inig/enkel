@@ -10,7 +10,14 @@
       <div class="media_fm_side_bar_control">
         <div class="current_mood">
           <div class="current_mod_wrapper"
-               :style="{backgroundPosition: currentMoodObj.iconNormal}"></div>
+               :style="{backgroundPosition: currentMoodObj.iconNormal}"
+               key="current-mood"
+               v-if="!activeSource.currentCategory"></div>
+          <div class="current_mod_wrapper"
+               :style="{backgroundImage: 'url(' + activeSource.icon[0].url + ')', backgroundSize: 'cover'}"
+               key="radio"
+               :title="activeSource.name"
+               v-else-if="activeSource.currentCategory === 'radio'"></div>
         </div>
         <div class="media_fm_side_bar_item"
              v-for="(item, index) in allCategory"
@@ -22,14 +29,33 @@
         <component :is="allCategory[currentCategoryIndex].name"
                    :all-moods="allMoods"
                    :current-mood="currentMood"
-                   @change-mood="changeMood"></component>
+                   @change-mood="changeMood"
+                   @play="play"></component>
       </div>
+    </div>
+
+    <div class="hidden_video_box"
+         id="videoBox">
+      <video class="video-js vjs-big-play-centered"
+             controls
+             preload="auto"
+             id="my-player"
+             data-setup='{}'
+             style="width: 100%; height: 100%;">
+        <source id="source"
+                :src="activeSource.url"
+                :type="activeSource.type">
+        </source>
+      </video>
     </div>
   </div>
 </template>
 
 <script>
 import { ipcRenderer } from 'electron'
+require('video.js/dist/video-js.min.css')
+import videojs from 'video.js'
+import '@videojs/http-streaming'
 export default {
   name: 'MediaFm',
   components: {
@@ -122,6 +148,11 @@ export default {
         status: 'paused', // 播放状态
         data: {}, // 播放数据
         currentIndex: -1 // 当前播放列表索引值
+      },
+      player: null,
+      activeSource: {
+        url: '',
+        type: 'application/x-mpegURL'
       }
     }
   },
@@ -170,10 +201,51 @@ export default {
         this.fmList = res.data
       }
     },
-    play () {
-      if (this.fmList.length < 1 || (this.fmList.length - 1 <= this.playBox.currentIndex)) {
-        // 播放列表为空或已播放完，请求下一页
+    play (data) {
+      this.activeSource = data
+      this.initPlayer()
+    },
+    initPlayer () {
+      // https://www.awaimai.com/2053.html
+      var options = {
+        bigPlayButton: true,
+        textTrackDisplay: false,
+        posterImage: true,
+        errorDisplay: false,
+        techOrder: ['html5'],
+        notSupportedMessage: '此视频暂无法播放，请稍后再试',
+        preload: 'auto',
+        language: 'zh-CN',
+        // muted: true
+        // poster: 'http://www.ttkzm.com/uploadfile/201912/15/E213231985.jpg'
       }
+
+      this.player = videojs('my-player')
+      if (this.player) {
+        try {
+          this.player.pause()
+          this.player.dispose()
+        } catch (err) { }
+      }
+
+      let videoBox = document.querySelector('#videoBox')
+      videoBox.innerHTML = ''
+      let videoStr = `<video class="video-js vjs-big-play-centered"
+             controls
+             preload="auto"
+             id="my-player"
+             data-setup='{"autoplay": "true"}'
+             style="width: 100%; height: 100%;">
+        <source id="source"
+                src="${this.activeSource.url}"
+                type="${this.activeSource.type}">
+        </source>
+      </video>`
+      videoBox.innerHTML = videoStr
+
+      this.player = videojs('my-player', options, function onPlayerReady () {
+        this.play()
+      })
     }
   }
 }
@@ -239,7 +311,7 @@ export default {
           border-radius: 50%;
           background-image: url("~@/assets/fm_mood_icons.png");
           display: inline-block;
-          pointer-events: none;
+          // pointer-events: none;
         }
       }
       .media_fm_side_bar_item {
