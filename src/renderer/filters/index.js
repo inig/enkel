@@ -18,3 +18,15 @@ export function capacityFilter (text) {
     return size.toFixed(2) + ' B'
   }
 }
+
+export function timeFilter (text) {
+  let time = Number(text)
+  let hour = parseInt(time / (60 * 60))
+  let minute = parseInt(time / 60)
+  let second = parseInt(time % 60)
+  if (hour <= 0) {
+    return (minute < 10 ? '0' + minute : minute) + ':' + (second < 10 ? '0' + second : second)
+  } else {
+    return (hour < 10 ? '0' + hour : hour) + ':' + (minute < 10 ? '0' + minute : minute) + ':' + (second < 10 ? '0' + second : second)
+  }
+}

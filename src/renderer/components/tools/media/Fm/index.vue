@@ -1,5 +1,6 @@
 <template>
-  <div class="media_fm">
+  <div class="media_fm"
+       :style="{backgroundImage: 'url(' + bg + ')'}">
     <transition name="sideBarShown">
       <div class="media_fm_side_bar_mask"
            @click="hideSideBar"
@@ -9,11 +10,11 @@
          :class="[sideBarShown ? 'shown' : 'hidden']">
       <div class="media_fm_side_bar_control">
         <div class="current_mood">
-          <div class="current_mod_wrapper"
+          <div class="current_mood_wrapper"
                :style="{backgroundPosition: currentMoodObj.iconNormal}"
                key="current-mood"
                v-if="!activeSource.currentCategory"></div>
-          <div class="current_mod_wrapper"
+          <div class="current_mood_wrapper"
                :style="{backgroundImage: 'url(' + activeSource.icon[0].url + ')', backgroundSize: 'cover'}"
                key="radio"
                :title="activeSource.name"
@@ -24,17 +25,26 @@
              :key="index"
              :class="[currentCategoryIndex === index ? 'active' : '']"
              @click="chooseCategory(index)">{{item.label}}</div>
+        <div class="media_fm_side_bar_settings"
+             @click="showSettingsModal">
+          <Icon type="ios-cog"
+                color="#fff"
+                size="24" />
+        </div>
       </div>
       <div class="media_fm_content">
-        <component :is="allCategory[currentCategoryIndex].name"
-                   :all-moods="allMoods"
-                   :current-mood="currentMood"
-                   @change-mood="changeMood"
-                   @play="play"></component>
+        <keep-alive>
+          <component :is="allCategory[currentCategoryIndex].name"
+                     :all-moods="allMoods"
+                     :current-mood="currentMood"
+                     @play-list="playList"
+                     @play="play"></component>
+        </keep-alive>
       </div>
     </div>
 
     <div class="hidden_video_box"
+         style="pointer-events: none; opacity: 0;"
          id="videoBox">
       <video class="video-js vjs-big-play-centered"
              controls
@@ -48,11 +58,105 @@
         </source>
       </video>
     </div>
+
+    <div class="play_box">
+      <div class="play_box_mood"
+           v-if="playBox.category === 'mood'">
+        <h2>{{activeSource.title}}</h2>
+        <h4>主播: {{activeSource.speak}}</h4>
+        <div class="play_box_mood_control">
+          <div class="play_box_mood_control_item small play_box_mood_control_prev"
+               @click="playPrev">
+            <Icon type="ios-skip-backward"
+                  color="#fff"
+                  size="20" />
+          </div>
+          <div class="play_box_mood_control_item big paly_box_mood_control_play"
+               v-if="playBox.status === 'pause'"
+               @click="setPlayStatus('play')">
+            <Icon type="ios-play"
+                  color="#fff"
+                  size="28" />
+          </div>
+          <div class="play_box_mood_control_item big paly_box_mood_control_pause"
+               v-if="playBox.status === 'play'"
+               @click="setPlayStatus('pause')">
+            <Icon type="ios-pause"
+                  color="#fff"
+                  size="28" />
+          </div>
+          <div class="play_box_mood_control_item small paly_box_mood_control_next"
+               @click="playNext">
+            <Icon type="ios-skip-forward"
+                  color="#fff"
+                  size="20" />
+          </div>
+
+          <div class="play_box_mood_control_progress">
+            <Slider :value="playBox.currentTime"
+                    :max="playBox.duration"
+                    :tip-format="(value) => $timeFilter(value)"
+                    @on-change="changeCurrentTime"></Slider>
+          </div>
+          <div class="play_box_mood_control_progress_tip">{{(playBox.duration - playBox.currentTime) | timeFilter}}</div>
+        </div>
+      </div>
+      <div class="play_box_radio"
+           v-if="playBox.category === 'radio'">
+        <img :src="activeSource.icon[0].url"
+             :alt="activeSource.name">
+        <div class="play_box_radio_btn"
+             v-if="playBox.status === 'pause'"
+             @click="setPlayStatus('play')">
+          <Icon type="ios-play"
+                color="#fff"
+                size="28" />
+        </div>
+        <div class="play_box_radio_btn"
+             v-if="playBox.status === 'play'"
+             @click="setPlayStatus('pause')">
+          <Icon type="ios-pause"
+                color="#fff"
+                size="28" />
+        </div>
+        <div class="play_box_radio_name">{{activeSource.name}}</div>
+      </div>
+    </div>
+
+    <div class="logo_box">
+      <div class="logo_box_title">Enkel FM</div>
+      <div class="logo_box_slogan">听各种心情</div>
+    </div>
+
+    <Modal v-model="settings.shown"
+           width="400"
+           title="设置"
+           ok-text="保存"
+           @on-ok="saveSettings">
+      <div class="settings_modal_item">
+        <div class="settings_modal_item_label">背景图片</div>
+        <div class="settings_modal_item_value">
+          <Input placeholder="输入背景图片"
+                 type="text"
+                 clearable
+                 v-model="settings.bg" />
+        </div>
+      </div>
+      <div class="settings_modal_item">
+        <div class="settings_modal_item_label"></div>
+        <div class="settings_modal_item_value">
+          <div class="settings_modal_item_previewer">
+            <img :src="settings.bg">
+          </div>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
 <script>
 import { ipcRenderer } from 'electron'
+import { Icon, Slider, Modal, Input } from 'view-design'
 require('video.js/dist/video-js.min.css')
 import videojs from 'video.js'
 import '@videojs/http-streaming'
@@ -61,10 +165,16 @@ export default {
   components: {
     Mood: () => import('./Mood'),
     Radio: () => import('./Radio'),
-    Recommend: () => import('./Recommend')
+    Recommend: () => import('./Recommend'),
+    Icon, Slider, Modal, Input
   },
   data () {
     return {
+      bg: '',
+      settings: {
+        shown: false,
+        bg: 'http://e.hiphotos.baidu.com/zhidao/pic/item/ae51f3deb48f8c5420d92dbf38292df5e0fe7f1c.jpg'
+      },
       recommendPageIndex: 1,
       recommendPageSize: 20,
       recommends: [],
@@ -127,17 +237,17 @@ export default {
           bgColor: '#e7925d'
         }
       ],
-      sideBarShown: true,
+      sideBarShown: false,
       currentCategoryIndex: 0,
       allCategory: [
         {
           label: '广播',
           name: 'radio'
         },
-        {
-          label: '推荐',
-          name: 'recommend'
-        },
+        // {
+        //   label: '推荐',
+        //   name: 'recommend'
+        // },
         {
           label: '心情',
           name: 'mood'
@@ -145,9 +255,12 @@ export default {
       ],
       fmList: [],
       playBox: {
-        status: 'paused', // 播放状态
+        status: 'pause', // 播放状态
         data: {}, // 播放数据
-        currentIndex: -1 // 当前播放列表索引值
+        currentIndex: 0, // 当前播放列表索引值
+        category: 'mood',
+        duration: 0,
+        currentTime: 0
       },
       player: null,
       activeSource: {
@@ -158,7 +271,9 @@ export default {
   },
   beforeRouteEnter (to, from, next) {
     let mood = ipcRenderer.sendSync('fm-get-mood')
+    let bg = ipcRenderer.sendSync('fm-get-bg')
     next(vm => {
+      vm.bg = bg
       if (mood) {
         vm.currentMood = mood
         vm.currentMoodObj = vm.allMoods.filter(item => item.label === mood)[0]
@@ -171,8 +286,11 @@ export default {
           bgColor: '#e7925d'
         }
       }
-      vm.getFmListByMood(vm.currentMood)
     })
+  },
+  mounted () {
+    this.getFmListByMood(this.currentMood)
+    this.playBox.currentIndex = 0
   },
   methods: {
     hideSideBar () {
@@ -184,9 +302,14 @@ export default {
     toggleSideBar () {
       this.sideBarShown = !this.sideBarShown
     },
-    changeMood (item) {
-      this.currentMood = item.label
-      this.currentMoodObj = item
+    playList (data) {
+      this.currentMood = data.moodItem.label
+      this.currentMoodObj = data.moodItem
+      this.activeSource = Object.assign({}, data.list[0], {
+        type: data.type
+      })
+      this.playBox.category = 'mood'
+      this.initPlayer()
     },
     chooseCategory (index) {
       this.currentCategoryIndex = Number(index)
@@ -194,15 +317,29 @@ export default {
     },
     getFmListByMood (mood) {
       let res = ipcRenderer.sendSync('fm-get-list-by-mood', {
-        mood: mood
+        mood: mood,
+        pageIndex: Math.ceil(Math.random() * 100),
+        pageSize: 20
       })
-      console.log('>>>>>', res)
       if (res.code === 0 && res.data) {
-        this.fmList = res.data
+        let lastIndex
+        if (this.fmList.length > 0) {
+          lastIndex = this.fmList.length - 1
+          this.fmList = this.fmList.concat(res.data)
+        } else {
+          lastIndex = 0
+          this.fmList = res.data
+        }
+        this.playBox.currentIndex = lastIndex
+        this.activeSource = Object.assign({}, res.data[this.playBox.currentIndex], {
+          type: 'audio/mp3'
+        })
+        this.initPlayer()
       }
     },
     play (data) {
       this.activeSource = data
+      this.playBox.category = data.currentCategory
       this.initPlayer()
     },
     initPlayer () {
@@ -243,9 +380,84 @@ export default {
       </video>`
       videoBox.innerHTML = videoStr
 
+      const that = this
+
       this.player = videojs('my-player', options, function onPlayerReady () {
         this.play()
+
+        this.on('play', () => {
+          that.playBox.status = 'play'
+        })
+        this.on('pause', () => {
+          that.playBox.status = 'pause'
+        })
+        this.on('ended', () => {
+          that.playBox.status = 'ended'
+        })
+        this.on('druationchange', (e) => {
+          that.playBox.duration = 0
+          that.playBox.currentTime = 0
+        })
+        this.on('timeupdate', (e) => {
+          that.playBox.duration = Math.floor(this.duration())
+          that.playBox.currentTime = Math.floor(this.currentTime())
+        })
       })
+    },
+    setPlayStatus (status) {
+      if (this.player) {
+        this.player[status]()
+      }
+    },
+    playNext () {
+      if (this.player && this.playBox.category === 'mood') {
+        if (this.playBox.currentIndex === this.fmList.length - 1) {
+          // 已是最后一条，请求下一页
+          this.getFmListByMood(this.currentMood)
+        } else {
+          this.playBox.currentIndex = (this.playBox.currentIndex + 1) % this.fmList.length
+          this.activeSource = Object.assign({ type: 'audio/mp3' }, this.fmList[this.playBox.currentIndex])
+          this.initPlayer()
+        }
+      }
+    },
+    playPrev () {
+      if (this.player && this.playBox.category === 'mood') {
+        if (this.playBox.currentIndex === 0) {
+          // 已是最后一条，请求下一页
+          this.playBox.currentIndex = this.fmList.length - 1
+        } else {
+          this.playBox.currentIndex = (this.playBox.currentIndex - 1) % this.fmList.length
+        }
+        this.activeSource = Object.assign({ type: 'audio/mp3' }, this.fmList[this.playBox.currentIndex])
+        this.initPlayer()
+      }
+    },
+    changeCurrentTime (e) {
+      if (this.player) {
+        this.player.currentTime(Number(e))
+      }
+    },
+    showSettingsModal () {
+      this.settings.bg = this.bg
+      this.settings.shown = true
+    },
+    saveSettings () {
+      ipcRenderer.send('fm-set-bg', this.settings.bg)
+      this.bg = this.settings.bg
+    }
+  },
+  watch: {
+    'playBox.status' (val) {
+      if (val === 'ended') {
+        if (this.playBox.category === 'mood') {
+          if (this.playBox.currentIndex < this.fmList.length - 1) {
+            this.playBox.currentIndex += 1
+            this.activeSource = Object.assign({ type: 'audio/mp3' }, this.fmList[this.playBox.currentIndex])
+            this.initPlayer()
+          }
+        }
+      }
     }
   }
 }
@@ -257,11 +469,19 @@ export default {
   -webkit-app-region: drag;
   width: 100%;
   height: 100%;
-  background-image: url("http://lorempixel.com/1366/768/nature/");
+  background-color: rgba(0, 0, 0, 0.8);
+  // background-image: url("~@/assets/bg1.jpg");
+  // background-image: url("http://pic1.win4000.com/wallpaper/4/54740e3b7cc5f.jpg");
+  // background-image: url("http://lorempixel.com/1366/768/nature/");
   // background-image: url("https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   .media_fm_side_bar_mask {
     position: absolute;
     width: 100%;
@@ -269,10 +489,12 @@ export default {
     background-color: transparent;
     left: 0;
     top: 0;
+    z-index: 2;
   }
   .media_fm_side_bar {
     position: absolute;
     top: 0;
+    z-index: 2;
     height: 100%;
     width: 400px;
     background-color: #f0f0f0;
@@ -290,6 +512,7 @@ export default {
       right: 0;
     }
     .media_fm_side_bar_control {
+      position: relative;
       width: 100px;
       height: 100%;
       cursor: pointer;
@@ -304,7 +527,7 @@ export default {
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        .current_mod_wrapper {
+        .current_mood_wrapper {
           width: 50px;
           height: 50px;
           background-color: #fff;
@@ -329,6 +552,18 @@ export default {
           background-color: #000 !important;
         }
       }
+      .media_fm_side_bar_settings {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 50px;
+        color: #fff;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
     }
     .media_fm_content {
       width: 300px;
@@ -338,6 +573,189 @@ export default {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
+    }
+  }
+  .play_box {
+    padding: 15px;
+    box-sizing: border-box;
+    .play_box_mood {
+      width: 400px;
+      // height: 240px;
+      background-color: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      padding: 15px 0;
+      box-sizing: border-box;
+      border: 1px solid #c8c8c8;
+      h2 {
+        color: #fff;
+        font-size: 18px;
+        line-height: 25px;
+        font-weight: 400;
+        text-overflow: -o-ellipsis-lastline;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        padding: 0 15px;
+        box-sizing: border-box;
+      }
+      h4 {
+        color: #fff;
+        opacity: 0.6;
+        line-height: 50px;
+        padding: 0 15px;
+        box-sizing: border-box;
+      }
+      .play_box_mood_control {
+        padding: 15px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        .play_box_mood_control_item {
+          border-radius: 50%;
+          border: 2px solid #fff;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          margin-right: 20px;
+          cursor: pointer;
+          &:hover {
+            opacity: 0.7;
+          }
+          &.small {
+            width: 34px;
+            height: 34px;
+          }
+          &.big {
+            width: 45px;
+            height: 45px;
+          }
+        }
+        .play_box_mood_control_progress {
+          width: 140px;
+        }
+        .play_box_mood_control_progress_tip {
+          width: 60px;
+          height: 34px;
+          color: #fff;
+          margin-left: 8px;
+          flex: 1;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: flex-start;
+        }
+      }
+    }
+    .play_box_radio {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      background-color: rgba(255, 255, 255, 0.6);
+      border-radius: 4px;
+      padding: 15px 0;
+      box-sizing: border-box;
+      border: 1px solid #c8c8c8;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      img {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 200px;
+        height: 200px;
+      }
+      .play_box_radio_btn {
+        width: 48px;
+        height: 48px;
+        z-index: 1;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 2px solid #fff;
+        // opacity: 0;
+        &:hover {
+          background-color: rgba(0, 0, 0, 1);
+        }
+      }
+      &:hover {
+        .play_box_radio_btn {
+          // opacity: 1;
+        }
+      }
+      .play_box_radio_name {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 24px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0 10px;
+        box-sizing: border-box;
+        color: #fff;
+        background-color: rgba(0, 0, 0, 0.6);
+        font-size: 13px;
+      }
+    }
+  }
+
+  .logo_box {
+    position: absolute;
+    left: 30px;
+    top: 40px;
+    width: 120px;
+    // height: 80px;
+    color: #fff;
+    text-shadow: 0 0 2px #111;
+    .logo_box_title {
+      font-size: 25px;
+      font-weight: bold;
+    }
+    .logo_box_slogan {
+      letter-spacing: 10px;
+    }
+  }
+}
+.settings_modal_item {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  .settings_modal_item_label {
+    width: 80px;
+  }
+  .settings_modal_item_value {
+    flex: 1;
+    .settings_modal_item_previewer {
+      width: 100%;
+      height: 200px;
+      margin-top: 15px;
+      border: 1px solid #ddd;
+      overflow: hidden;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      img {
+        max-width: 100%;
+        max-width: 100%;
+      }
     }
   }
 }

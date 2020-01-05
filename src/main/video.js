@@ -4,7 +4,7 @@ import fs from 'fs'
 import path from 'path'
 
 import axios from 'axios'
-axios.defaults.timeout = 5000
+axios.defaults.timeout = 10000
 
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
@@ -333,6 +333,8 @@ db.defaults({
   },
   fm: {
     mood: '迷茫', // 1: 烦躁；2: 悲伤；3: 孤独；4: 已弃疗；5: 减压；6: 无奈；7: 快乐；8: 感动；9: 迷茫
+    bg: 'http://e.hiphotos.baidu.com/zhidao/pic/item/ae51f3deb48f8c5420d92dbf38292df5e0fe7f1c.jpg',
+    customBg: ''
   }
 }).write()
 
@@ -353,6 +355,16 @@ function getMood () {
 function setMood (mood) {
   db.get('fm').assign({
     mood: mood
+  }).write()
+}
+
+function getFmBg () {
+  return db.get('fm.customBg').value() || db.get('fm.bg').value() || 'http://e.hiphotos.baidu.com/zhidao/pic/item/ae51f3deb48f8c5420d92dbf38292df5e0fe7f1c.jpg'
+}
+
+function setFmBg (bg) {
+  db.get('fm').assign({
+    customBg: bg
   }).write()
 }
 
@@ -457,6 +469,16 @@ ipcMain.on('fm-set-mood', (event, mood) => {
   setMood(mood || '迷茫')
 })
 
+ipcMain.on('fm-get-bg', (event) => {
+  event.returnValue = getFmBg()
+})
+
+ipcMain.on('fm-set-bg', (event, bg) => {
+  if (bg) {
+    setFmBg(bg)
+  }
+})
+
 ipcMain.on('fm-get-recommend', async (event, data) => {
   let offset = ((data.pageIndex - 1) || 0) * (data.pageSize || 20)
   let limit = data.pageSize || 20
@@ -484,7 +506,6 @@ ipcMain.on('fm-get-radio-by-place', async (event, data) => {
   let now = new Date()
   let date = now.getFullYear() + '-' + (now.getMonth() + 1 < 10 ? '0' + (now.getMonth() + 1) : now.getMonth() + 1) + '-' + (now.getDate() < 10 ? '0' + now.getDate() : now.getDate())
   let ts = now.getTime()
-  console.log(`http://tacc.radio.cn/pcpages/radiopages?callback=jQuery11220497578513847472_${ts}&place_id=${data.place || 3225}&date=${date}&_=${ts}`)
   let res = await axios.get(`http://tacc.radio.cn/pcpages/radiopages?callback=jQuery11220497578513847472_${ts}&place_id=${data.place || 3225}&date=${date}&_=${ts}`)
   res.data = res.data.replace(new RegExp('^jQuery11220497578513847472_' + ts + '\\\('), '').replace(/\)$/, '')
   try {

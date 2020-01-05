@@ -394,4 +394,13 @@ body {
     height: 18px;
   }
 }
+
+.play_box_mood_control_progress {
+  // .ivu-slider-bar {
+  //   background: #33ff00;
+  // }
+  // .ivu-slider-button {
+  //   border: 2px solid #33ff00;
+  // }
+}
 </style>
