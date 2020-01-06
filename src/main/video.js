@@ -334,9 +334,21 @@ db.defaults({
   fm: {
     mood: '迷茫', // 1: 烦躁；2: 悲伤；3: 孤独；4: 已弃疗；5: 减压；6: 无奈；7: 快乐；8: 感动；9: 迷茫
     bg: 'http://e.hiphotos.baidu.com/zhidao/pic/item/ae51f3deb48f8c5420d92dbf38292df5e0fe7f1c.jpg',
-    customBg: ''
+    customBg: '',
+    favorite: {
+      radio: [], // 直播电台
+      sound: [], // 主播声音
+      anchor: [] // 主播
+    }
   }
 }).write()
+
+function S4 () {
+  return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1)
+}
+function getUUID (perfix) {
+  return ((perfix ? (perfix + '-') : '') + S4() + S4() + S4())
+}
 
 function getCode () {
   return db.get('video.code').value()
@@ -356,6 +368,60 @@ function setMood (mood) {
   db.get('fm').assign({
     mood: mood
   }).write()
+}
+
+function getAllFavoriteFm () {
+  return db.get('fm.favorite').value() || {
+    radio: [],
+    sound: [],
+    anchor: []
+  }
+}
+
+function setFavoriteFm (item, type) {
+  if (!db.get('fm.favorite').value()) {
+    db.get('fm').assign({
+      favorite: {
+        radio: [],
+        sound: [],
+        anchor: []
+      }
+    }).write()
+  } else if (!db.get('fm.favorite.' + type).value()) {
+    let d = {}
+    d[type] = []
+    db.get('fm.favorite').assign(d).write()
+  }
+  let list = db.get('fm.favorite.' + type).value()
+  if (!list.some(itm => itm.url === item.url)) {
+    list.push(item)
+  }
+  let d2 = {}
+  d2[type] = list
+  db.get('fm.favorite').assign(d2).write()
+}
+
+function removeFavoriteFm (item, type) {
+  if (item.url) {
+    let list = db.get('fm.favorite.' + type).value()
+
+    if (list && (list.length > 0)) {
+      let i = 0
+      let outIndex = -1
+      for (i; i < list.length; i++) {
+        if (list[i].url === item.url) {
+          outIndex = i
+          i = list.length
+        }
+      }
+      if (outIndex > -1) {
+        list.splice(outIndex, 1)
+        let d2 = {}
+        d2[type] = list
+        db.get('fm.favorite').assign(d2).write()
+      }
+    }
+  }
 }
 
 function getFmBg () {
@@ -514,4 +580,22 @@ ipcMain.on('fm-get-radio-by-place', async (event, data) => {
     res.data = {}
   }
   event.returnValue = res.data
+})
+
+ipcMain.on('fm-get-all-favorite', (event) => {
+  event.returnValue = getAllFavoriteFm() || {
+    radio: [],
+    sound: [],
+    anchor: []
+  }
+})
+
+ipcMain.on('fm-set-favorite', (event, data) => {
+  setFavoriteFm(data.data, data.type)
+  event.returnValue = true
+})
+
+ipcMain.on('fm-remove-favorite', (event, data) => {
+  removeFavoriteFm(data.data, data.type)
+  event.returnValue = true
 })

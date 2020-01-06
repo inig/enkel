@@ -9,7 +9,8 @@
     <div class="media_fm_side_bar"
          :class="[sideBarShown ? 'shown' : 'hidden']">
       <div class="media_fm_side_bar_control">
-        <div class="current_mood">
+        <div class="current_mood"
+             @click="toggleSideBar">
           <div class="current_mood_wrapper"
                :style="{backgroundPosition: currentMoodObj.iconNormal}"
                key="current-mood"
@@ -19,6 +20,17 @@
                key="radio"
                :title="activeSource.name"
                v-else-if="activeSource.currentCategory === 'radio'"></div>
+          <div class="current_mood_wrapper"
+               v-else>
+            <img :src="activeSource.cover"
+                 alt="">
+          </div>
+        </div>
+        <div class="media_fm_side_bar_favorite"
+             @click="openFavoritePanel">
+          <svg>
+            <use xlink:href="#favorite"></use>
+          </svg>
         </div>
         <div class="media_fm_side_bar_item"
              v-for="(item, index) in allCategory"
@@ -34,9 +46,10 @@
       </div>
       <div class="media_fm_content">
         <keep-alive>
-          <component :is="allCategory[currentCategoryIndex].name"
+          <component :is="currentCategoryIndex > -1 ? allCategory[currentCategoryIndex].name : additionalPanel"
                      :all-moods="allMoods"
                      :current-mood="currentMood"
+                     :favorite="favorite"
                      @play-list="playList"
                      @play="play"></component>
         </keep-alive>
@@ -100,6 +113,13 @@
           </div>
           <div class="play_box_mood_control_progress_tip">{{(playBox.duration - playBox.currentTime) | timeFilter}}</div>
         </div>
+        <div class="play_box_heart"
+             :class="[favorite['sound'].some(item => item.url === activeSource.url) ? 'favorited' : '']"
+             @click="toggleFavorite('sound')">
+          <svg>
+            <use xlink:href="#favorite"></use>
+          </svg>
+        </div>
       </div>
       <div class="play_box_radio"
            v-if="playBox.category === 'radio'">
@@ -120,6 +140,13 @@
                 size="28" />
         </div>
         <div class="play_box_radio_name">{{activeSource.name}}</div>
+        <div class="play_box_heart"
+             :class="[favorite['radio'].some(item => item.url === activeSource.url) ? 'favorited' : '']"
+             @click="toggleFavorite('radio')">
+          <svg>
+            <use xlink:href="#favorite"></use>
+          </svg>
+        </div>
       </div>
     </div>
 
@@ -166,6 +193,7 @@ export default {
     Mood: () => import('./Mood'),
     Radio: () => import('./Radio'),
     Recommend: () => import('./Recommend'),
+    Favorite: () => import('./Favorite'),
     Icon, Slider, Modal, Input
   },
   data () {
@@ -266,7 +294,9 @@ export default {
       activeSource: {
         url: '',
         type: 'application/x-mpegURL'
-      }
+      },
+      additionalPanel: '',
+      favorite: {}
     }
   },
   beforeRouteEnter (to, from, next) {
@@ -287,6 +317,9 @@ export default {
         }
       }
     })
+  },
+  created () {
+    this.getFavoriteFmList()
   },
   mounted () {
     this.getFmListByMood(this.currentMood)
@@ -312,7 +345,13 @@ export default {
       this.initPlayer()
     },
     chooseCategory (index) {
+      this.additionalPanel = ''
       this.currentCategoryIndex = Number(index)
+      this.showSideBar()
+    },
+    openFavoritePanel () {
+      this.additionalPanel = 'favorite'
+      this.currentCategoryIndex = -1
       this.showSideBar()
     },
     getFmListByMood (mood) {
@@ -338,8 +377,21 @@ export default {
       }
     },
     play (data) {
-      this.activeSource = data
-      this.playBox.category = data.currentCategory
+      console.log('=====', data)
+      if (data.currentCategory === 'radio') {
+        this.activeSource = Object.assign({}, data, {
+          type: 'application/x-mpegURL'
+        })
+        this.playBox.category = data.currentCategory
+      } else if (data.currentCategory === 'sound') {
+        this.activeSource = Object.assign({}, data, {
+          type: 'audio/mp3',
+          currentCategory: 'mood'
+        })
+        this.playBox.category = 'mood'
+      }
+
+
       this.initPlayer()
     },
     initPlayer () {
@@ -445,6 +497,46 @@ export default {
     saveSettings () {
       ipcRenderer.send('fm-set-bg', this.settings.bg)
       this.bg = this.settings.bg
+    },
+    getFavoriteFmList () {
+      this.favorite = ipcRenderer.sendSync('fm-get-all-favorite')
+    },
+    setFavorite (type) {
+      ipcRenderer.sendSync('fm-set-favorite', {
+        data: this.activeSource,
+        type: type
+      })
+      this.favorite[type].push(this.activeSource)
+    },
+    toggleFavorite (type) {
+      if (this.favorite[type].some(item => item.url === this.activeSource.url)) {
+        this.removeFavorite(type)
+        this.$Message.success({
+          content: '取消关注成功'
+        })
+      } else {
+        this.setFavorite(type)
+        this.$Message.success({
+          content: '关注成功'
+        })
+      }
+    },
+    removeFavorite (type) {
+      ipcRenderer.sendSync('fm-remove-favorite', {
+        data: this.activeSource,
+        type: type
+      })
+      let i = 0
+      let outIndex = -1
+      for (i; i < this.favorite[type].length; i++) {
+        if (this.favorite[type][i].url === this.activeSource.url) {
+          outIndex = i
+          i = this.favorite[type].length
+        }
+      }
+      if (outIndex > -1) {
+        this.favorite[type].splice(outIndex, 1)
+      }
     }
   },
   watch: {
@@ -464,6 +556,20 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@keyframes heartbeat {
+  0% {
+    transform: scale(0.8, 0.8);
+    opacity: 1;
+  }
+  25% {
+    transform: scale(1, 1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0.8, 0.8);
+    opacity: 1;
+  }
+}
 .media_fm {
   position: relative;
   -webkit-app-region: drag;
@@ -534,7 +640,12 @@ export default {
           border-radius: 50%;
           background-image: url("~@/assets/fm_mood_icons.png");
           display: inline-block;
-          // pointer-events: none;
+          border: 1px solid #fff;
+          overflow: hidden;
+        }
+        img {
+          max-width: 100%;
+          max-height: 100%;
         }
       }
       .media_fm_side_bar_item {
@@ -564,6 +675,32 @@ export default {
         align-items: center;
         justify-content: center;
       }
+      .media_fm_side_bar_favorite {
+        position: absolute;
+        left: 0;
+        bottom: 50px;
+        width: 100%;
+        height: 50px;
+        color: #fff;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        svg {
+          width: 24px;
+          height: 24px;
+          fill: rgba(255, 0, 0, 0.2);
+          filter: drop-shadow(0px 0px 20px rgb(255, 20, 20));
+          animation: heartbeat 1s infinite;
+          -webkit-animation: heartbeat 1s infinite;
+          transition: fill 0.3s ease-in-out;
+        }
+        &:hover {
+          svg {
+            fill: rgba(255, 0, 0, 1);
+          }
+        }
+      }
     }
     .media_fm_content {
       width: 300px;
@@ -579,6 +716,7 @@ export default {
     padding: 15px;
     box-sizing: border-box;
     .play_box_mood {
+      position: relative;
       width: 400px;
       // height: 240px;
       background-color: rgba(0, 0, 0, 0.3);
@@ -710,6 +848,34 @@ export default {
         color: #fff;
         background-color: rgba(0, 0, 0, 0.6);
         font-size: 13px;
+      }
+    }
+    .play_box_heart {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      right: 8px;
+      top: 8px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      svg {
+        width: 18px;
+        height: 18px;
+        fill: #888;
+        transition: fill 0.3s ease-in-out;
+      }
+      &:hover {
+        svg {
+          fill: red;
+        }
+      }
+      &.favorited {
+        svg {
+          fill: red !important;
+        }
       }
     }
   }

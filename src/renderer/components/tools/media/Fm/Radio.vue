@@ -198,7 +198,7 @@ export default {
       flex-direction: row;
       flex-wrap: wrap;
       .media_fm_radio_channel_item {
-        width: 150px;
+        width: 50%;
         height: 150px;
         display: flex;
         flex-direction: row;
