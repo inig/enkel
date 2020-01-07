@@ -193,6 +193,7 @@ export default {
     Mood: () => import('./Mood'),
     Radio: () => import('./Radio'),
     Recommend: () => import('./Recommend'),
+    Anchor: () => import('./Anchor'),
     Favorite: () => import('./Favorite'),
     Icon, Slider, Modal, Input
   },
@@ -265,17 +266,17 @@ export default {
           bgColor: '#e7925d'
         }
       ],
-      sideBarShown: false,
-      currentCategoryIndex: 0,
+      sideBarShown: true,
+      currentCategoryIndex: 1,
       allCategory: [
         {
           label: '广播',
           name: 'radio'
         },
-        // {
-        //   label: '推荐',
-        //   name: 'recommend'
-        // },
+        {
+          label: '主播',
+          name: 'anchor'
+        },
         {
           label: '心情',
           name: 'mood'
@@ -336,11 +337,15 @@ export default {
       this.sideBarShown = !this.sideBarShown
     },
     playList (data) {
-      this.currentMood = data.moodItem.label
-      this.currentMoodObj = data.moodItem
+      if (data.moodItem.label) {
+        this.currentMood = data.moodItem.label
+        this.currentMoodObj = data.moodItem
+      }
       this.activeSource = Object.assign({}, data.list[0], {
         type: data.type
       })
+      this.playBox.currentIndex = this.fmList.length
+      this.fmList = this.fmList.concat(data.list)
       this.playBox.category = 'mood'
       this.initPlayer()
     },
@@ -363,21 +368,20 @@ export default {
       if (res.code === 0 && res.data) {
         let lastIndex
         if (this.fmList.length > 0) {
-          lastIndex = this.fmList.length - 1
+          lastIndex = this.fmList.length
           this.fmList = this.fmList.concat(res.data)
         } else {
           lastIndex = 0
           this.fmList = res.data
         }
         this.playBox.currentIndex = lastIndex
-        this.activeSource = Object.assign({}, res.data[this.playBox.currentIndex], {
+        this.activeSource = Object.assign({}, this.fmList[this.playBox.currentIndex], {
           type: 'audio/mp3'
         })
         this.initPlayer()
       }
     },
     play (data) {
-      console.log('=====', data)
       if (data.currentCategory === 'radio') {
         this.activeSource = Object.assign({}, data, {
           type: 'application/x-mpegURL'
@@ -390,7 +394,6 @@ export default {
         })
         this.playBox.category = 'mood'
       }
-
 
       this.initPlayer()
     },
@@ -729,7 +732,6 @@ export default {
         font-size: 18px;
         line-height: 25px;
         font-weight: 400;
-        text-overflow: -o-ellipsis-lastline;
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;

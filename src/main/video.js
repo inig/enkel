@@ -582,6 +582,56 @@ ipcMain.on('fm-get-radio-by-place', async (event, data) => {
   event.returnValue = res.data
 })
 
+// 搜主播、节目、tag
+ipcMain.on('fm-search', async (event, data) => {
+  let offset = ((data.pageIndex - 1) || 0) * (data.pageSize || 20)
+  let limit = data.pageSize || 20
+  let res = await axios.get(`http://bapi.xinli001.com/fm2/broadcast_list.json/?q=${encodeURIComponent(data.anchor)}&is_teacher=&offset=${offset}&speaker_id=0&rows=${limit}&key=046b6a2a43dc6ff6e770255f57328f89`)
+  event.returnValue = Object.assign({}, res.data, {
+    pageIndex: data.pageIndex || 1,
+    pageSize: data.pageSize || 20
+  })
+})
+
+/**
+ * 获取主播的节目列表
+ * anchorId: 主播ID
+ */
+ipcMain.on('fm-get-anchor-playlist', async (event, data) => {
+  let offset = ((data.pageIndex - 1) || 0) * (data.pageSize || 20)
+  let limit = data.pageSize || 20
+  let res = await axios.get(`http://yiapi.xinli001.com/fm/diantai-jiemu-list.json?offset=${offset}&limit=${limit}&diantai_id=${data.anchorId}&key=046b6a2a43dc6ff6e770255f57328f89`)
+  event.returnValue = Object.assign({}, res.data, {
+    pageIndex: data.pageIndex || 1,
+    pageSize: data.pageSize || 20
+  })
+})
+
+/**
+ * 获取主播详情
+ * anchorId: 主播ID
+ */
+ipcMain.on('fm-get-anchor-detail', async (event, data) => {
+  let res = await axios.get(`http://yiapi.xinli001.com/fm/diantai-detai.json?id=${data.anchorId}&key=046b6a2a43dc6ff6e770255f57328f89`)
+  event.returnValue = Object.assign({}, res.data, {
+    pageIndex: data.pageIndex || 1,
+    pageSize: data.pageSize || 20
+  })
+})
+
+/**
+ * 获取主播列表
+ */
+ipcMain.on('fm-get-anchor-list', async (event, data) => {
+  let offset = ((data.pageIndex - 1) || 0) * (data.pageSize || 20)
+  let limit = data.pageSize || 20
+  let res = await axios.get(`http://yiapi.xinli001.com/fm/diantai-new-list.json?offset=${offset}&limit=${limit}&key=046b6a2a43dc6ff6e770255f57328f89`)
+  event.returnValue = Object.assign({}, res.data, {
+    pageIndex: data.pageIndex || 1,
+    pageSize: data.pageSize || 20
+  })
+})
+
 ipcMain.on('fm-get-all-favorite', (event) => {
   event.returnValue = getAllFavoriteFm() || {
     radio: [],
