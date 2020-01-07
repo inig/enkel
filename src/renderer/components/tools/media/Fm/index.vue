@@ -12,19 +12,21 @@
         <div class="current_mood"
              @click="toggleSideBar">
           <div class="current_mood_wrapper"
+               :style="{backgroundImage: 'url(' + activeSource.cover + ')', backgroundSize: 'cover'}"
+               v-if="activeSource.cover">
+            <!-- <img :src="activeSource.cover"
+                 alt=""> -->
+          </div>
+          <div class="current_mood_wrapper"
                :style="{backgroundPosition: currentMoodObj.iconNormal}"
                key="current-mood"
-               v-if="!activeSource.currentCategory"></div>
+               v-else-if="!activeSource.currentCategory"></div>
           <div class="current_mood_wrapper"
                :style="{backgroundImage: 'url(' + activeSource.icon[0].url + ')', backgroundSize: 'cover'}"
                key="radio"
                :title="activeSource.name"
                v-else-if="activeSource.currentCategory === 'radio'"></div>
-          <div class="current_mood_wrapper"
-               v-else>
-            <img :src="activeSource.cover"
-                 alt="">
-          </div>
+
         </div>
         <div class="media_fm_side_bar_favorite"
              @click="openFavoritePanel">
@@ -641,15 +643,18 @@ export default {
           height: 50px;
           background-color: #fff;
           border-radius: 50%;
-          background-image: url("~@/assets/fm_mood_icons.png");
-          display: inline-block;
+          // background-image: url("~@/assets/fm_mood_icons.png");
           border: 1px solid #fff;
           overflow: hidden;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
         }
-        img {
-          max-width: 100%;
-          max-height: 100%;
-        }
+        // img {
+        //   max-width: 100%;
+        //   max-height: 100%;
+        // }
       }
       .media_fm_side_bar_item {
         width: 100%;
