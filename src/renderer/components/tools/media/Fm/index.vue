@@ -434,7 +434,7 @@ export default {
         notSupportedMessage: '此视频暂无法播放，请稍后再试',
         preload: 'auto',
         language: 'zh-CN',
-        muted: true
+        // muted: true
         // poster: 'http://www.ttkzm.com/uploadfile/201912/15/E213231985.jpg'
       }
 

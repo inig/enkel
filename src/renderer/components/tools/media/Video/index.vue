@@ -71,6 +71,9 @@
          @click.stop="hidePlayFile">
       <div class="play_file_inner"
            @click.stop="noop">
+        <span>点击选择文件</span>
+        <span style="margin: 8px 0;">或</span>
+        <span>拖动文件至此</span>
         <input type="file"
                class="video_input"
                style="opacity: 0;"
@@ -217,7 +220,8 @@ export default {
           el: '.swiper-pagination'
         }
       },
-      currentSlideIndex: 0
+      currentSlideIndex: 0,
+      musicBgs: ['http://v.bootstrapmb.com/2019/4/u0d54217', 'http://v.bootstrapmb.com/2018/12/0twha3250', 'http://v.bootstrapmb.com/2019/10/5s65c6354', 'http://v.bootstrapmb.com/2018/11/t36ed2742', 'http://v.bootstrapmb.com/2019/5/lm53h4838', 'http://v.bootstrapmb.com/2019/10/x6xcs6480', 'http://v.bootstrapmb.com/2019/4/lm8y53989', 'http://v.bootstrapmb.com/2019/3/wxmoy3693']
     }
   },
   computed: {
@@ -327,6 +331,7 @@ export default {
         notSupportedMessage: '此视频暂无法播放，请稍后再试',
         preload: 'auto',
         language: 'zh-CN',
+        loop: true,
         // muted: true
         // poster: 'http://www.ttkzm.com/uploadfile/201912/15/E213231985.jpg'
       }
@@ -369,16 +374,10 @@ export default {
         that.addItemPlayFile()
         // that.addItemFm()
 
-        // http://v.bootstrapmb.com/2019/4/u0d54217
-        // http://v.bootstrapmb.com/2018/12/0twha3250
-        // http://v.bootstrapmb.com/2019/10/5s65c6354
-        // http://v.bootstrapmb.com/2018/11/t36ed2742
-        // http://v.bootstrapmb.com/2019/5/lm53h4838
-        // http://v.bootstrapmb.com/2019/10/x6xcs6480
-        // http://v.bootstrapmb.com/2019/4/lm8y53989
-        // http://v.bootstrapmb.com/2019/3/wxmoy3693
         if (that.videoFile && that.videoFile.type && !!that.videoFile.type.match(/^audio/)) {
-          that.addMusicBox('http://v.bootstrapmb.com/2019/3/wxmoy3693')
+          let musciBgs = that.musicBgs
+          let ran = Math.floor(Math.random() * musciBgs.length)
+          that.addMusicBox(musciBgs[ran] || 'http://v.bootstrapmb.com/2019/3/wxmoy3693')
         }
 
         videojs.log('Your player is ready!')
@@ -791,6 +790,14 @@ export default {
       transition: left 0.25s ease-in-out;
       box-sizing: border-box;
       background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      span {
+        color: #666;
+        font-size: 13px;
+      }
     }
     &.shown {
       left: 0;
