@@ -25,16 +25,27 @@
             <div class="media_fm_radio_channel_item"
                  v-for="(itm, index) in favorite[item.name]"
                  :key="index"
-                 :title="itm.name">
+                 :title="itm.title">
               <div class="media_fm_radio_channel_item_inner"
                    @click="play(item.name, itm)">
                 <img :src="itm.cover"
-                     :alt="itm.name">
+                     :alt="itm.title">
               </div>
             </div>
           </div>
           <div class="favorite_panel_item favorite_anchor"
-               v-if="'anchor' === item.name"></div>
+               v-if="'anchor' === item.name">
+            <div class="media_fm_radio_channel_item"
+                 v-for="(itm, index) in favorite[item.name]"
+                 :key="index"
+                 :title="itm.title">
+              <div class="media_fm_radio_channel_item_inner media_fm_radio_channel_item_anchor"
+                   @click="gotoAnchorDetail(itm)">
+                <img :src="itm.cover"
+                     :alt="itm.title">
+              </div>
+            </div>
+          </div>
         </TabPane>
       </Tabs>
     </div>
@@ -84,10 +95,13 @@ export default {
   },
   methods: {
     play (name, item) {
-      // this.activeSource.url = url
-      // this.initPlayer()
       this.$emit('play', Object.assign({ currentCategory: name }, item))
-      // console.log('play: ', 'http://127.0.0.1:3000/videos?url=' + encodeURIComponent(url))
+    },
+    gotoAnchorDetail (data) {
+      global.eventHub.$emit('open-anchor-detail-panel', {
+        page: 'detail',
+        data: data
+      })
     }
   }
 }
@@ -139,9 +153,21 @@ export default {
       height: 120px;
       background-color: #fff;
       cursor: pointer;
+      &.media_fm_radio_channel_item_anchor {
+        border: 1px solid #c8c8c8;
+        border-radius: 50%;
+        overflow: hidden;
+        &:hover {
+          img {
+            transform: scale(1.2);
+          }
+        }
+      }
       img {
         width: 120px;
         height: 120px;
+        transform: scale(1);
+        transition: transform 0.3s ease-in-out;
       }
     }
   }

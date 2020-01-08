@@ -113,7 +113,9 @@ export default {
     },
     changePlace (id) {
       this.currentPlace = id
-      this.getRadioData()
+      setTimeout(() => {
+        this.getRadioData()
+      }, 10)
     },
     initPlayer () {
       // https://www.awaimai.com/2053.html

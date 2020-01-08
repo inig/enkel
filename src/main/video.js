@@ -393,8 +393,14 @@ function setFavoriteFm (item, type) {
     db.get('fm.favorite').assign(d).write()
   }
   let list = db.get('fm.favorite.' + type).value()
-  if (!list.some(itm => itm.url === item.url)) {
-    list.push(item)
+  if (type === 'anchor') {
+    if (!list.some(itm => itm.id === item.id)) {
+      list.push(item)
+    }
+  } else {
+    if (!list.some(itm => itm.url === item.url)) {
+      list.push(item)
+    }
   }
   let d2 = {}
   d2[type] = list
@@ -402,16 +408,24 @@ function setFavoriteFm (item, type) {
 }
 
 function removeFavoriteFm (item, type) {
-  if (item.url) {
+  if (item.url || item.id) {
     let list = db.get('fm.favorite.' + type).value()
-
     if (list && (list.length > 0)) {
       let i = 0
       let outIndex = -1
-      for (i; i < list.length; i++) {
-        if (list[i].url === item.url) {
-          outIndex = i
-          i = list.length
+      if (type === 'anchor') {
+        for (i; i < list.length; i++) {
+          if (list[i].id === item.id) {
+            outIndex = i
+            i = list.length
+          }
+        }
+      } else {
+        for (i; i < list.length; i++) {
+          if (list[i].url === item.url) {
+            outIndex = i
+            i = list.length
+          }
         }
       }
       if (outIndex > -1) {
