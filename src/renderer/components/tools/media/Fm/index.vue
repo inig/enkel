@@ -664,7 +664,7 @@ export default {
       .current_mood {
         width: 100%;
         height: 50px;
-        margin-bottom: 60px;
+        margin-bottom: 80px;
         display: flex;
         flex-direction: row;
         align-items: center;
