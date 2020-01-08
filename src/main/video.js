@@ -600,7 +600,7 @@ ipcMain.on('fm-get-radio-by-place', async (event, data) => {
 ipcMain.on('fm-search', async (event, data) => {
   let offset = ((data.pageIndex - 1) || 0) * (data.pageSize || 20)
   let limit = data.pageSize || 20
-  let res = await axios.get(`http://bapi.xinli001.com/fm2/broadcast_list.json/?q=${encodeURIComponent(data.anchor)}&is_teacher=&offset=${offset}&speaker_id=0&rows=${limit}&key=046b6a2a43dc6ff6e770255f57328f89`)
+  let res = await axios.get(`http://bapi.xinli001.com/fm2/broadcast_list.json/?q=${encodeURIComponent(data.key)}&is_teacher=&offset=${offset}&speaker_id=0&rows=${limit}&key=046b6a2a43dc6ff6e770255f57328f89`)
   event.returnValue = Object.assign({}, res.data, {
     pageIndex: data.pageIndex || 1,
     pageSize: data.pageSize || 20

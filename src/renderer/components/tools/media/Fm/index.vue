@@ -38,7 +38,14 @@
              v-for="(item, index) in allCategory"
              :key="index"
              :class="[currentCategoryIndex === index ? 'active' : '']"
-             @click="chooseCategory(index)">{{item.label}}</div>
+             @click="chooseCategory(index)">
+          <span v-if="item.name !== 'search'">{{item.label}}</span>
+          <Icon v-else
+                type="ios-search"
+                size="24"
+                color="#fff" />
+        </div>
+
         <div class="media_fm_side_bar_settings"
              @click="showSettingsModal">
           <Icon type="ios-cog"
@@ -199,6 +206,7 @@ export default {
     Recommend: () => import('./Recommend'),
     Anchor: () => import('./Anchor'),
     Favorite: () => import('./Favorite'),
+    Search: () => import('./Search'),
     Icon, Slider, Modal, Input
   },
   data () {
@@ -271,7 +279,7 @@ export default {
         }
       ],
       sideBarShown: true,
-      currentCategoryIndex: 1,
+      currentCategoryIndex: 3,
       allCategory: [
         {
           label: '广播',
@@ -284,6 +292,10 @@ export default {
         {
           label: '心情',
           name: 'mood'
+        },
+        {
+          label: '搜索',
+          name: 'search'
         }
       ],
       fmList: [],

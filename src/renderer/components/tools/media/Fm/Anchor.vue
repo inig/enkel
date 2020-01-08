@@ -146,7 +146,8 @@ export default {
       this.showAnchorDetailPanel()
       this.resetDetailInfo()
       this.getAnchorDetailList()
-      document.querySelector('.media_fm_anchor_detail_panel_content').scrollTop = 0
+      let content = document.querySelector('.media_fm_anchor_detail_panel_content')
+      content && (content.scrollTop = 0)
     },
     redirectToAnchorDetail (data) {
       this.gotoAnchorDetail(null, {

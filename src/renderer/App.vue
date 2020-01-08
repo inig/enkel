@@ -307,7 +307,10 @@ body {
 
 .emphasize {
   color: #99ff00 !important;
-  // color: #ff6600 !important;
+}
+.emphasize2 {
+  color: #ff6600 !important;
+  font-weight: bold;
 }
 
 .requests_footer_btn {
