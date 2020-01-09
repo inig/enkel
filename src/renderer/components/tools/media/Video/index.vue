@@ -168,7 +168,7 @@ export default {
       videoSrc: '',
       player: null,
       playlist: [],
-      activePlaylist: [2, 1],
+      activePlaylist: [0, 1],
       playlistShown: false,
       playFileShown: false,
       fmShown: true,

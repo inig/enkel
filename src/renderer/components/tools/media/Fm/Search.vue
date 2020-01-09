@@ -101,7 +101,12 @@ export default {
           this.noMoreList = false
         }
       } else {
-        this.noMoreList = true
+
+        if (this.pageIndex === 1) {
+          this.noMoreList = false
+        } else {
+          this.noMoreList = true
+        }
       }
     },
     resetSearchCondition () {
