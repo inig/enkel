@@ -334,7 +334,7 @@ db.defaults({
   },
   fm: {
     mood: '迷茫', // 1: 烦躁；2: 悲伤；3: 孤独；4: 已弃疗；5: 减压；6: 无奈；7: 快乐；8: 感动；9: 迷茫
-    bg: 'http://e.hiphotos.baidu.com/zhidao/pic/item/ae51f3deb48f8c5420d92dbf38292df5e0fe7f1c.jpg',
+    bg: 'http://attach.bbs.miui.com/forum/201107/18/1128552dfogdk5efkhzmoh.jpg',
     customBg: '',
     favorite: {
       radio: [], // 直播电台
@@ -440,7 +440,7 @@ function removeFavoriteFm (item, type) {
 }
 
 function getFmBg () {
-  return db.get('fm.customBg').value() || db.get('fm.bg').value() || 'http://e.hiphotos.baidu.com/zhidao/pic/item/ae51f3deb48f8c5420d92dbf38292df5e0fe7f1c.jpg'
+  return db.get('fm.customBg').value() || db.get('fm.bg').value() || 'http://attach.bbs.miui.com/forum/201107/18/1128552dfogdk5efkhzmoh.jpg'
 }
 
 function setFmBg (bg) {

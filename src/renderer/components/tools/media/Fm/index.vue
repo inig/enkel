@@ -214,7 +214,7 @@ export default {
       bg: '',
       settings: {
         shown: false,
-        bg: 'http://e.hiphotos.baidu.com/zhidao/pic/item/ae51f3deb48f8c5420d92dbf38292df5e0fe7f1c.jpg'
+        bg: 'http://attach.bbs.miui.com/forum/201107/18/1128552dfogdk5efkhzmoh.jpg'
       },
       recommendPageIndex: 1,
       recommendPageSize: 20,
@@ -278,8 +278,8 @@ export default {
           bgColor: '#e7925d'
         }
       ],
-      sideBarShown: true,
-      currentCategoryIndex: 3,
+      sideBarShown: false,
+      currentCategoryIndex: 0,
       allCategory: [
         {
           label: '广播',
