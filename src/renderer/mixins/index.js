@@ -2,6 +2,7 @@ import { ipcRenderer } from 'electron'
 export default {
   methods: {
     $goto (data) {
+      console.log('>>>', data)
       ipcRenderer.send('navigate-to', data)
     },
     S4 () {

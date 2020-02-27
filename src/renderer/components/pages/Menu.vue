@@ -81,8 +81,13 @@
         let opt = {
           path: data.name
         }
-        if (data.meta && data.meta.resources) {
-          opt.resources = data.meta.resources
+        if (data.meta) {
+          if (data.meta.resources) {
+            opt.resources = data.meta.resources
+          }
+          if (data.meta.boxSize) {
+            opt.boxSize = data.meta.boxSize
+          }
         }
         this.$goto(opt)
       },

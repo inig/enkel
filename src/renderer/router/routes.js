@@ -95,8 +95,8 @@ export const mediaRouter = {
       path: '/video',
       name: 'video',
       meta: {
-        label: 'VIDEO',
-        title: 'Video',
+        label: 'Enkel视频',
+        title: 'Enkel视频',
         icon: '#route-video',
         name: '视频播放',
         desc: '视频播放器，支持多种视频格式',
@@ -130,6 +130,26 @@ export const mediaRouter = {
         withoutHeader: true
       },
       component: require('@/components/tools/media/Fm/index').default
+    },
+    {
+      path: '/flac',
+      name: 'flac',
+      meta: {
+        label: 'Enkel无损音乐',
+        title: 'Enkel无损音乐',
+        icon: '#route-flac',
+        name: 'Enkel无损音乐',
+        desc: '过精致的生活，听无损的音乐',
+        createTime: '1582793691589',
+        hot: false,
+        closable: false,
+        withoutHeader: true,
+        boxSize: {
+          width: 400,
+          height: 600
+        }
+      },
+      component: require('@/components/tools/media/Flac/index').default
     }
   ]
 }

@@ -161,9 +161,9 @@ function createWindow () {
 
 function createNewWindow (arg) {
   let newWindow = new BrowserWindow({
-    height: 563,
+    height: arg.boxSize ? arg.boxSize.height : 563,
     useContentSize: true,
-    width: 1000,
+    width: arg.boxSize ? arg.boxSize.width : 1000,
     titleBarStyle: 'hidden',
     show: false,
     webPreferences: {
