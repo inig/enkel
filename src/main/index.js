@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, clipboard, globalShortcut, screen } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, clipboard, globalShortcut, screen, session } from 'electron'
 // import { autoUpdater } from 'electron-updater'
 import { screenshot } from './puppeteer'
 
@@ -12,6 +12,7 @@ const { showSettingsWindow, createSettingsWindow } = require('./settings')
 const { showAboutWindow } = require('./about')
 require('./autoUpdate')
 require('./video')
+require('./flac')
 // const { checkUpdate } = require('./autoUpdate')
 // console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
 // if (!fs.existsSync(app.getAppPath() + path.sep + 'db.json')) {
@@ -159,7 +160,37 @@ function createWindow () {
   // mainWindow.setAspectRatio(16 / 9)
 }
 
-function createNewWindow (arg) {
+function cookieValidate (loginBeforeOption, win, redirectUrl) {
+  return new Promise((resolve) => {
+    session.defaultSession.cookies.get({
+      url: loginBeforeOption.url
+    }).then(c => {
+      let now = (new Date()).getTime()
+      if (loginBeforeOption.cookies.every(item => c.some(itm => (itm.name === item) && (parseInt(itm.expirationDate * 1000) > now)))) {
+        win.loadURL(redirectUrl)
+      } else {
+        win.loadURL(loginBeforeOption.url)
+        win.webContents.executeJavaScript((loginBeforeOption.insert && loginBeforeOption.insert.js) ? loginBeforeOption.insert.js : '')
+      }
+      resolve()
+    }).catch(err => {
+      win.loadURL(loginBeforeOption.url)
+      win.webContents.executeJavaScript((loginBeforeOption.insert && loginBeforeOption.insert.js) ? loginBeforeOption.insert.js : '')
+      resolve()
+    })
+    win.webContents.on('will-navigate', (event) => {
+      event.preventDefault()
+    })
+  })
+}
+
+async function cookieChanged (changedCookie, loginBeforeOption, win, redirectUrl) {
+  if (loginBeforeOption.cookies.indexOf(changedCookie.name) > -1) {
+    await cookieValidate(loginBeforeOption, win, redirectUrl)
+  }
+}
+
+async function createNewWindow (arg) {
   let newWindow = new BrowserWindow({
     height: arg.boxSize ? arg.boxSize.height : 563,
     useContentSize: true,
@@ -179,7 +210,13 @@ function createNewWindow (arg) {
   const url = process.env.NODE_ENV === 'development'
     ? `http://localhost:9080/#/${arg.path}`
     : `file://${__dirname}/index.html?page=${arg.path}`
-  newWindow.loadURL(url)
+
+  if (arg.loginBefore && arg.loginBefore.url) {
+    await cookieValidate(arg.loginBefore, newWindow, url)
+    session.defaultSession.cookies.on('changed', async (evt, cookie, cause, removed) => {
+      await cookieChanged(cookie, arg.loginBefore, newWindow, url)
+    })
+  }
 
   // if (arg.resources) {
   //   let webContents = newWindow.webContents

@@ -88,6 +88,9 @@
           if (data.meta.boxSize) {
             opt.boxSize = data.meta.boxSize
           }
+          if (data.meta.loginBefore) {
+            opt.loginBefore = data.meta.loginBefore
+          }
         }
         this.$goto(opt)
       },

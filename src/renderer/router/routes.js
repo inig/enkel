@@ -147,6 +147,15 @@ export const mediaRouter = {
         boxSize: {
           width: 400,
           height: 600
+        },
+        loginBefore: {
+          url: 'https://wappass.baidu.com/passport#/insert_account',
+          // url: 'https://wappass.baidu.com/passport?login&authsite=1&tpl=netdisk&overseas=1&regdomestic=1&smsLoginLink=1&display=mobile&u=https%3A%2F%2Fpan.baidu.com%2Fwap%2Fhome%3Fadapt%3Dpc%26fr%3Dftw%26realName%3D1%26wapBehaviorLog%3Dwap_click_welcome_login%26branchType%3DSMSlogin#/insert_account',
+          // url: 'https://pan.baidu.com',
+          cookies: ['BDUSS'],
+          insert: {
+            js: 'let bdheader = document.querySelector(".pass-header"); if (bdheader) { bdheader.style.display = "none"; }'
+          }
         }
       },
       component: require('@/components/tools/media/Flac/index').default
