@@ -3,7 +3,7 @@
     <div class="video_box">
       <div class="video_box_top">
         <div class="video_box_top_left">
-          <img src="/static/images/flac/fallback_album_art.png"
+          <img src="~@/assets/images/flac/fallback_album_art.png"
                alt="封面">
           <transition name="fade">
             <div class="audio_loading"
@@ -99,7 +99,7 @@
         </div>
         <div class="video_box_bottom_loop"
              @click="changeLoopType">
-          <img :src="`/static/images/flac/${playBox.loopType}.png`">
+          <img :src="`~@/assets/images/flac/${playBox.loopType}.png`">
         </div>
       </div>
     </div>

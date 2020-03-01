@@ -236,6 +236,64 @@ function _flacGetRealPath (event, args) {
         //   layoutApp.style.webkitAppRegion = 'drag'
         // }
         console.log('下载')
+        function _getSystemContext () {
+          return window.require("system-core:context/context.js").instanceForSystem;
+        }
+        function _initWidgetContext (name, callback) {
+          var initFunc = function (widget) {
+            if (!widget.getContext()) {
+              widget.setContext(_getSystemContext());
+            }
+            callback && callback();
+          };
+          if (callback) {
+            window.require.async(name, initFunc);
+          }
+          else {
+            initFunc(window.require(name));
+          }
+        }
+        
+        function pan_run () {
+          return new Promise(resolve => {
+            let fileList = require('system-core:context/context.js').instanceForSystem.list.getSelected();
+            _initWidgetContext("function-widget-1:download/util/context.js");
+          
+            window.require.async("function-widget-1:download/service/dlinkService.js", function (dl) {
+              var yunData = window.yunData;
+              var data = {
+                list: fileList,
+                share_uk: yunData.SHARE_UK,
+                share_id: yunData.SHARE_ID,
+                sign: yunData.SIGN,
+                timestamp: yunData.TIMESTAMP,
+                type: "nolimit"
+              };
+              try {
+                dl.getDlinkShare(data, (response) => {
+                  resolve(response)
+                });
+              } catch (err) {
+              }
+            })
+          })
+        }
+        if (location.href.indexOf('baidu.com/share/init') > -1) {
+          // 输入提取码
+          console.log('输入提取码');
+          let codeInput = document.querySelector('.pickpw input')
+          if (codeInput) {
+            codeInput.value = "${args.code}";
+            codeInput.setAttribute('value', "${args.code}");
+          }
+          document.querySelector('[title="提取文件"]').click()
+        } else {
+          console.log('获取真实url');
+          pan_run().then(response => {
+            document.title = JSON.stringify(response)
+            console.log('获取真实url成功: ', response);
+          })
+        }
       `)
       win.show()
     })
