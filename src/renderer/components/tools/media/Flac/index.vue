@@ -64,15 +64,15 @@
         <div class="video_box_bottom_playlist"
              @click="togglePlayList"
              title="播放列表">
-          <svg>
+          <svg :style="{fill: playListModal.shown ? '#4fc08d' : 'rgb(201, 201, 201)'}">
             <use xlink:href="#playlist"></use>
           </svg>
         </div>
 
         <div class="video_box_bottom_discover"
-             @click="togglePlayList"
+             @click="toggleDiscover"
              title="发现更多">
-          <svg>
+          <svg :style="{fill: discoverModal.shown ? '#4fc08d' : 'rgb(201, 201, 201)'}">
             <use xlink:href="#discover"></use>
           </svg>
         </div>
@@ -106,16 +106,21 @@
 
     <div class="play_list_container"
          :class="[playListModal.shown ? 'show' : 'hide']">
-      <List :play-list="playList"
-            :active-index="activeIndex"
-            @change-active-index="changeActiveIndex"></List>
+      <PlayList :play-list="playList"
+                :active-index="activeIndex"
+                @change-active-index="changeActiveIndex"></PlayList>
     </div>
+
+    <div class="discover_container"
+         :class="[discoverModal.shown ? 'show' : 'hide']">
+      <Discover></Discover>
+    </div>
+
     <audio ref="audioRef"
            style="opacity: 0;"
            id="audio"
            :src="playList[activeIndex].url"
            type="audio/flac"
-           autoplay
            preload
            :loop="playBox.loopType === 'repeat'"
            :volume="parseFloat(playBox.volume / 100).toFixed(1)"
@@ -139,7 +144,8 @@ export default {
   name: 'MediaFlac',
   components: {
     Button, Slider, Icon, Tooltip,
-    List: () => import('./List')
+    PlayList: () => import('./PlayList'),
+    Discover: () => import('./Discover')
   },
   data () {
     return {
@@ -246,6 +252,9 @@ export default {
       playListModal: {
         shown: false
       },
+      discoverModal: {
+        shown: false
+      },
       activeSource: {
         // url: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Debussy_-_Pour_les_accords.flac',
         url: 'https://static.dei2.com/sounds/demo.flac',
@@ -272,7 +281,7 @@ export default {
   },
   mounted () {
     this.initPlayer()
-    ipcRenderer.on('flac-response-real-path', this.play)
+    ipcRenderer.on('flac-response-real-path', this.insertPlay)
   },
   methods: {
     getPlayList () {
@@ -289,7 +298,18 @@ export default {
         code: this.code
       })
     },
-    play (event, data) {
+    insertPlay (event, data) {
+      this.pause()
+      this.playList.push({
+        url: data.dlink, // 'https://static.dei2.com/sounds/demo.flac'
+        type: 'audio/x-flac',
+        name: data.server_filename,
+        artist: 'No Artist'
+      })
+      this.activeIndex = this.playList.length - 1
+      this.play()
+    },
+    play () {
       this.setPlayStatus('play')
       this.initPlayer()
       this.player.play()
@@ -306,6 +326,9 @@ export default {
         this.pause()
       }
     },
+    hidePlayList () {
+      this.playListModal.shown = false
+    },
     togglePlayList () {
       if (!this.playListModal.shown) {
         this.setWindowSize({
@@ -316,7 +339,25 @@ export default {
           height: 250
         })
       }
+      this.hideDiscover()
       this.playListModal.shown = !this.playListModal.shown
+    },
+    hideDiscover () {
+      this.discoverModal.shown = false
+    },
+    toggleDiscover () {
+      if (!this.discoverModal.shown) {
+        ipcRenderer.send('flac-get-play-list')
+        this.setWindowSize({
+          height: 667
+        })
+      } else {
+        this.setWindowSize({
+          height: 250
+        })
+      }
+      this.hidePlayList()
+      this.discoverModal.shown = !this.discoverModal.shown
     },
     setWindowSize (size) {
       ipcRenderer.sendSync('set-window-size', size)
@@ -631,7 +672,6 @@ export default {
         align-items: center;
         justify-content: center;
         svg {
-          fill: rgb(201, 201, 201);
           width: 24px;
           height: 24px;
           &:hover {
@@ -733,16 +773,40 @@ export default {
     // max-height: 80px;
     max-height: calc(~"100% - 245px");
     transform-origin: 50% 0%;
-    transition: all 0.3s linear;
+    // transition: all 0.15s linear;
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
     overflow: hidden;
     // background-color: transparent;
     &.show {
       opacity: 1;
+      pointer-events: auto;
     }
     &.hide {
       opacity: 0;
+      pointer-events: none;
+    }
+  }
+  .discover_container {
+    position: absolute;
+    top: 245px;
+    width: 100%;
+    z-index: 0;
+    // max-height: 80px;
+    max-height: calc(~"100% - 245px");
+    transform-origin: 50% 0%;
+    // transition: all 0.15s linear;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    overflow: hidden;
+    // background-color: transparent;
+    &.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    &.hide {
+      opacity: 0;
+      pointer-events: none;
     }
   }
 }

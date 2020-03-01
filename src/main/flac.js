@@ -19,7 +19,6 @@ function _flacGetPlayList (args) {
     const browser = await puppeteer.launch({
       headless: true,
       ignoreHTTPSErrors: true,
-      defaultViewport: args.viewport,
       timeout: 60 * 1000
     })
     const page = await browser.newPage()
@@ -27,14 +26,46 @@ function _flacGetPlayList (args) {
       waitUntil: ["load", "domcontentloaded", "networkidle0"]
     })
 
-    let doms = await page.$$eval('.main .left ul li', links => links.map(el => {
-      return {
-        html: el.querySelector('a').innerHTML
+    let list = await page.$eval('.main', links => {
+      let tab = []
+      let lis = links.querySelectorAll('.wupd .notice .tab-nav li')
+      for (let i = 0; i < lis.length; i++) {
+        tab.push(lis[i].querySelector('a').innerHTML)
       }
-    }));
-    console.log(doms)
-
+      tab = tab.map((item, index) => {
+        let content = []
+        let palLis = links.querySelectorAll('.wupd .notice .tab-pal')[index].querySelectorAll('li')
+        for (let i = 0; i < palLis.length; i++) {
+          content.push({
+            name: palLis[i].querySelector('a').getAttribute('title'),
+            url: palLis[i].querySelector('a').getAttribute('href')
+          })
+        }
+        return {
+          group: item,
+          list: content.slice(1)
+        }
+      })
+      let others = ['', '', '', ''].map((item, index) => {
+        let group = links.querySelectorAll('.index-cms .ybbt')[index].querySelector('.yanse').innerHTML
+        let bgbLis = links.querySelectorAll('.index-cms .bgb ul')[index].querySelectorAll('li')
+        let content = []
+        for (let i = 0; i < bgbLis.length; i++) {
+          content.push({
+            name: bgbLis[i].querySelector('a').getAttribute('title'),
+            url: bgbLis[i].querySelector('a').getAttribute('href')
+          })
+        }
+        return {
+          group: group,
+          list: content
+        }
+      })
+      tab = tab.concat(others)
+      return tab
+    })
     await browser.close()
+    resolve(list)
   })
 }
 
@@ -55,6 +86,8 @@ function _flacGetRealPath (event, args) {
       }
     })
     win.loadURL(args.url)
+
+    console.log('===', args)
 
     // let targetWindow = BrowserWindow.fromWebContents(win.webContents)
     // targetWindow.webContents.executeJavaScript(`
@@ -101,9 +134,22 @@ function _flacGetRealPath (event, args) {
           })
         })
       }
-      pan_run().then(response => {
-        document.title = JSON.stringify(response)
-      })
+      if (location.href.indexOf('baidu.com/share/init') > -1) {
+        // 输入提取码
+        console.log('输入提取码');
+        let codeInput = document.querySelector('.pickpw input')
+        if (codeInput) {
+          codeInput.value = "${args.code}";
+          codeInput.setAttribute('value', "${args.code}");
+        }
+        document.querySelector('[title="提取文件"]').click()
+      } else {
+        console.log('获取真实url');
+        pan_run().then(response => {
+          document.title = JSON.stringify(response)
+          console.log('获取真实url成功: ', response);
+        })
+      }
     `)
 
     win.on('page-title-updated', (evt, title) => {
@@ -114,7 +160,8 @@ function _flacGetRealPath (event, args) {
         response = {}
       }
       if (response.list && response.list.length) {
-        event.sender.send('flac-response-real-path', response.list[0].dlink)
+        event.sender.send('flac-response-real-path', response.list[0])
+        console.log('response: ', response.list[0])
         win.destroy()
       }
     })
@@ -149,18 +196,18 @@ function _flacGetRealPath (event, args) {
         if (drager) {
           drager.classList.remove('dialog-drag')
         }
-        if (layoutApp) {
-          layoutApp.style.overflow = 'hidden'
-          layoutApp.style.display = 'none'
-          layoutApp.style.webkitAppRegion = 'drag'
-        }
+        // if (layoutApp) {
+        //   layoutApp.style.overflow = 'hidden'
+        //   layoutApp.style.display = 'none'
+        //   layoutApp.style.webkitAppRegion = 'drag'
+        // }
       `)
 
       win.show()
     })
-    session.defaultSession.webRequest.onResponseStarted(requestFilter2, (details) => {
-      win.hide()
-    })
+    // session.defaultSession.webRequest.onResponseStarted(requestFilter2, (details) => {
+    //   win.hide()
+    // })
     session.defaultSession.webRequest.onCompleted(requestFilter2, (details) => {
       win.webContents.executeJavaScript(`
         var closeBtn = document.querySelector('.dialog-control')
@@ -183,11 +230,12 @@ function _flacGetRealPath (event, args) {
         if (drager) {
           drager.classList.remove('dialog-drag')
         }
-        if (layoutApp) {
-          layoutApp.style.overflow = 'hidden'
-          layoutApp.style.display = 'none'
-          layoutApp.style.webkitAppRegion = 'drag'
-        }
+        // if (layoutApp) {
+        //   layoutApp.style.overflow = 'hidden'
+        //   layoutApp.style.display = 'none'
+        //   layoutApp.style.webkitAppRegion = 'drag'
+        // }
+        console.log('下载')
       `)
       win.show()
     })
@@ -244,11 +292,53 @@ function _flacGetRealPath (event, args) {
   })
 }
 
-ipcMain.on('flac-get-play-list', async (event, data) => {
-  await _flacGetPlayList(data)
+function _getBDResourceUrl (event, args) {
+  return new Promise(async (resolve, reject) => {
+    const browser = await puppeteer.launch({
+      headless: true,
+      ignoreHTTPSErrors: true,
+      timeout: 60 * 1000
+    })
+    const page = await browser.newPage()
+    let id = args.url.replace(/(.*\/)(.*)(\.html?)$/, '$2')
+    await page.goto(args.url, {
+      waitUntil: ["load", "domcontentloaded", "networkidle0"]
+    })
+
+    await page.addScriptTag({
+      content: `
+        let dBtn = document.querySelector('a[href="https://www.52flac.com/download/' + ${id} + '.html"]')
+        if (dBtn) {
+          dBtn.setAttribute('target', '_self')
+        }
+      `
+    })
+
+    await Promise.all([
+      page.waitForNavigation(),
+      page.click('a[href="https://www.52flac.com/download/' + id + '.html"]')
+    ])
+
+    let data = await page.$eval('.wrap', links => {
+      let str = links.querySelectorAll('.con')[1].querySelector('p').innerHTML.replace(/\s/g, '')
+      return {
+        url: str.replace(/^(链接：)?(.*)(提取码：)(.*)$/, '$2'),
+        code: str.replace(/^(.*)(提取码：)([a-zA-Z0-9]{4})(.*)$/, '$3')
+      }
+    })
+    await browser.close()
+    resolve(data)
+  })
+}
+
+ipcMain.on('flac-get-play-list', async (event) => {
+  let response = await _flacGetPlayList({
+    url: 'https://www.52flac.com/'
+  })
+  event.reply('flac-response-get-play-list', response)
 })
 
 ipcMain.on('flac-get-real-path', async (event, data) => {
-  console.log('Data: ', data)
-  await _flacGetRealPath(event, data)
+  let resource = await _getBDResourceUrl(event, data)
+  await _flacGetRealPath(event, resource)
 })

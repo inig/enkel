@@ -5,7 +5,6 @@ import { screenshot } from './puppeteer'
 import path from 'path'
 
 import os from 'os'
-
 require('./request')
 require('./npm')
 const { showSettingsWindow, createSettingsWindow } = require('./settings')
