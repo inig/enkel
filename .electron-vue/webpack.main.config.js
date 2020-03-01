@@ -25,6 +25,10 @@ let mainConfig = {
       {
         test: /\.node$/,
         use: 'node-loader'
+      },
+      {
+        test: /\.coffee$/,
+        use: 'coffee-loader'
       }
     ]
   },

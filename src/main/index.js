@@ -191,10 +191,10 @@ async function cookieChanged (changedCookie, loginBeforeOption, win, redirectUrl
 }
 
 async function createNewWindow (arg) {
-  let newWindow = new BrowserWindow({
-    height: arg.boxSize ? arg.boxSize.height : 563,
-    useContentSize: true,
-    width: arg.boxSize ? arg.boxSize.width : 1000,
+  let newWindow = new BrowserWindow(Object.assign({
+    height: 563,
+    // useContentSize: true,
+    width: 1000,
     titleBarStyle: 'hidden',
     show: false,
     webPreferences: {
@@ -205,7 +205,7 @@ async function createNewWindow (arg) {
       // preload: (arg.resources && arg.resources.js && (arg.resources.js.length > 0)) ? path.join(__dirname, `../renderer/assets/preload/js/${arg.resources.js[0]}`) : ''
       // preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
     }
-  })
+  }, arg.windowOption))
 
   const url = process.env.NODE_ENV === 'development'
     ? `http://localhost:9080/#/${arg.path}`
@@ -216,8 +216,9 @@ async function createNewWindow (arg) {
     session.defaultSession.cookies.on('changed', async (evt, cookie, cause, removed) => {
       await cookieChanged(cookie, arg.loginBefore, newWindow, url)
     })
+  } else {
+    newWindow.loadURL(url)
   }
-
   // if (arg.resources) {
   //   let webContents = newWindow.webContents
   //   webContents.executeJavaScript(`var dynamicLoading={css:function(path){if(!path||path.length===0){throw new Error('argument "path" is required !')}var head=document.getElementsByTagName("head")[0];var link=document.createElement("link");link.href=path;link.rel="stylesheet";link.type="text/css";head.appendChild(link)},js:function(path){if(!path||path.length===0){throw new Error('argument "path" is required !')}var head=document.getElementsByTagName("head")[0];var script=document.createElement("script");script.src=path;script.type="text/javascript";head.appendChild(script)}};`)
@@ -798,6 +799,14 @@ ipcMain.on('toggle-window-size', (event) => {
   if (win) {
     win.isMaximized() ? win.unmaximize() : win.maximize()
   }
+})
+
+ipcMain.on('set-window-size', (event, size) => {
+  let win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    win.setBounds(size)
+  }
+  event.returnValue = true
 })
 
 // checkUpdate()

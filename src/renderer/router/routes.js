@@ -144,9 +144,17 @@ export const mediaRouter = {
         hot: false,
         closable: false,
         withoutHeader: true,
-        boxSize: {
-          width: 400,
-          height: 600
+        windowOption: {
+          frame: false,
+          // resizable: false,
+          width: 360,
+          height: 250,
+          // height: 667,
+          modal: true,
+          transparent: true,
+          // hasShadow: false,
+          // backgroundColor: '#00ffffff',
+          titleBarStyle: 'default'
         },
         loginBefore: {
           url: 'https://wappass.baidu.com/passport#/insert_account',

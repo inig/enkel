@@ -42,6 +42,10 @@ export default {
 
 <style lang="less">
 @import url("/static/css/ace/themes/theme-tomorrow-night.css");
+html,
+body {
+  background: rgba(0, 0, 0, 0);
+}
 /* CSS */
 * {
   margin: 0;
@@ -398,12 +402,21 @@ body {
   }
 }
 
-.play_box_mood_control_progress {
+.video_box_middle {
   // .ivu-slider-bar {
   //   background: #33ff00;
   // }
   // .ivu-slider-button {
   //   border: 2px solid #33ff00;
+  // }
+  .ivu-slider-wrap {
+    background-color: #151619;
+  }
+  .ivu-slider-bar {
+    background: #4fc08d;
+  }
+  // .ivu-slider-button {
+  //   border: 2px solid #4fc08d;
   // }
 }
 </style>
