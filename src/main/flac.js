@@ -144,11 +144,11 @@ function _flacGetRealPath (event, args) {
         }
         document.querySelector('[title="提取文件"]').click()
       } else {
-        console.log('获取真实url');
-        pan_run().then(response => {
-          document.title = JSON.stringify(response)
-          console.log('获取真实url成功: ', response);
-        })
+        // console.log('获取真实url');
+        // pan_run().then(response => {
+        //   document.title = JSON.stringify(response)
+        //   console.log('获取真实url成功: ', response);
+        // })
       }
     `)
 
@@ -279,14 +279,7 @@ function _flacGetRealPath (event, args) {
           })
         }
         if (location.href.indexOf('baidu.com/share/init') > -1) {
-          // 输入提取码
-          console.log('输入提取码');
-          let codeInput = document.querySelector('.pickpw input')
-          if (codeInput) {
-            codeInput.value = "${args.code}";
-            codeInput.setAttribute('value', "${args.code}");
-          }
-          document.querySelector('[title="提取文件"]').click()
+          
         } else {
           console.log('获取真实url');
           pan_run().then(response => {
