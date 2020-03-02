@@ -30,12 +30,19 @@
       </div>
       <transition name="fade">
         <div class="flac_search_content_blank"
-             v-if="list.length === 0">暂无搜索结果</div>
+             v-if="list.length === 0">
+          <img src="~@/assets/images/flac/blank.jpeg"
+               alt="暂无搜索结果">
+          <div class="flac_search_content_blank_text">
+            暂无搜索结果
+          </div>
+        </div>
       </transition>
       <transition name="fade">
         <div class="flac_search_loading"
              v-if="isSearching">
-          <Spin size="large"></Spin>
+          <img src="~@/assets/images/flac/loading.gif"
+               alt="加载中">
         </div>
       </transition>
     </div>
@@ -202,13 +209,26 @@ export default {
       bottom: 0;
       width: 100%;
       height: 100%;
-      background-color: #f5f5f5;
+      background-color: #fff;
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
-      color: #aaa;
+
+      img {
+        width: 100%;
+      }
+      &_text {
+        width: 100%;
+        height: 32px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: rgb(95, 105, 113);
+        margin-top: -30px;
+      }
     }
   }
   &_loading {
@@ -217,7 +237,7 @@ export default {
     width: 100%;
     left: 0;
     bottom: 0;
-    background-color: #f5f5f5;
+    background-color: #fff;
     display: flex;
     flex-direction: row;
     align-items: center;

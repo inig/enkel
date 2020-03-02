@@ -53,7 +53,8 @@
     <transition name="fade">
       <div class="flac_discover_loading"
            v-if="!pageLoaded">
-        <Spin size="large"></Spin>
+        <img src="~@/assets/images/flac/loading.gif"
+             alt="加载中">
       </div>
     </transition>
   </div>
@@ -199,7 +200,7 @@ export default {
     width: 100%;
     left: 0;
     bottom: 0;
-    background-color: #f5f5f5;
+    background-color: #fff;
     display: flex;
     flex-direction: row;
     align-items: center;
