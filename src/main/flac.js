@@ -490,6 +490,40 @@ function _getBDResourceUrl (event, args) {
   })
 }
 
+function _searchByKw (event, args) {
+  return new Promise(async (resolve, reject) => {
+    const browser = await puppeteer.launch({
+      headless: true,
+      ignoreHTTPSErrors: true,
+      timeout: 60 * 1000
+    })
+    const page = await browser.newPage()
+    await page.goto(`https://www.52flac.com/search.php?q=${args.kw}`, {
+      waitUntil: ["load", "domcontentloaded", "networkidle0"]
+    })
+
+    // await page.addScriptTag({
+    //   content: `
+
+    //   `
+    // })
+
+    let data = await page.$eval('.main .list ul', links => {
+      let list = []
+      let lis = links.querySelectorAll('li')
+      for (let i = 0; i < lis.length; i++) {
+        list.push({
+          name: lis[i].querySelector('a').innerHTML.replace(/red/, '#4fc08d'),
+          url: lis[i].querySelector('a').getAttribute('href')
+        })
+      }
+      return list
+    })
+    await browser.close()
+    resolve(data)
+  })
+}
+
 ipcMain.on('flac-get-play-list', async (event) => {
   let response = await _flacGetPlayList({
     url: 'https://www.52flac.com/'
@@ -522,8 +556,14 @@ ipcMain.on('flac-save', async (event, data) => {
     //   saveTo: response
     // })
     require('request')(data.url, (data) => {
-      console.log('>>>>', data)
       require('fs').writeFileSync(response, data)
     })
+  }
+})
+
+ipcMain.on('flac-search', async (event, data) => {
+  let response = await _searchByKw(event, data)
+  if (response) {
+    event.reply('flac-response-search', response)
   }
 })

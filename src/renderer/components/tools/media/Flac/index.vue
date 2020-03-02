@@ -1,6 +1,7 @@
 <template>
   <div class="container">
-    <div class="video_box">
+    <div class="video_box"
+         :style="{borderBottomLeftRadius: (!discoverModal.shown && !playListModal.shown && !searchModal.shown) ? '5px' : '0px', borderBottomRightRadius: (!discoverModal.shown && !playListModal.shown && !searchModal.shown) ? '5px' : '0px'}">
       <div class="video_box_top">
         <div class="video_box_top_left">
           <img src="~@/assets/images/flac/fallback_album_art.png"
@@ -73,7 +74,15 @@
              @click="toggleDiscover"
              title="发现更多">
           <svg :style="{fill: discoverModal.shown ? '#4fc08d' : 'rgb(201, 201, 201)'}">
-            <use xlink:href="#discover"></use>
+            <use xlink:href="#global"></use>
+          </svg>
+        </div>
+
+        <div class="video_box_bottom_item"
+             @click="toggleSearch"
+             title="搜索">
+          <svg :style="{fill: searchModal.shown ? '#4fc08d' : 'rgb(201, 201, 201)'}">
+            <use xlink:href="#search"></use>
           </svg>
         </div>
 
@@ -110,26 +119,34 @@
         </div>
         <div class="video_box_bottom_loop"
              @click="changeLoopType">
-          <img v-if="playBox.loopType === 'loop'"
+          <svg>
+            <use :xlink:href="'#controls-' + playBox.loopType"></use>
+          </svg>
+          <!-- <img v-if="playBox.loopType === 'loop'"
                src="~@/assets/images/flac/loop.png">
           <img v-else-if="playBox.loopType === 'random'"
                src="~@/assets/images/flac/random.png">
           <img v-else
-               src="~@/assets/images/flac/repeat.png">
+               src="~@/assets/images/flac/repeat.png"> -->
         </div>
       </div>
     </div>
 
-    <div class="play_list_container"
+    <div class="flac_content"
          :class="[playListModal.shown ? 'show' : 'hide']">
       <PlayList :play-list="playList"
                 :active-index="activeIndex"
                 @change-active-index="changeActiveIndex"></PlayList>
     </div>
 
-    <div class="discover_container"
+    <div class="flac_content"
          :class="[discoverModal.shown ? 'show' : 'hide']">
       <Discover></Discover>
+    </div>
+
+    <div class="flac_content"
+         :class="[searchModal.shown ? 'show' : 'hide']">
+      <Search></Search>
     </div>
 
     <audio ref="audioRef"
@@ -162,7 +179,8 @@
     components: {
       Button, Slider, Icon, Tooltip,
       PlayList: () => import('./PlayList'),
-      Discover: () => import('./Discover')
+      Discover: () => import('./Discover'),
+      Search: () => import('./Search')
     },
     data () {
       return {
@@ -272,6 +290,9 @@
         discoverModal: {
           shown: false
         },
+        searchModal: {
+          shown: false
+        },
         activeSource: {
           // url: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Debussy_-_Pour_les_accords.flac',
           url: 'https://static.dei2.com/sounds/demo.flac',
@@ -359,6 +380,7 @@
           })
         }
         this.hideDiscover()
+        this.hideSearch()
         this.playListModal.shown = !this.playListModal.shown
       },
       hideDiscover () {
@@ -376,7 +398,26 @@
           })
         }
         this.hidePlayList()
+        this.hideSearch()
         this.discoverModal.shown = !this.discoverModal.shown
+      },
+      hideSearch () {
+        this.searchModal.shown = false
+      },
+      toggleSearch () {
+        if (!this.searchModal.shown) {
+          ipcRenderer.send('flac-get-play-list')
+          this.setWindowSize({
+            height: 667
+          })
+        } else {
+          this.setWindowSize({
+            height: 250
+          })
+        }
+        this.hidePlayList()
+        this.hideDiscover()
+        this.searchModal.shown = !this.searchModal.shown
       },
       setWindowSize (size) {
         ipcRenderer.sendSync('set-window-size', size)
@@ -522,7 +563,9 @@
       z-index: 1;
       padding: 18px 18px 5px 18px;
       background: -webkit-linear-gradient(#32363c, #17191e);
-      border-radius: 5px;
+      // border-radius: 5px;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
       border: 1px solid rgba(0, 0, 0, 0.85);
       &_top {
         width: 100%;
@@ -698,8 +741,8 @@
           align-items: center;
           justify-content: center;
           svg {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             &:hover {
               opacity: 0.7;
               cursor: pointer;
@@ -725,7 +768,7 @@
             }
           }
         }
-        &_download {
+        &_item {
           position: absolute;
           left: 68px;
           width: 24px;
@@ -735,8 +778,13 @@
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          &:hover {
-            opacity: 0.7;
+          svg {
+            width: 20px;
+            height: 20px;
+            &:hover {
+              opacity: 0.7;
+              cursor: pointer;
+            }
           }
         }
         &_volume {
@@ -799,19 +847,21 @@
           &:hover {
             opacity: 0.7;
           }
-          img {
-            width: 18px;
+          svg {
+            width: 20px;
+            height: 20px;
+            fill: rgb(201, 201, 201);
           }
         }
       }
     }
     .play_list_container {
       position: absolute;
-      top: 245px;
+      top: 250px;
       width: 100%;
       z-index: 0;
       // max-height: 80px;
-      max-height: calc(~"100% - 245px");
+      max-height: calc(~"100% - 250px");
       transform-origin: 50% 0%;
       // transition: all 0.15s linear;
       border-bottom-left-radius: 5px;
@@ -829,11 +879,33 @@
     }
     .discover_container {
       position: absolute;
-      top: 245px;
+      top: 250px;
       width: 100%;
       z-index: 0;
       // max-height: 80px;
-      max-height: calc(~"100% - 245px");
+      max-height: calc(~"100% - 250px");
+      transform-origin: 50% 0%;
+      // transition: all 0.15s linear;
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+      overflow: hidden;
+      // background-color: transparent;
+      &.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      &.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
+    .flac_content {
+      position: absolute;
+      top: 250px;
+      width: 100%;
+      z-index: 0;
+      // max-height: 80px;
+      max-height: calc(~"100% - 250px");
       transform-origin: 50% 0%;
       // transition: all 0.15s linear;
       border-bottom-left-radius: 5px;

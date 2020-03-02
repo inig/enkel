@@ -56,18 +56,19 @@
 
 <script>
   import { ipcRenderer } from 'electron'
-  import { Tabs, TabPane, Spin } from 'view-design'
+  import { Tabs, TabPane, Spin, Input } from 'view-design'
   export default {
     name: 'MediaFlacDiscover',
     components: {
-      Tabs, TabPane, Spin
+      Tabs, TabPane, Spin, Input
     },
     data () {
       return {
         list: [],
         isLoading: false,
         requestingTimeout: null,
-        activeIndex: [-1, -1]
+        activeIndex: [-1, -1],
+        kw: ''
       }
     },
     created () {
@@ -85,13 +86,6 @@
         this.activeIndex = [mainIndex + offset, index]
         this.isLoading = true
 
-        // if (!this.requestingTimeout) {
-        //   this.requestingTimeout = setTimeout(() => {
-        //     this.isLoading = false
-        //     clearTimeout(this.requestingTimeout)
-        //   }, 60 * 1000)
-        // }
-
         ipcRenderer.send('flac-get-real-path', {
           url: url
         })
@@ -106,12 +100,11 @@
 <style lang="less" scoped>
   .flac_discover {
     position: relative;
-    padding-top: 5px;
+    // padding-top: 5px;
     width: 100%;
     height: 422px;
     // height: 100%;
     background-color: #f8f8f8;
-    padding-top: 5px;
     overflow: auto;
     &_item {
       position: relative;
