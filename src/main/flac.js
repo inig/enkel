@@ -567,3 +567,11 @@ ipcMain.on('flac-search', async (event, data) => {
     event.reply('flac-response-search', response)
   }
 })
+
+ipcMain.on('set-always-on-top', (event, data) => {
+  let win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    win.setAlwaysOnTop(data)
+  }
+})
+

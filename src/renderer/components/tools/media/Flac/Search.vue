@@ -50,6 +50,11 @@ export default {
   components: {
     Icon, Input, Spin
   },
+  props: {
+    shown: {
+      type: Boolean
+    }
+  },
   data () {
     return {
       kw: '',
@@ -86,6 +91,13 @@ export default {
     },
     requesting () {
       this.isLoading = false
+    }
+  },
+  watch: {
+    shown (val) {
+      if (!val) {
+        this.activeIndex = -1
+      }
     }
   }
 }
