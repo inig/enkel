@@ -158,6 +158,14 @@
       <Search :shown="searchModal.shown"></Search>
     </div>
 
+    <transition name="fade">
+      <div class="download_container">
+        <div ref="downloadAnimationRef"
+             class="download_animation"
+             style="width: 60px; height: 60px;"></div>
+      </div>
+    </transition>
+
     <audio ref="audioRef"
            style="opacity: 0;"
            id="audio"
@@ -183,6 +191,8 @@
 <script>
 import { ipcRenderer } from 'electron'
 import { Button, Slider, Icon, Tooltip } from 'view-design'
+import * as pinjump from '../../../../assets/lottie/pinjump.json'
+import lottie from 'lottie-web'
 export default {
   name: 'MediaFlac',
   components: {
@@ -245,7 +255,17 @@ export default {
       list: {
         shown: false
       },
-      isPin: false // 是否置顶
+      isPin: false, // 是否置顶
+      downloadModal: {
+        shown: true,
+        options: {
+          animationData: pinjump,
+          width: 360,
+          height: 100
+        },
+        speed: 1,
+        anim: {}
+      }
     }
   },
   computed: {
@@ -265,6 +285,7 @@ export default {
     this.initPlayer()
     ipcRenderer.on('flac-response-real-path', this.insertPlay)
     this.setAlwaysOnTop()
+    this.startDownloadAnimation()
   },
   methods: {
     initPlayer () {
@@ -465,6 +486,24 @@ export default {
     setAlwaysOnTop () {
       this.isPin = !this.isPin
       ipcRenderer.send('set-always-on-top', this.isPin)
+    },
+    startDownloadAnimation () {
+      this.$nextTick(() => {
+        let anim = lottie.loadAnimation({
+          container: this.$refs.downloadAnimationRef,
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          path: 'https://labs.nearpod.com/bodymovin/demo/markus/walk/parents.json'
+          // path: 'https://assets3.lottiefiles.com/packages/lf20_1uKnRo.json'
+        })
+        setTimeout(() => {
+          this.$refs.downloadAnimationRef.style.transform = 'translate3d(300px, 0, 0)'
+          setTimeout(() => {
+            anim.stop()
+          }, 5000)
+        }, 3000)
+      })
     }
   }
 }
@@ -917,6 +956,20 @@ export default {
     &.hide {
       opacity: 0;
       pointer-events: none;
+    }
+  }
+
+  .download_container {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100px;
+    .download_animation {
+      width: 60px;
+      height: 60px;
+      transition: transform 5s linear;
+      transform: translate3d(0, 0, 0);
     }
   }
 }
