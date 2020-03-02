@@ -513,7 +513,7 @@ function _searchByKw (event, args) {
       let lis = links.querySelectorAll('li')
       for (let i = 0; i < lis.length; i++) {
         list.push({
-          name: lis[i].querySelector('a').innerHTML.replace(/red/, '#4fc08d'),
+          name: lis[i].querySelector('a').innerHTML.replace(/red/, '#ff9900'),
           url: lis[i].querySelector('a').getAttribute('href')
         })
       }
