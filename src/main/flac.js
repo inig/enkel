@@ -549,15 +549,37 @@ ipcMain.on('flac-save', async (event, data) => {
     defaultPath: path.resolve(os.homedir(), '.' + path.sep + 'Downloads' + path.sep + (data.filename || 'demo.flac')),
     buttonLabel: '保存'
   })
-  console.log(data, response)
+
+  let win = BrowserWindow.fromWebContents(event.sender)
+
   if (response) {
-    // downloadFile({
-    //   url: data.url,
-    //   saveTo: response
-    // })
-    require('request')(data.url, (data) => {
-      require('fs').writeFileSync(response, data)
+    // http://www.bootstrapmb.com/item/3029/preview lottie动画
+    win.webContents.session.on('will-download', (event, item, webContents) => {
+      item.setSavePath(response)
+
+      item.on('updated', (evt, state) => {
+        if (state === 'interrupted') {
+          console.log('Download is interrupted but can be resumed')
+        } else if (state === 'progressing') {
+          if (item.isPaused()) {
+            console.log('Download is paused')
+          } else {
+            console.log('Received bytes: ', item.getReceivedBytes())
+          }
+        } else { }
+      })
+
+      item.once('done', (evt, state) => {
+        if (state === 'completed') {
+          console.log('Download successfully')
+        } else {
+          console.log('Download failed: ', state)
+        }
+      })
+      console.log('will download: ', item)
     })
+
+    win.webContents.downloadURL(data.url)
   }
 })
 

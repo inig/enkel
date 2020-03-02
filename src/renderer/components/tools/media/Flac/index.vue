@@ -86,7 +86,7 @@
           </svg>
         </div>
 
-        <!-- <transition name="fade">
+        <transition name="fade">
           <div class="video_box_bottom_download"
                @click="downloadItem"
                title="下载"
@@ -95,7 +95,7 @@
                   size="24"
                   style="color: rgb(201, 201, 201);" />
           </div>
-        </transition> -->
+        </transition>
 
         <div class="video_box_bottom_volume"
              :class="[volumeBox.shown ? 'show' : 'hide']"
@@ -461,7 +461,6 @@ export default {
         filename: this.playList[this.activeIndex].name,
         url: this.playList[this.activeIndex].url
       })
-      // alert(JSON.stringify(this.playList[this.activeIndex], null, 2))
     },
     setAlwaysOnTop () {
       this.isPin = !this.isPin
@@ -717,6 +716,25 @@ export default {
       &_item {
         position: absolute;
         left: 68px;
+        width: 24px;
+        height: 36px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        svg {
+          width: 20px;
+          height: 20px;
+          &:hover {
+            opacity: 0.7;
+            cursor: pointer;
+          }
+        }
+      }
+      &_download {
+        position: absolute;
+        left: 102px;
         width: 24px;
         height: 36px;
         display: flex;
