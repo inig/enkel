@@ -162,7 +162,13 @@
       <div class="download_container">
         <div ref="downloadAnimationRef"
              class="download_animation"
+             @click="startDownloadAnimation('start')"
              style="width: 60px; height: 60px;"></div>
+        <!-- <lottie-player class="download_animation"
+                       ref="downloadAnimationRef"
+                       mode="normal"
+                       @click="startDownloadAnimation('start')"
+                       src="https://assets5.lottiefiles.com/datafiles/1FoyaL9X8oraOrX/data.json"></lottie-player> -->
       </div>
     </transition>
 
@@ -189,788 +195,863 @@
 </template>
 
 <script>
-import { ipcRenderer } from 'electron'
-import { Button, Slider, Icon, Tooltip } from 'view-design'
-import * as pinjump from '../../../../assets/lottie/pinjump.json'
-import lottie from 'lottie-web'
-export default {
-  name: 'MediaFlac',
-  components: {
-    Button, Slider, Icon, Tooltip,
-    PlayList: () => import('./PlayList'),
-    Discover: () => import('./Discover'),
-    Search: () => import('./Search')
-  },
-  data () {
-    return {
-      url: 'https://pan.baidu.com/s/1bo9Rajl', // 资源地址
-      code: 't864',
-      player: null,
-      playBox: {
-        status: 'pause', // 播放状态
-        data: {}, // 播放数据
-        currentIndex: -1, // 当前播放列表索引值
-        category: 'mood',
-        duration: 0,
-        currentTime: 0,
-        cachedVolume: 100,
-        volume: 100,
-        isLoading: true,
-        isMute: false,
-        loopType: 'repeat', // repeat: 单曲重复；loop: 列表循环；random: 随机播放
-      },
-      volumeBox: {
-        shown: false
-      },
-      playList: [
-        {
+  import { ipcRenderer } from 'electron'
+  import { Button, Slider, Icon, Tooltip } from 'view-design'
+  import * as pinjump from '../../../../assets/lottie/pinjump.json'
+  import lottie from 'lottie-web'
+  // import '@lottiefiles/lottie-player'
+  export default {
+    name: 'MediaFlac',
+    components: {
+      Button, Slider, Icon, Tooltip,
+      PlayList: () => import('./PlayList'),
+      Discover: () => import('./Discover'),
+      Search: () => import('./Search')
+    },
+    data () {
+      return {
+        url: 'https://pan.baidu.com/s/1bo9Rajl', // 资源地址
+        code: 't864',
+        player: null,
+        playBox: {
+          status: 'pause', // 播放状态
+          data: {}, // 播放数据
+          currentIndex: -1, // 当前播放列表索引值
+          category: 'mood',
+          duration: 0,
+          currentTime: 0,
+          cachedVolume: 100,
+          volume: 100,
+          isLoading: true,
+          isMute: false,
+          loopType: 'repeat', // repeat: 单曲重复；loop: 列表循环；random: 随机播放
+        },
+        volumeBox: {
+          shown: false
+        },
+        playList: [
+          {
+            url: 'https://static.dei2.com/sounds/demo.flac',
+            type: 'audio/x-flac',
+            name: '对的那个人.flac',
+            artist: '陈娟儿'
+          },
+          {
+            url: 'https://static.dei2.com/sounds/demo2.flac',
+            type: 'audio/x-flac',
+            name: '一曲相思.flac',
+            artist: '半阳'
+          }
+        ],
+        activeIndex: -1,
+        playListModal: {
+          shown: false
+        },
+        discoverModal: {
+          shown: false
+        },
+        searchModal: {
+          shown: false
+        },
+        activeSource: {
+          // url: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Debussy_-_Pour_les_accords.flac',
           url: 'https://static.dei2.com/sounds/demo.flac',
-          type: 'audio/x-flac',
-          name: '对的那个人.flac',
-          artist: '陈娟儿'
+          // url: 'http://d.pcs.baidu.com/file/9cf73dfb9b845623b2e2ec4eaf1c6e8e?fid=3610725717-250528-1049961648578531&dstime=1582908171&rt=sh&sign=FDtAERVyK-DCb740ccc5511e5e8fedcff06b081203-WjvSGkchqd9YMlc%2FTjAHJXEil8E%3D&expires=8h&chkv=1&chkbd=0&chkpc=&dp-logid=1369066902920002872&dp-callid=0&shareid=1963030568&r=371039862&clienttype=0&vuk=3610725717&vip=0',
+          type: 'audio/x-flac'
         },
-        {
-          url: 'https://static.dei2.com/sounds/demo2.flac',
-          type: 'audio/x-flac',
-          name: '一曲相思.flac',
-          artist: '半阳'
+        list: {
+          shown: false
+        },
+        isPin: false, // 是否置顶
+        downloadModal: {
+          shown: true,
+          anim: null,
+          status: ''
         }
-      ],
-      activeIndex: -1,
-      playListModal: {
-        shown: false
-      },
-      discoverModal: {
-        shown: false
-      },
-      searchModal: {
-        shown: false
-      },
-      activeSource: {
-        // url: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Debussy_-_Pour_les_accords.flac',
-        url: 'https://static.dei2.com/sounds/demo.flac',
-        // url: 'http://d.pcs.baidu.com/file/9cf73dfb9b845623b2e2ec4eaf1c6e8e?fid=3610725717-250528-1049961648578531&dstime=1582908171&rt=sh&sign=FDtAERVyK-DCb740ccc5511e5e8fedcff06b081203-WjvSGkchqd9YMlc%2FTjAHJXEil8E%3D&expires=8h&chkv=1&chkbd=0&chkpc=&dp-logid=1369066902920002872&dp-callid=0&shareid=1963030568&r=371039862&clienttype=0&vuk=3610725717&vip=0',
-        type: 'audio/x-flac'
-      },
-      list: {
-        shown: false
-      },
-      isPin: false, // 是否置顶
-      downloadModal: {
-        shown: true,
-        options: {
-          animationData: pinjump,
-          width: 360,
-          height: 100
-        },
-        speed: 1,
-        anim: {}
-      }
-    }
-  },
-  computed: {
-    volumeIcon () {
-      if (this.playBox.isMute) {
-        return 'md-volume-off'
-      } else if (this.playBox.volume === 0) {
-        return 'md-volume-mute'
-      } else if (this.playBox.volume < 50) {
-        return 'md-volume-down'
-      } else {
-        return 'md-volume-up'
       }
     },
-  },
-  mounted () {
-    this.initPlayer()
-    ipcRenderer.on('flac-response-real-path', this.insertPlay)
-    this.setAlwaysOnTop()
-    this.startDownloadAnimation()
-  },
-  methods: {
-    initPlayer () {
-      if (!this.player) {
-        this.player = this.$refs.audioRef
-      }
+    computed: {
+      volumeIcon () {
+        if (this.playBox.isMute) {
+          return 'md-volume-off'
+        } else if (this.playBox.volume === 0) {
+          return 'md-volume-mute'
+        } else if (this.playBox.volume < 50) {
+          return 'md-volume-down'
+        } else {
+          return 'md-volume-up'
+        }
+      },
     },
-    getRealPath () {
-      ipcRenderer.send('flac-get-real-path', {
-        url: this.url,
-        code: this.code
-      })
-    },
-    insertPlay (event, data) {
-      // this.pause()
-      this.playList.push({
-        url: data.dlink, // 'https://static.dei2.com/sounds/demo.flac',
-        type: 'audio/x-flac',
-        name: data.server_filename,
-        artist: 'No Artist'
-      })
-      this.activeIndex = this.playList.length - 1
-      this.play()
-    },
-    play () {
-      this.setPlayStatus('play')
+    mounted () {
       this.initPlayer()
-      setTimeout(() => {
-        this.player.play()
-      }, 100)
+      ipcRenderer.on('flac-response-real-path', this.insertPlay)
+      this.setAlwaysOnTop()
+      this.startDownloadAnimation('init')
+
+      ipcRenderer.on('flac-save-start', this.flacSaveStart)
+      ipcRenderer.on('flac-save-interrupted', this.flacSaveInterrupted)
+      ipcRenderer.on('flac-save-paused', this.flacSavePaused)
+      ipcRenderer.on('flac-save-progress', this.flacSaveProgress)
+      ipcRenderer.on('flac-save-success', this.flacSaveSuccess)
+      ipcRenderer.on('flac-save-fail', this.flacSaveFail)
     },
-    pause () {
-      this.setPlayStatus('pause')
-      this.initPlayer()
-      this.player.pause()
-    },
-    togglePlay () {
-      if (this.playBox.status === 'pause') {
+    methods: {
+      initPlayer () {
+        if (!this.player) {
+          this.player = this.$refs.audioRef
+        }
+      },
+      getRealPath () {
+        ipcRenderer.send('flac-get-real-path', {
+          url: this.url,
+          code: this.code
+        })
+      },
+      insertPlay (event, data) {
+        // this.pause()
+        this.playList.push({
+          url: data.dlink, // 'https://static.dei2.com/sounds/demo.flac',
+          type: 'audio/x-flac',
+          name: data.server_filename,
+          artist: 'No Artist'
+        })
+        this.activeIndex = this.playList.length - 1
         this.play()
-      } else {
-        this.pause()
-      }
-    },
-    hidePlayList () {
-      this.playListModal.shown = false
-    },
-    togglePlayList () {
-      if (!this.playListModal.shown) {
-        this.setWindowSize({
-          height: 667
-        })
-      } else {
-        this.setWindowSize({
-          height: 250
-        })
-      }
-      this.hideDiscover()
-      this.hideSearch()
-      this.playListModal.shown = !this.playListModal.shown
-    },
-    hideDiscover () {
-      this.discoverModal.shown = false
-    },
-    toggleDiscover () {
-      if (!this.discoverModal.shown) {
-        ipcRenderer.send('flac-get-play-list')
-        this.setWindowSize({
-          height: 667
-        })
-      } else {
-        this.setWindowSize({
-          height: 250
-        })
-      }
-      this.hidePlayList()
-      this.hideSearch()
-      this.discoverModal.shown = !this.discoverModal.shown
-    },
-    hideSearch () {
-      this.searchModal.shown = false
-    },
-    toggleSearch () {
-      if (!this.searchModal.shown) {
-        ipcRenderer.send('flac-get-play-list')
-        this.setWindowSize({
-          height: 667
-        })
-      } else {
-        this.setWindowSize({
-          height: 250
-        })
-      }
-      this.hidePlayList()
-      this.hideDiscover()
-      this.searchModal.shown = !this.searchModal.shown
-    },
-    setWindowSize (size) {
-      ipcRenderer.sendSync('set-window-size', size)
-    },
-    changeCurrentTime (e) {
-      this.initPlayer()
-      this.player.currentTime = Number(e)
-    },
-    setVolume (e) {
-      this.playBox.cachedVolume = this.playBox.volume
-    },
-    changeVolume (e) {
-      this.initPlayer()
-      this.playBox.volume = Number(e)
-      this.player.volume = parseFloat(this.playBox.volume / 100).toFixed(1)
-      if (this.playBox.volume > 0) {
-        this.playBox.isMute = false
-        this.player.muted = false
-      }
-    },
-    playPrev () {
-      if (this.playBox.loopType === 'random') {
-        this.activeIndex = Math.floor(Math.random() * this.playList.length)
-      } else {
-        this.activeIndex = (this.activeIndex - 1 + this.playList.length) % this.playList.length
-      }
-      this.play()
-    },
-    playNext () {
-      if (this.playBox.loopType === 'random') {
-        this.activeIndex = Math.floor(Math.random() * this.playList.length)
-      } else {
-        this.activeIndex = (this.activeIndex + 1) % this.playList.length
-      }
-      this.play()
-    },
-    setPlayStatus (status) {
-      this.playBox.status = status
-    },
-    canplay (e) {
-      this.playBox.isLoading = false
-    },
-    durationchange (e) {
-      this.playBox.duration = this.player.duration
-    },
-    timeupdate (e) {
-      this.playBox.currentTime = this.player.currentTime
-    },
-    waiting (e) {
-      this.playBox.isLoading = true
-    },
-    ended (e) {
-      switch (this.playBox.loopType) {
-        case 'loop':
-          this.activeIndex = (this.activeIndex + 1) % this.playList.length
-          break
-        case 'random':
-          this.activeIndex = Math.floor(Math.random() * this.playList.length)
-          break
-        default:
-          break
-      }
-      this.play()
-    },
-    setAudioMuted () {
-      this.playBox.volume = 0
-      this.playBox.isMute = true
-      this.initPlayer()
-      this.player.muted = true
-    },
-    cancelAudioMuted () {
-      this.playBox.volume = this.playBox.cachedVolume
-      this.playBox.isMute = false
-      this.initPlayer()
-      this.player.muted = false
-    },
-    toggleMute () {
-      if (this.playBox.isMute) {
-        this.cancelAudioMuted()
-      } else {
-        this.setAudioMuted()
-      }
-    },
-    changeLoopType () {
-      let allLoopType = ['repeat', 'loop', 'random']
-      this.playBox.loopType = allLoopType[(allLoopType.indexOf(this.playBox.loopType) + 1) % allLoopType.length]
-      if (this.playBox.loopType === 'repeat') {
-        this.player.loop = true
-      } else {
-        this.player.loop = false
-      }
-    },
-    changeActiveIndex (index) {
-      this.activeIndex = index
-      this.play()
-    },
-    downloadItem () {
-      ipcRenderer.send('flac-save', {
-        filename: this.playList[this.activeIndex].name,
-        url: this.playList[this.activeIndex].url
-      })
-    },
-    setAlwaysOnTop () {
-      this.isPin = !this.isPin
-      ipcRenderer.send('set-always-on-top', this.isPin)
-    },
-    startDownloadAnimation () {
-      this.$nextTick(() => {
-        let anim = lottie.loadAnimation({
-          container: this.$refs.downloadAnimationRef,
-          renderer: 'svg',
-          loop: true,
-          autoplay: true,
-          path: 'https://labs.nearpod.com/bodymovin/demo/markus/walk/parents.json'
-          // path: 'https://assets3.lottiefiles.com/packages/lf20_1uKnRo.json'
-        })
+      },
+      play () {
+        this.setPlayStatus('play')
+        this.initPlayer()
         setTimeout(() => {
-          this.$refs.downloadAnimationRef.style.transform = 'translate3d(300px, 0, 0)'
-          setTimeout(() => {
-            anim.stop()
-          }, 5000)
-        }, 3000)
-      })
+          this.player.play()
+        }, 100)
+      },
+      pause () {
+        this.setPlayStatus('pause')
+        this.initPlayer()
+        this.player.pause()
+      },
+      togglePlay () {
+        if (this.playBox.status === 'pause') {
+          this.play()
+        } else {
+          this.pause()
+        }
+      },
+      hidePlayList () {
+        this.playListModal.shown = false
+      },
+      togglePlayList () {
+        if (!this.playListModal.shown) {
+          this.setWindowSize({
+            height: 667
+          })
+        } else {
+          this.setWindowSize({
+            height: 250
+          })
+        }
+        this.hideDiscover()
+        this.hideSearch()
+        this.playListModal.shown = !this.playListModal.shown
+      },
+      hideDiscover () {
+        this.discoverModal.shown = false
+      },
+      toggleDiscover () {
+        if (!this.discoverModal.shown) {
+          ipcRenderer.send('flac-get-play-list')
+          this.setWindowSize({
+            height: 667
+          })
+        } else {
+          this.setWindowSize({
+            height: 250
+          })
+        }
+        this.hidePlayList()
+        this.hideSearch()
+        this.discoverModal.shown = !this.discoverModal.shown
+      },
+      hideSearch () {
+        this.searchModal.shown = false
+      },
+      toggleSearch () {
+        if (!this.searchModal.shown) {
+          ipcRenderer.send('flac-get-play-list')
+          this.setWindowSize({
+            height: 667
+          })
+        } else {
+          this.setWindowSize({
+            height: 250
+          })
+        }
+        this.hidePlayList()
+        this.hideDiscover()
+        this.searchModal.shown = !this.searchModal.shown
+      },
+      setWindowSize (size) {
+        ipcRenderer.sendSync('set-window-size', size)
+      },
+      changeCurrentTime (e) {
+        this.initPlayer()
+        this.player.currentTime = Number(e)
+      },
+      setVolume (e) {
+        this.playBox.cachedVolume = this.playBox.volume
+      },
+      changeVolume (e) {
+        this.initPlayer()
+        this.playBox.volume = Number(e)
+        this.player.volume = parseFloat(this.playBox.volume / 100).toFixed(1)
+        if (this.playBox.volume > 0) {
+          this.playBox.isMute = false
+          this.player.muted = false
+        }
+      },
+      playPrev () {
+        if (this.playBox.loopType === 'random') {
+          this.activeIndex = Math.floor(Math.random() * this.playList.length)
+        } else {
+          this.activeIndex = (this.activeIndex - 1 + this.playList.length) % this.playList.length
+        }
+        this.play()
+      },
+      playNext () {
+        if (this.playBox.loopType === 'random') {
+          this.activeIndex = Math.floor(Math.random() * this.playList.length)
+        } else {
+          this.activeIndex = (this.activeIndex + 1) % this.playList.length
+        }
+        this.play()
+      },
+      setPlayStatus (status) {
+        this.playBox.status = status
+      },
+      canplay (e) {
+        this.playBox.isLoading = false
+      },
+      durationchange (e) {
+        this.playBox.duration = this.player.duration
+      },
+      timeupdate (e) {
+        this.playBox.currentTime = this.player.currentTime
+      },
+      waiting (e) {
+        this.playBox.isLoading = true
+      },
+      ended (e) {
+        switch (this.playBox.loopType) {
+          case 'loop':
+            this.activeIndex = (this.activeIndex + 1) % this.playList.length
+            break
+          case 'random':
+            this.activeIndex = Math.floor(Math.random() * this.playList.length)
+            break
+          default:
+            break
+        }
+        this.play()
+      },
+      setAudioMuted () {
+        this.playBox.volume = 0
+        this.playBox.isMute = true
+        this.initPlayer()
+        this.player.muted = true
+      },
+      cancelAudioMuted () {
+        this.playBox.volume = this.playBox.cachedVolume
+        this.playBox.isMute = false
+        this.initPlayer()
+        this.player.muted = false
+      },
+      toggleMute () {
+        if (this.playBox.isMute) {
+          this.cancelAudioMuted()
+        } else {
+          this.setAudioMuted()
+        }
+      },
+      changeLoopType () {
+        let allLoopType = ['repeat', 'loop', 'random']
+        this.playBox.loopType = allLoopType[(allLoopType.indexOf(this.playBox.loopType) + 1) % allLoopType.length]
+        if (this.playBox.loopType === 'repeat') {
+          this.player.loop = true
+        } else {
+          this.player.loop = false
+        }
+      },
+      changeActiveIndex (index) {
+        this.activeIndex = index
+        this.play()
+      },
+      downloadItem () {
+        ipcRenderer.send('flac-save', {
+          filename: this.playList[this.activeIndex].name,
+          url: this.playList[this.activeIndex].url
+        })
+      },
+      setAlwaysOnTop () {
+        this.isPin = !this.isPin
+        ipcRenderer.send('set-always-on-top', this.isPin)
+      },
+      startDownloadAnimation2 (status) {
+        this.$nextTick(() => {
+          setTimeout(async () => {
+            if (status === 'init') {
+              // this.downloadModal.anim = lottie.loadAnimation({
+              //   container: this.$refs.downloadAnimationRef,
+              //   renderer: 'svg',
+              //   loop: false,
+              //   autoplay: false,
+              //   name: 'download',
+              //   animationData: require('../../../../assets/lottie/download.json')
+              // })
+              this.downloadModal.anim = await this.$refs.downloadAnimationRef.getLottie()
+              // this.downloadModal.anim.load('https://assets5.lottiefiles.com/datafiles/1FoyaL9X8oraOrX/data.json')
+              // this.downloadModal.anim.pause()
+            } else if (status === 'start') {
+              this.downloadModal.anim.play()
+              setTimeout(() => {
+                this.downloadModal.anim.pause()
+                console.log(this.downloadModal.anim.getDuration())
+              }, 2000)
+              // this.downloadModal.anim.addEventListener('paused', (e) => {
+              //   console.log('pause: ', e)
+              // })
+              // this.downloadModal.anim.goToAndStop(130, true)
+            }
+          }, 100)
+        })
+
+      },
+      startDownloadAnimation (status, percent) {
+        this.downloadModal.status = status
+        this.$nextTick(async () => {
+          if (!this.downloadModal.anim) {
+            this.downloadModal.anim = lottie.loadAnimation({
+              container: this.$refs.downloadAnimationRef,
+              renderer: 'svg',
+              loop: false,
+              autoplay: false,
+              animationData: require('../../../../assets/lottie/download.json')
+            })
+            global.anim = this.downloadModal.anim
+          }
+          this.downloadModal.anim.addEventListener('enterFrame', (e) => {
+            // console.log(e)
+            if (this.downloadModal.status === 'start') {
+              if (e.currentTime >= 145) {
+                this.downloadModal.anim.pause()
+              }
+            }
+          })
+          if ((this.downloadModal.status === 'start')) {
+            this.downloadModal.anim.play()
+          }
+        })
+      },
+      downloadProgress (percent) {
+        // this.downloadModal.anim.play()
+        console.log(Math.min(145 + 45 * percent, 187))
+        this.downloadModal.anim.setCurrentRawFrameValue(Math.min(145 + 45 * percent, 187))
+        if (145 + 45 * percent >= 187) {
+          this.downloadModal.anim.pause()
+        }
+      },
+      flacSaveStart (event, data) {
+        // this.downloadModal.status = 'start'
+        // this.downloadModal.anim.play()
+      },
+      flacSaveInterrupted (event, data) { },
+      flacSavePaused (event, data) { },
+      flacSaveProgress (event, data) {
+        // console.log('下载中: ', 45 * parseFloat((data.received / data.total).toFixed(2)))
+        // this.startDownloadAnimation('progress', parseFloat((data.received / data.total).toFixed(2)))
+        this.downloadModal.status = 'progress'
+        this.downloadProgress(parseFloat((data.received / data.total).toFixed(4)))
+      },
+      flacSaveSuccess (event, data) {
+        this.$Message.success({
+          content: '下载成功: ' + data.path.replace(/^(.*\/)(.*)$/, '$2')
+        })
+        this.downloadModal.status = ''
+        this.downloadModal.anim.play()
+      },
+      flacSaveFail (event, data) {
+        this.$Message.error({
+          content: '下载失败: ' + data.path.replace(/^(.*\/)(.*)$/, '$2')
+        })
+        this.downloadModal.status = ''
+        this.downloadModal.anim.stop()
+      },
     }
   }
-}
 </script>
 
 <style lang="less" scoped>
-.demo-spin-icon-load {
-  animation: ani-demo-spin 1s linear infinite;
-}
-@keyframes ani-demo-spin {
-  from {
-    transform: rotate(0deg);
+  .demo-spin-icon-load {
+    animation: ani-demo-spin 1s linear infinite;
   }
-  50% {
-    transform: rotate(180deg);
+  @keyframes ani-demo-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    50% {
+      transform: rotate(180deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
-  to {
-    transform: rotate(360deg);
+  .demo-spin-col {
+    height: 100px;
+    position: relative;
+    border: 1px solid #eee;
   }
-}
-.demo-spin-col {
-  height: 100px;
-  position: relative;
-  border: 1px solid #eee;
-}
-.container {
-  position: relative;
+  .container {
+    position: relative;
 
-  width: 100%;
-  height: 100%;
-  // background-color: red;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-  overflow: hidden;
-  .video_box {
-    position: absolute;
-    top: 0;
     width: 100%;
-    height: 250px;
-    z-index: 1;
-    padding: 18px 18px 5px 18px;
-    background: -webkit-linear-gradient(#32363c, #17191e);
-    // border-radius: 5px;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-    border: 1px solid rgba(0, 0, 0, 0.85);
-    &_top {
+    height: 100%;
+    // background-color: red;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    overflow: hidden;
+    .video_box {
+      position: absolute;
+      top: 0;
       width: 100%;
-      height: 130px;
-      -webkit-app-region: drag;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      &_left {
-        position: relative;
-        width: 130px;
+      height: 250px;
+      z-index: 1;
+      padding: 18px 18px 5px 18px;
+      background: -webkit-linear-gradient(#32363c, #17191e);
+      // border-radius: 5px;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      border: 1px solid rgba(0, 0, 0, 0.85);
+      &_top {
+        width: 100%;
         height: 130px;
+        -webkit-app-region: drag;
         display: flex;
         flex-direction: row;
         align-items: center;
-        border: 1px solid rgba(0, 0, 0, 0.63);
-        box-shadow: rgba(0, 0, 0, 0.35) 0 1px 5px;
-        .audio_loading {
+        justify-content: space-between;
+        &_left {
+          position: relative;
+          width: 130px;
+          height: 130px;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          border: 1px solid rgba(0, 0, 0, 0.63);
+          box-shadow: rgba(0, 0, 0, 0.35) 0 1px 5px;
+          .audio_loading {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            svg {
+              width: 64px;
+              height: 64px;
+              fill: #fff;
+            }
+          }
+          img {
+            width: 100%;
+          }
+          &::after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            content: " ";
+            background: -webkit-linear-gradient(
+              -45deg,
+              rgba(255, 255, 255, 0.15) 50%,
+              transparent 50%
+            );
+            background: -moz-linear-gradient(
+              -45deg,
+              rgba(255, 255, 255, 0.15) 50%,
+              transparent 50%
+            );
+            background: -o-linear-gradient(
+              -45deg,
+              rgba(255, 255, 255, 0.15) 50%,
+              transparent 50%
+            );
+            box-shadow: rgba(255, 255, 255, 0.1) 0 1px 0 inset;
+          }
+        }
+        &_right {
+          width: calc(~"100% - 130px");
+          height: 130px;
+          padding-left: 10px;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: space-around;
+          &_artist {
+            width: 100%;
+            height: 50px;
+            &_title {
+              width: 100%;
+              height: 30px;
+              line-height: 30px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              font-family: Helvetica, Arial, "DejaVu Sans", sans-serif;
+              font-weight: 500;
+              font-size: 14px;
+              color: white;
+              margin: 0;
+              text-shadow: black 0 -1px 0;
+            }
+            &_name {
+              width: 100%;
+              height: 20px;
+              line-height: 20px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              font-family: Helvetica, Arial, "DejaVu Sans Condensed", sans-serif;
+              font-size: 12px;
+              color: #a7aab1;
+              text-shadow: black 0 -1px 0;
+            }
+          }
+          &_controls {
+            width: 100%;
+            height: 50px;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            justify-content: space-around;
+            flex-wrap: nowrap;
+            &_item {
+              border-radius: 50%;
+              border: 2px solid rgb(201, 201, 201);
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              justify-content: center;
+              // margin-right: 20px;
+              cursor: pointer;
+              &:hover {
+                opacity: 0.7;
+              }
+              &.small {
+                width: 24px;
+                height: 24px;
+              }
+              &.big {
+                width: 45px;
+                height: 45px;
+              }
+            }
+          }
+        }
+      }
+      &_middle {
+        width: 100%;
+        height: 36px;
+        margin-top: 15px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        -webkit-app-region: no-drag;
+        &_current {
+          display: inline-block;
+          color: #fff;
+          font-size: 12px;
+          width: 80px;
+        }
+        &_remaining {
+          display: inline-block;
+          color: #fff;
+          font-size: 12px;
+          width: 80px;
+          text-align: right;
+        }
+      }
+      &_bottom {
+        position: relative;
+        width: 100%;
+        height: calc(~"100% - 130px - 15px - 36px");
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        -webkit-app-region: no-drag;
+        &_playlist {
           position: absolute;
           left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
+          width: 24px;
+          height: 36px;
           display: flex;
           flex-direction: row;
           align-items: center;
           justify-content: center;
           svg {
-            width: 64px;
-            height: 64px;
-            fill: #fff;
+            width: 22px;
+            height: 22px;
+            &:hover {
+              opacity: 0.7;
+              cursor: pointer;
+            }
           }
         }
-        img {
-          width: 100%;
-        }
-        &::after {
+        &_discover {
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: -1px;
-          content: " ";
-          background: -webkit-linear-gradient(
-            -45deg,
-            rgba(255, 255, 255, 0.15) 50%,
-            transparent 50%
-          );
-          background: -moz-linear-gradient(
-            -45deg,
-            rgba(255, 255, 255, 0.15) 50%,
-            transparent 50%
-          );
-          background: -o-linear-gradient(
-            -45deg,
-            rgba(255, 255, 255, 0.15) 50%,
-            transparent 50%
-          );
-          box-shadow: rgba(255, 255, 255, 0.1) 0 1px 0 inset;
-        }
-      }
-      &_right {
-        width: calc(~"100% - 130px");
-        height: 130px;
-        padding-left: 10px;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-around;
-        &_artist {
-          width: 100%;
-          height: 50px;
-          &_title {
-            width: 100%;
-            height: 30px;
-            line-height: 30px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-family: Helvetica, Arial, "DejaVu Sans", sans-serif;
-            font-weight: 500;
-            font-size: 14px;
-            color: white;
-            margin: 0;
-            text-shadow: black 0 -1px 0;
-          }
-          &_name {
-            width: 100%;
-            height: 20px;
-            line-height: 20px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-family: Helvetica, Arial, "DejaVu Sans Condensed", sans-serif;
-            font-size: 12px;
-            color: #a7aab1;
-            text-shadow: black 0 -1px 0;
-          }
-        }
-        &_controls {
-          width: 100%;
-          height: 50px;
+          left: 34px;
+          width: 24px;
+          height: 36px;
           display: flex;
           flex-direction: row;
-          align-items: flex-end;
-          justify-content: space-around;
-          flex-wrap: nowrap;
-          &_item {
-            border-radius: 50%;
-            border: 2px solid rgb(201, 201, 201);
-            box-sizing: border-box;
+          align-items: center;
+          justify-content: center;
+          svg {
+            fill: rgb(201, 201, 201);
+            width: 22px;
+            height: 22px;
+            &:hover {
+              opacity: 0.7;
+              cursor: pointer;
+            }
+          }
+        }
+        &_item {
+          position: absolute;
+          left: 68px;
+          width: 24px;
+          height: 36px;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          svg {
+            width: 20px;
+            height: 20px;
+            &:hover {
+              opacity: 0.7;
+              cursor: pointer;
+            }
+          }
+        }
+        &_download {
+          position: absolute;
+          left: 102px;
+          width: 24px;
+          height: 36px;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          svg {
+            width: 20px;
+            height: 20px;
+            &:hover {
+              opacity: 0.7;
+              cursor: pointer;
+            }
+          }
+        }
+        &_volume {
+          position: relative;
+          height: 36px;
+          cursor: pointer;
+          overflow-x: hidden;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: flex-end;
+          transform-origin: 100% 50%;
+          transition: width 0.3s ease-in-out;
+          &_slider {
+            position: absolute;
+            right: 34px;
+            width: 120px;
+            height: 100%;
             display: flex;
             flex-direction: row;
             align-items: center;
-            justify-content: center;
-            // margin-right: 20px;
-            cursor: pointer;
-            &:hover {
-              opacity: 0.7;
-            }
-            &.small {
-              width: 24px;
-              height: 24px;
-            }
-            &.big {
-              width: 45px;
-              height: 45px;
+            justify-content: flex-end;
+            &_text {
+              width: 48px;
+              margin-left: 8px;
+              color: rgb(201, 201, 201);
+              font-size: 12px;
+              text-align: center;
             }
           }
-        }
-      }
-    }
-    &_middle {
-      width: 100%;
-      height: 36px;
-      margin-top: 15px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      -webkit-app-region: no-drag;
-      &_current {
-        display: inline-block;
-        color: #fff;
-        font-size: 12px;
-        width: 80px;
-      }
-      &_remaining {
-        display: inline-block;
-        color: #fff;
-        font-size: 12px;
-        width: 80px;
-        text-align: right;
-      }
-    }
-    &_bottom {
-      position: relative;
-      width: 100%;
-      height: calc(~"100% - 130px - 15px - 36px");
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: flex-end;
-      -webkit-app-region: no-drag;
-      &_playlist {
-        position: absolute;
-        left: 0;
-        width: 24px;
-        height: 36px;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        svg {
-          width: 22px;
-          height: 22px;
-          &:hover {
-            opacity: 0.7;
-            cursor: pointer;
+          &.show {
+            width: 184px;
+          }
+          &.hide {
+            width: 24px;
+          }
+          &_icon {
+            position: absolute;
+            width: 24px;
+            right: 0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-end;
+            i {
+              &:hover {
+                opacity: 0.7;
+              }
+            }
           }
         }
-      }
-      &_discover {
-        position: absolute;
-        left: 34px;
-        width: 24px;
-        height: 36px;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        svg {
-          fill: rgb(201, 201, 201);
-          width: 22px;
-          height: 22px;
-          &:hover {
-            opacity: 0.7;
-            cursor: pointer;
-          }
-        }
-      }
-      &_item {
-        position: absolute;
-        left: 68px;
-        width: 24px;
-        height: 36px;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        svg {
-          width: 20px;
-          height: 20px;
-          &:hover {
-            opacity: 0.7;
-            cursor: pointer;
-          }
-        }
-      }
-      &_download {
-        position: absolute;
-        left: 102px;
-        width: 24px;
-        height: 36px;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        svg {
-          width: 20px;
-          height: 20px;
-          &:hover {
-            opacity: 0.7;
-            cursor: pointer;
-          }
-        }
-      }
-      &_volume {
-        position: relative;
-        height: 36px;
-        cursor: pointer;
-        overflow-x: hidden;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-end;
-        transform-origin: 100% 50%;
-        transition: width 0.3s ease-in-out;
-        &_slider {
-          position: absolute;
-          right: 34px;
-          width: 120px;
-          height: 100%;
+        &_loop {
+          width: 24px;
+          height: 36px;
+          margin-left: 10px;
           display: flex;
           flex-direction: row;
           align-items: center;
-          justify-content: flex-end;
-          &_text {
-            width: 48px;
-            margin-left: 8px;
-            color: rgb(201, 201, 201);
-            font-size: 12px;
-            text-align: center;
+          cursor: pointer;
+          &:hover {
+            opacity: 0.7;
           }
-        }
-        &.show {
-          width: 184px;
-        }
-        &.hide {
-          width: 24px;
-        }
-        &_icon {
-          position: absolute;
-          width: 24px;
-          right: 0;
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: flex-end;
-          i {
-            &:hover {
-              opacity: 0.7;
-            }
+          svg {
+            width: 20px;
+            height: 20px;
+            fill: rgb(201, 201, 201);
           }
         }
       }
-      &_loop {
-        width: 24px;
-        height: 36px;
-        margin-left: 10px;
+      &_pin {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        z-index: 2;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
         display: flex;
         flex-direction: row;
         align-items: center;
-        cursor: pointer;
+        justify-content: center;
         &:hover {
-          opacity: 0.7;
+          svg {
+            fill: #888;
+          }
         }
         svg {
-          width: 20px;
-          height: 20px;
-          fill: rgb(201, 201, 201);
+          width: 16px;
+          height: 16px;
+          fill: #555;
+          pointer-events: none;
         }
-      }
-    }
-    &_pin {
-      position: absolute;
-      right: 10px;
-      top: 10px;
-      z-index: 2;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      &:hover {
-        svg {
-          fill: #888;
-        }
-      }
-      svg {
-        width: 16px;
-        height: 16px;
-        fill: #555;
-        pointer-events: none;
-      }
-      &.active {
-        svg {
-          fill: #4fc08d;
-        }
-        &:hover {
+        &.active {
           svg {
             fill: #4fc08d;
           }
+          &:hover {
+            svg {
+              fill: #4fc08d;
+            }
+          }
         }
       }
     }
-  }
-  .play_list_container {
-    position: absolute;
-    top: 250px;
-    width: 100%;
-    z-index: 0;
-    // max-height: 80px;
-    max-height: calc(~"100% - 250px");
-    transform-origin: 50% 0%;
-    // transition: all 0.15s linear;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    overflow: hidden;
-    // background-color: transparent;
-    &.show {
-      opacity: 1;
-      pointer-events: auto;
+    .play_list_container {
+      position: absolute;
+      top: 250px;
+      width: 100%;
+      z-index: 0;
+      // max-height: 80px;
+      max-height: calc(~"100% - 250px");
+      transform-origin: 50% 0%;
+      // transition: all 0.15s linear;
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+      overflow: hidden;
+      // background-color: transparent;
+      &.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      &.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
     }
-    &.hide {
-      opacity: 0;
-      pointer-events: none;
+    .discover_container {
+      position: absolute;
+      top: 250px;
+      width: 100%;
+      z-index: 0;
+      // max-height: 80px;
+      max-height: calc(~"100% - 250px");
+      transform-origin: 50% 0%;
+      // transition: all 0.15s linear;
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+      overflow: hidden;
+      // background-color: transparent;
+      &.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      &.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
     }
-  }
-  .discover_container {
-    position: absolute;
-    top: 250px;
-    width: 100%;
-    z-index: 0;
-    // max-height: 80px;
-    max-height: calc(~"100% - 250px");
-    transform-origin: 50% 0%;
-    // transition: all 0.15s linear;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    overflow: hidden;
-    // background-color: transparent;
-    &.show {
-      opacity: 1;
-      pointer-events: auto;
+    .flac_content {
+      position: absolute;
+      top: 250px;
+      width: 100%;
+      z-index: 0;
+      // max-height: 80px;
+      max-height: calc(~"100% - 250px");
+      transform-origin: 50% 0%;
+      // transition: all 0.15s linear;
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+      overflow: hidden;
+      // background-color: transparent;
+      &.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      &.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
     }
-    &.hide {
-      opacity: 0;
-      pointer-events: none;
-    }
-  }
-  .flac_content {
-    position: absolute;
-    top: 250px;
-    width: 100%;
-    z-index: 0;
-    // max-height: 80px;
-    max-height: calc(~"100% - 250px");
-    transform-origin: 50% 0%;
-    // transition: all 0.15s linear;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    overflow: hidden;
-    // background-color: transparent;
-    &.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    &.hide {
-      opacity: 0;
-      pointer-events: none;
-    }
-  }
 
-  .download_container {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100px;
-    .download_animation {
-      width: 60px;
-      height: 60px;
-      transition: transform 5s linear;
-      transform: translate3d(0, 0, 0);
+    .download_container {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100px;
+      .download_animation {
+        width: 60px;
+        height: 60px;
+        transition: transform 5s linear;
+        transform: translate3d(0, 0, 0);
+      }
     }
   }
-}
 </style>
