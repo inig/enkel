@@ -31,8 +31,10 @@
       <transition name="fade">
         <div class="flac_search_content_blank"
              v-if="list.length === 0">
-          <img src="~@/assets/images/flac/blank.jpeg"
-               alt="暂无搜索结果">
+          <!-- <img src="~@/assets/images/flac/blank.jpeg"
+               alt="暂无搜索结果"> -->
+          <div class="empty_result"
+               ref="emptyLottieRef"></div>
           <div class="flac_search_content_blank_text">
             暂无搜索结果
           </div>
@@ -52,6 +54,7 @@
 <script>
 import { ipcRenderer } from 'electron'
 import { Icon, Input, Spin } from 'view-design'
+import lottie from 'lottie-web'
 export default {
   name: 'MediaFlacSearch',
   components: {
@@ -68,12 +71,16 @@ export default {
       isSearching: false,
       list: [],
       activeIndex: -1,
-      isLoading: false
+      isLoading: false,
+      lottie: {
+        empty: null
+      }
     }
   },
   mounted () {
     ipcRenderer.on('flac-response-search', this.searchResponse)
     ipcRenderer.on('flac-response-real-path', this.requesting)
+    this.initLottieEmpty()
   },
   methods: {
     doSearch () {
@@ -98,6 +105,17 @@ export default {
     },
     requesting () {
       this.isLoading = false
+    },
+    initLottieEmpty () {
+      this.$nextTick(() => {
+        this.lottie.empty = lottie.loadAnimation({
+          container: this.$refs.emptyLottieRef,
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          animationData: require('../../../../assets/lottie/empty.json')
+        })
+      })
     }
   },
   watch: {
@@ -214,7 +232,11 @@ export default {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-
+      .empty_result {
+        width: 280px;
+        height: 280px;
+        margin-bottom: 50px;
+      }
       img {
         width: 100%;
       }
@@ -227,7 +249,7 @@ export default {
         justify-content: center;
         font-size: 14px;
         color: rgb(95, 105, 113);
-        margin-top: -30px;
+        margin-top: -50px;
       }
     }
   }
