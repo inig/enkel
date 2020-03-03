@@ -198,8 +198,8 @@
 import { ipcRenderer } from 'electron'
 import { Button, Slider, Icon, Tooltip } from 'view-design'
 import * as pinjump from '../../../../assets/lottie/pinjump.json'
-import { debounce } from 'lodash-es'
-// import { throttle } from '../../../../utils/index'
+// import { debounce } from 'lodash-es'
+import { throttle } from '../../../../utils/index'
 import lottie from 'lottie-web'
 // import '@lottiefiles/lottie-player'
 export default {
@@ -493,7 +493,7 @@ export default {
     genFlacId () {
       return this.getUUID('flac-')
     },
-    downloadItem: debounce(function () {
+    downloadItem: throttle(function () {
       if ((this.activeIndex > -1) && this.playList[this.activeIndex] && this.downloadModal.list.hasOwnProperty(this.playList[this.activeIndex].url)) {
         return
       }
