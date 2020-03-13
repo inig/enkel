@@ -70,6 +70,20 @@ export const developRouter = {
         hot: false
       },
       component: require('@/components/tools/developer/Qrcode/index').default
+    },
+    {
+      path: '/encrypt',
+      name: 'encrypt',
+      meta: {
+        label: '加密/解密',
+        title: '加密/解密',
+        icon: '#route-encrypt',
+        name: '加密/解密',
+        desc: '提供多种形式的文件内容加密、解密功能',
+        createTime: '1576724461449',
+        hot: false
+      },
+      component: require('@/components/tools/developer/Encrypt/index').default
     }
     // {
     //   path: '/shell',
