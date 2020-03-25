@@ -20,7 +20,8 @@ const db = low(adapter)
 axios.defaults.timeout = 5000
 db.defaults({
   requests: [
-  ]
+  ],
+  baseParams: {}
 }).write()
 
 function S4 () {
@@ -37,6 +38,15 @@ function getRequests () {
 function setRequests (event, requests) {
   db.set('requests', requests).write()
   requestsUpdated(event, requests)
+}
+
+function getBaseParams () {
+  return db.get('baseParams').value()
+}
+
+function setBaseParams (event, baseParams) {
+  db.set('baseParams', baseParams).write()
+  baseParamsUpdated(event, baseParams)
 }
 
 function setRequest (event, args) {
@@ -78,6 +88,11 @@ function modifyRequest (event, args) {
   }
   requestsUpdated(event)
   return getRequests()
+}
+
+function modifyBaseParams (event, args) {
+  setBaseParams(event, args.baseParams)
+  return getBaseParams()
 }
 
 function setRequestFolder (event, args) {
@@ -150,11 +165,23 @@ function requestsUpdated (event, requests) {
   })
 }
 
+function baseParamsUpdated (event, baseParams) {
+  BrowserWindow.getAllWindows().forEach(item => {
+    let allBaseParams = (baseParams || getBaseParams())
+    if (item.webContents !== event.sender) {
+      item.webContents.send('base-params-updated', allBaseParams)
+    }
+  })
+}
+
 ipcMain.on('remove-request', (event, args) => {
   event.returnValue = removeRequest(event, args)
 })
 ipcMain.on('get-requests', (event) => {
   event.returnValue = getRequests()
+})
+ipcMain.on('get-base-params', (event) => {
+  event.returnValue = getBaseParams()
 })
 ipcMain.on('set-requests', (event, args) => {
   if (args.request) {
@@ -178,6 +205,9 @@ ipcMain.on('modify-requests', (event, args) => {
     }
   })
   event.returnValue = modifyRequest(event, args)
+})
+ipcMain.on('modify-base-params', (event, args) => {
+  event.returnValue = modifyBaseParams(event, args)
 })
 ipcMain.on('set-requests-folder', (event, args) => {
   event.returnValue = setRequestFolder(event, args)

@@ -10,8 +10,9 @@
                   @on-click="panelOperate">
           <a href="javascript:void(0)"
              style="color: #c8c8c8;">
-            <Icon type="md-add-circle"></Icon>
-            <Icon type="ios-arrow-down"></Icon>
+            <Icon type="md-settings"
+                  size="20"></Icon>
+            <!-- <Icon type="ios-arrow-down"></Icon> -->
           </a>
           <DropdownMenu slot="list">
             <DropdownItem name="new-request"
@@ -23,6 +24,11 @@
                           class="drop_down_item">
               <Icon type="md-folder" />
               新建文件夹
+            </DropdownItem>
+            <DropdownItem name="base-params"
+                          class="drop_down_item">
+              <Icon type="md-build" />
+              公共参数
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
@@ -129,11 +135,11 @@
         </FormItem>
         <FormItem label="请求描述">
           <Input placeholder="请输入请求描述"
-                 v-model="requestModal.formatData.label" />
+                 v-model="requestModal.formData.label" />
         </FormItem>
         <FormItem label="请求地址">
           <Input placeholder="请输入请求地址"
-                 v-model="requestModal.formatData.url"
+                 v-model="requestModal.formData.url"
                  @on-change="changeUrl">
           <Button class="request_footer_btn"
                   type="text"
@@ -179,16 +185,16 @@
           </FormItem>
         </transition>
         <transition name="fade">
-          <FormItem v-if="requestModal.formatData.method.toLowerCase() === 'post'"
+          <FormItem v-if="requestModal.formData.method.toLowerCase() === 'post'"
                     label="POST 参数">
-            <RequestBody v-model="requestModal.formatData.body"
+            <RequestBody v-model="requestModal.formData.body"
                          theme="light"
                          ref="newRequestJsonBodyRef"
                          style="height: 300px; width: 100%;"></RequestBody>
           </FormItem>
         </transition>
         <FormItem label="请求方式">
-          <Select v-model="requestModal.formatData.method">
+          <Select v-model="requestModal.formData.method">
             <Option v-for="(item, index) in requestMethods"
                     :key="index"
                     :label="item.name"
@@ -206,11 +212,11 @@
       <Form :label-width="90">
         <FormItem label="请求描述">
           <Input placeholder="请输入请求描述"
-                 v-model="modifyModal.formatData.label" />
+                 v-model="modifyModal.formData.label" />
         </FormItem>
         <FormItem label="请求地址">
           <Input placeholder="请输入请求地址"
-                 v-model="modifyModal.formatData.url"
+                 v-model="modifyModal.formData.url"
                  @on-change="changeModifyUrl">
           <Button class="request_footer_btn"
                   type="text"
@@ -255,16 +261,16 @@
           </FormItem>
         </transition>
         <transition name="fade">
-          <FormItem v-if="modifyModal.formatData.method.toLowerCase() === 'post'"
+          <FormItem v-if="modifyModal.formData.method.toLowerCase() === 'post'"
                     label="POST 参数">
-            <RequestBody v-model="modifyModal.formatData.body"
+            <RequestBody v-model="modifyModal.formData.body"
                          theme="light"
                          ref="modifyRequestJsonBodyRef"
                          style="height: 300px; width: 100%;"></RequestBody>
           </FormItem>
         </transition>
         <FormItem label="请求方式">
-          <Select v-model="modifyModal.formatData.method">
+          <Select v-model="modifyModal.formData.method">
             <Option v-for="(item, index) in requestMethods"
                     :key="index"
                     :label="item.name"
@@ -284,7 +290,7 @@
           <Input placeholder="请输入文件夹名称"
                  clearable
                  @on-keyup.13="createFolder"
-                 v-model="folderModal.formatData.label" />
+                 v-model="folderModal.formData.label" />
         </FormItem>
       </Form>
     </Modal>
@@ -298,9 +304,39 @@
           <Input placeholder="请输入文件夹名称"
                  clearable
                  @on-keyup.13="modifyFolder"
-                 v-model="modifyFolderModal.formatData.label" />
+                 v-model="modifyFolderModal.formData.label" />
         </FormItem>
       </Form>
+    </Modal>
+
+    <Modal v-model="baseParamsModal.shown"
+           width="450"
+           title="修改基础参数"
+           @on-ok="modifyBaseParams">
+      <div class="modal_item json_form_item"
+           style="width: 100%; height: 32px; background-color: lightgray; display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+        <div class="json_form_item_key"
+             style="width: 40%;"
+             @click="addNewItem">
+          <Input placeholder="New key"
+                 readonly />
+        </div>
+
+        <div class="json_form_item_value"
+             style="width: 60%; margin-left: 10px;"
+             @click="addNewItem">
+          <Input placeholder="New value"
+                 readonly />
+        </div>
+      </div>
+      <!-- <Form :label-width="80"> -->
+      <!-- <FormItem label="名称">
+          <Input placeholder="请输入文件夹名称"
+                 clearable
+                 @on-keyup.13="modifyFolder"
+                 v-model="modifyFolderModal.formData.label" />
+        </FormItem> -->
+      <!-- </Form> -->
     </Modal>
   </div>
 </template>
@@ -339,7 +375,7 @@ export default {
       requestModal: {
         shown: false,
         paramFormatShown: false,
-        formatData: {
+        formData: {
           url: '',
           label: '',
           method: 'GET',
@@ -352,20 +388,20 @@ export default {
       formatedModifyParams: [],
       folderModal: {
         shown: false,
-        formatData: {
+        formData: {
           label: ''
         }
       },
       modifyFolderModal: {
         shown: false,
-        formatData: {
+        formData: {
           label: ''
         }
       },
       modifyModal: {
         shown: false,
         paramFormatShown: false,
-        formatData: {
+        formData: {
           url: '',
           label: '',
           method: 'GET',
@@ -374,7 +410,12 @@ export default {
           cookie: {}
         }
       },
+      baseParamsModal: {
+        shown: true,
+        formData: {}
+      },
       requestsList: [],
+      baseParams: {},
       defaultMethod: 'GET',
       colors: {
         get: 'rgb(167, 149, 251)',
@@ -402,6 +443,7 @@ export default {
   },
   created () {
     this.getRequestsList()
+    this.getBaseParams()
     this.$emit('active', this.getActiveObj())
     ipcRenderer.on('contextmenu-tool-request-delete', this.requestItemDelete)
     ipcRenderer.on('contextmenu-tool-request-modify', this.requestItemModify)
@@ -436,11 +478,17 @@ export default {
     openFolderModal () {
       this.folderModal.shown = true
     },
+    openBaseParamsModal () {
+      this.baseParamsModal.shown = true
+    },
     panelOperate (name) {
       if (name === 'new-request') {
         this.openRequestModal()
       } else if (name === 'new-folder') {
         this.openFolderModal()
+      } else if (name === 'base-params') {
+        // 基础参数
+        this.openBaseParamsModal()
       }
     },
     formatParams (str) {
@@ -460,24 +508,24 @@ export default {
       })
     },
     toggleParamsFormat () {
-      if (!this.requestModal.formatData.url) {
+      if (!this.requestModal.formData.url) {
         alert('url不能为空')
         return
       }
       if (!this.requestModal.paramFormatShown) {
         // 格式化参数
-        this.formatedParams = this.formatParams(this.requestModal.formatData.url)
+        this.formatedParams = this.formatParams(this.requestModal.formData.url)
       }
       this.requestModal.paramFormatShown = !this.requestModal.paramFormatShown
     },
     toggleModifyParamsFormat () {
-      if (!this.modifyModal.formatData.url) {
+      if (!this.modifyModal.formData.url) {
         alert('url不能为空')
         return
       }
       if (!this.modifyModal.paramFormatShown) {
         // 格式化参数
-        this.formatedModifyParams = this.formatParams(this.modifyModal.formatData.url)
+        this.formatedModifyParams = this.formatParams(this.modifyModal.formData.url)
       }
       this.modifyModal.paramFormatShown = !this.modifyModal.paramFormatShown
     },
@@ -504,7 +552,7 @@ export default {
           outArr.push(params[i].key + '=' + params[i].value)
         }
       }
-      this.requestModal.formatData.url = this.requestModal.formatData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
+      this.requestModal.formData.url = this.requestModal.formData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
     },
     disableParamItem () {
       this.setUrlStr(this.formatedParams)
@@ -513,7 +561,7 @@ export default {
       this.setUrlStr(this.formatedParams)
     },
     changeUrl () {
-      this.formatedParams = this.formatParams(this.requestModal.formatData.url)
+      this.formatedParams = this.formatParams(this.requestModal.formData.url)
     },
     deleteModifyItem (index) {
       this.formatedModifyParams.splice(Number(index), 1)
@@ -528,7 +576,7 @@ export default {
           outArr.push(params[i].key + '=' + params[i].value)
         }
       }
-      this.modifyModal.formatData.url = this.modifyModal.formatData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
+      this.modifyModal.formData.url = this.modifyModal.formData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
     },
     disableModifyParamItem () {
       this.setModifyUrlStr(this.formatedModifyParams)
@@ -537,26 +585,37 @@ export default {
       this.setModifyUrlStr(this.formatedModifyParams)
     },
     changeModifyUrl () {
-      this.formatedModifyParams = this.formatParams(this.modifyModal.formatData.url)
+      this.formatedModifyParams = this.formatParams(this.modifyModal.formData.url)
     },
     createFolder () {
       this.folderModal.shown = false
       this.requestsList = ipcRenderer.sendSync('set-requests-folder', {
-        label: this.folderModal.formatData.label
+        label: this.folderModal.formData.label
       })
       this.$Notice.success({
-        desc: `创建目录【${this.folderModal.formatData.label}】成功`
+        desc: `创建目录【${this.folderModal.formData.label}】成功`
       })
     },
     modifyFolder () {
       this.modifyFolderModal.shown = false
-      this.requestsList = ipcRenderer.sendSync('modify-requests-folder', this.modifyFolderModal.formatData)
+      this.baseParams = ipcRenderer.sendSync('modify-base-params', this.baseParamsModal.formData)
       this.$Notice.success({
-        desc: `修改目录【${this.modifyFolderModal.formatData.label}】成功`
+        desc: `基础参数修改成功`
+      })
+    },
+    modifyBaseParams () {
+      this.baseParamsModal.shown = false
+      this.requestsList = ipcRenderer.sendSync('modify-requests-folder', this.modifyFolderModal.formData)
+      this.$Notice.success({
+        desc: `修改目录【${this.modifyFolderModal.formData.label}】成功`
       })
     },
     getRequestsList () {
       this.requestsList = ipcRenderer.sendSync('get-requests')
+    },
+    getBaseParams () {
+      this.baseParams = ipcRenderer.sendSync('get-base-params')
+      this.baseParamsModal.formData = JSON.parse(JSON.stringify(this.baseParams))
     },
     openMenu (id) {
       let index = this.openedItem.indexOf(id)
@@ -609,11 +668,11 @@ export default {
         this.openMenu(this.requestModal.parent.id)
       }
       this.requestsList = ipcRenderer.sendSync('set-requests', {
-        request: this.requestModal.formatData,
+        request: this.requestModal.formData,
         parent: this.requestModal.parent
       })
       this.$Notice.success({
-        desc: `创建请求【${this.requestModal.formatData.label}】成功`
+        desc: `创建请求【${this.requestModal.formData.label}】成功`
       })
       this.resetAfterNewRequest()
     },
@@ -621,7 +680,7 @@ export default {
       this.requestModal = {
         shown: false,
         paramFormatShown: false,
-        formatData: {
+        formData: {
           url: '',
           label: '',
           method: 'GET',
@@ -633,12 +692,12 @@ export default {
     },
     modifyRequest () {
       this.requestsList = ipcRenderer.sendSync('modify-requests', {
-        request: this.modifyModal.formatData
+        request: this.modifyModal.formData
       })
       this.$Notice.success({
-        desc: `修改请求【${this.modifyModal.formatData.label}】成功`
+        desc: `修改请求【${this.modifyModal.formData.label}】成功`
       })
-      // global.eventHub.$emit('request-modified', this.modifyModal.formatData)
+      // global.eventHub.$emit('request-modified', this.modifyModal.formData)
     },
     moveToDir (request, dir) {
       this.requestsList = ipcRenderer.sendSync('move-request-to-dir', {
@@ -747,10 +806,10 @@ export default {
     requestItemModify (event, data) {
       if (data.type === 'folder') {
         this.modifyFolderModal.shown = true
-        this.modifyFolderModal.formatData = JSON.parse(JSON.stringify(data))
+        this.modifyFolderModal.formData = JSON.parse(JSON.stringify(data))
       } else {
         this.modifyModal.shown = true
-        this.modifyModal.formatData = JSON.parse(JSON.stringify(data))
+        this.modifyModal.formData = JSON.parse(JSON.stringify(data))
       }
     },
     requestsUpdated (event, data) {
