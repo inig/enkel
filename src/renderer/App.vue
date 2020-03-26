@@ -237,6 +237,27 @@
         color: rgb(81, 81, 80);
       }
     }
+    &.light {
+      .ivu-input {
+        border-bottom: 1px solid #f0f0f0;
+        &:focus {
+          box-shadow: none;
+          border-color: #474846;
+        }
+        &:hover {
+          border-color: #474846;
+        }
+        &::placeholder {
+          color: rgb(108, 108, 108);
+        }
+      }
+    }
+    .modified {
+      .ivu-input {
+        color: #ed4014;
+        text-decoration: line-through;
+      }
+    }
     .ivu-checkbox-inner {
       background-color: transparent;
       border: 1px solid rgb(153, 153, 153);

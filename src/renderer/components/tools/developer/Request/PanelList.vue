@@ -313,20 +313,51 @@
            width="450"
            title="修改基础参数"
            @on-ok="modifyBaseParams">
-      <div class="modal_item json_form_item"
-           style="width: 100%; height: 32px; background-color: lightgray; display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+      <div class="modal_item"
+           v-for="(item, index) in baseParamsModal.formData"
+           :key="index"
+           style="width: 100%; height: 32px; margin-bottom: 15px; display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+        <div class="json_form_item_key"
+             style="width: 40%;">
+          <Input placeholder="键"
+                 ref="jsonKeyInputRef"
+                 v-model="item.key" />
+        </div>
+
+        <div class="json_form_item_value"
+             style="width: 60%; margin-left: 10px;">
+          <Input placeholder="值"
+                 v-model="item.value" />
+        </div>
+
+        <div @click="deleteBaseParamByIndex(index)"
+             style="width: 40px; height: 32px; cursor: pointer; display: flex; flex-direction: row; align-items: center; justify-content: flex-end;">
+          <Icon type="md-trash"
+                color="rgb(237, 64, 20)"
+                size="20" />
+        </div>
+      </div>
+
+      <div class="modal_item json_form_item light"
+           style="width: 100%; height: 32px; margin-bottom: 15px; display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
         <div class="json_form_item_key"
              style="width: 40%;"
              @click="addNewItem">
           <Input placeholder="New key"
-                 readonly />
+                 readonly>
+          <Icon type="md-add"
+                slot="prefix" />
+          </Input>
         </div>
 
         <div class="json_form_item_value"
              style="width: 60%; margin-left: 10px;"
              @click="addNewItem">
           <Input placeholder="New value"
-                 readonly />
+                 readonly>
+          <Icon type="md-add"
+                slot="prefix" />
+          </Input>
         </div>
       </div>
       <!-- <Form :label-width="80"> -->
@@ -342,842 +373,875 @@
 </template>
 
 <script>
-import { Input, Dropdown, DropdownMenu, DropdownItem, ButtonGroup, Button, Icon, Modal, Form, FormItem, Select, Option, Checkbox } from 'view-design'
-import { ipcRenderer, remote } from 'electron'
-import path from 'path'
-const { Menu, MenuItem } = remote
-export default {
-  name: 'RequestPanelList',
-  components: {
-    Input, Dropdown, DropdownMenu, DropdownItem, ButtonGroup, Button, Icon, Modal, Form, FormItem, Select, Option, Checkbox,
-    RequestBody: () => import('./RequestBody')
-  },
-  props: {
-    requestMethods: {
-      type: Array,
-      default () {
-        return [
-          {
-            name: 'GET',
-            color: 'rgb(167, 149, 251)'
-          },
-          {
-            name: 'POST',
-            color: 'rgb(94, 160, 33)'
+  import { Input, Dropdown, DropdownMenu, DropdownItem, ButtonGroup, Button, Icon, Modal, Form, FormItem, Select, Option, Checkbox } from 'view-design'
+  import { ipcRenderer, remote } from 'electron'
+  import path from 'path'
+  import * as types from '../../../../store/mutation-types'
+  const { Menu, MenuItem } = remote
+  export default {
+    name: 'RequestPanelList',
+    components: {
+      Input, Dropdown, DropdownMenu, DropdownItem, ButtonGroup, Button, Icon, Modal, Form, FormItem, Select, Option, Checkbox,
+      RequestBody: () => import('./RequestBody')
+    },
+    props: {
+      requestMethods: {
+        type: Array,
+        default () {
+          return [
+            {
+              name: 'GET',
+              color: 'rgb(167, 149, 251)'
+            },
+            {
+              name: 'POST',
+              color: 'rgb(94, 160, 33)'
+            }
+          ]
+        }
+      }
+    },
+    data () {
+      return {
+        filterText: '',
+        requestModal: {
+          shown: false,
+          paramFormatShown: false,
+          formData: {
+            url: '',
+            label: '',
+            method: 'GET',
+            body: {},
+            header: {},
+            cookie: {}
           }
-        ]
-      }
-    }
-  },
-  data () {
-    return {
-      filterText: '',
-      requestModal: {
-        shown: false,
-        paramFormatShown: false,
-        formData: {
-          url: '',
-          label: '',
-          method: 'GET',
-          body: {},
-          header: {},
-          cookie: {}
-        }
-      },
-      formatedParams: [],
-      formatedModifyParams: [],
-      folderModal: {
-        shown: false,
-        formData: {
-          label: ''
-        }
-      },
-      modifyFolderModal: {
-        shown: false,
-        formData: {
-          label: ''
-        }
-      },
-      modifyModal: {
-        shown: false,
-        paramFormatShown: false,
-        formData: {
-          url: '',
-          label: '',
-          method: 'GET',
-          body: {},
-          header: {},
-          cookie: {}
-        }
-      },
-      baseParamsModal: {
-        shown: true,
-        formData: {}
-      },
-      requestsList: [],
-      baseParams: {},
-      defaultMethod: 'GET',
-      colors: {
-        get: 'rgb(167, 149, 251)',
-        post: 'rgb(94, 160, 33)'
-      },
-      activeItem: [-1, -1],
-      openedItem: ['0d29ed42e3ec']
-    }
-  },
-  computed: {
-    methodColors () {
-      return this.$store.state.methodColors
-    },
-    filterLabel () {
-      return function (text, filter) {
-        let outHtml = ''
-        let reg = new RegExp(filter, 'ig')
-        outHtml = text.replace(reg, item => '<span class="emphasize">' + item + '</span>')
-        return outHtml
+        },
+        formatedParams: [],
+        formatedModifyParams: [],
+        folderModal: {
+          shown: false,
+          formData: {
+            label: ''
+          }
+        },
+        modifyFolderModal: {
+          shown: false,
+          formData: {
+            label: ''
+          }
+        },
+        modifyModal: {
+          shown: false,
+          paramFormatShown: false,
+          formData: {
+            url: '',
+            label: '',
+            method: 'GET',
+            body: {},
+            header: {},
+            cookie: {}
+          }
+        },
+        baseParamsModal: {
+          shown: false,
+          formData: []
+        },
+        requestsList: [],
+        // baseParams: [],
+        defaultMethod: 'GET',
+        colors: {
+          get: 'rgb(167, 149, 251)',
+          post: 'rgb(94, 160, 33)'
+        },
+        activeItem: [-1, -1],
+        openedItem: ['0d29ed42e3ec']
       }
     },
-    allDirs () {
-      return this.requestsList.filter(item => item.type === 'folder')
-    }
-  },
-  created () {
-    this.getRequestsList()
-    this.getBaseParams()
-    this.$emit('active', this.getActiveObj())
-    ipcRenderer.on('contextmenu-tool-request-delete', this.requestItemDelete)
-    ipcRenderer.on('contextmenu-tool-request-modify', this.requestItemModify)
-    ipcRenderer.on('requests-updated', this.requestsUpdated)
-    ipcRenderer.on('import-requests-success', this.importRequestsSuccess)
-  },
-  methods: {
-    exportRequests () {
-      let result = ipcRenderer.sendSync('export-requests')
-      if (result) {
-        this.$Notice.success({
-          desc: '请求列表导出成功'
+    computed: {
+      store () {
+        return this.$store
+      },
+      methodColors () {
+        return this.store.state.methodColors
+      },
+      filterLabel () {
+        return function (text, filter) {
+          let outHtml = ''
+          let reg = new RegExp(filter, 'ig')
+          outHtml = text.replace(reg, item => '<span class="emphasize">' + item + '</span>')
+          return outHtml
+        }
+      },
+      allDirs () {
+        return this.requestsList.filter(item => item.type === 'folder')
+      },
+      baseParams () {
+        return this.store.state.baseParams
+      }
+    },
+    created () {
+      this.getRequestsList()
+      this.getBaseParams()
+      this.$emit('active', this.getActiveObj())
+      ipcRenderer.on('contextmenu-tool-request-delete', this.requestItemDelete)
+      ipcRenderer.on('contextmenu-tool-request-modify', this.requestItemModify)
+      ipcRenderer.on('requests-updated', this.requestsUpdated)
+      ipcRenderer.on('base-params-updated', this.baseParamsUpdated)
+      ipcRenderer.on('import-requests-success', this.importRequestsSuccess)
+    },
+    methods: {
+      addNewItem () {
+        this.baseParamsModal.formData.push({
+          key: '',
+          value: ''
         })
-      }
-    },
-    importRequests () {
-      this.requestsList = ipcRenderer.sendSync('import-requests')
-    },
-    importRequestsSuccess () {
-      this.$Notice.success({
-        desc: '导入成功'
-      })
-    },
-    openRequestModal (args) {
-      this.requestModal.shown = true
-      if (args && args.parent) {
-        this.requestModal.parent = args.parent
-      } else {
-        this.requestModal.parent = null
-      }
-    },
-    openFolderModal () {
-      this.folderModal.shown = true
-    },
-    openBaseParamsModal () {
-      this.baseParamsModal.shown = true
-    },
-    panelOperate (name) {
-      if (name === 'new-request') {
-        this.openRequestModal()
-      } else if (name === 'new-folder') {
-        this.openFolderModal()
-      } else if (name === 'base-params') {
-        // 基础参数
-        this.openBaseParamsModal()
-      }
-    },
-    formatParams (str) {
-      if (!str || !str.trim() || (str.indexOf('?') < 0)) {
-        return []
-      }
-      let search = str.replace(/^([^?]*)(\?)(.*)$/, '$3')
-      if (!search || !search.trim()) {
-        return []
-      }
-      return search.split('&').map(item => {
-        return {
-          key: item.split('=')[0],
-          value: item.split('=')[1],
-          status: true
-        }
-      })
-    },
-    toggleParamsFormat () {
-      if (!this.requestModal.formData.url) {
-        alert('url不能为空')
-        return
-      }
-      if (!this.requestModal.paramFormatShown) {
-        // 格式化参数
-        this.formatedParams = this.formatParams(this.requestModal.formData.url)
-      }
-      this.requestModal.paramFormatShown = !this.requestModal.paramFormatShown
-    },
-    toggleModifyParamsFormat () {
-      if (!this.modifyModal.formData.url) {
-        alert('url不能为空')
-        return
-      }
-      if (!this.modifyModal.paramFormatShown) {
-        // 格式化参数
-        this.formatedModifyParams = this.formatParams(this.modifyModal.formData.url)
-      }
-      this.modifyModal.paramFormatShown = !this.modifyModal.paramFormatShown
-    },
-    hoverInItem (e) {
-      if (!e.target.classList.contains('active')) {
-        e.target.classList.add('active')
-      }
-    },
-    hoverOutItem (e) {
-      if (e.target.classList.contains('active')) {
-        e.target.classList.remove('active')
-      }
-    },
-    deleteItem (index) {
-      this.formatedParams.splice(Number(index), 1)
-      this.setUrlStr(this.formatedParams)
-    },
-    setUrlStr (data) {
-      let params = JSON.parse(JSON.stringify(data))
-      let i = 0
-      let outArr = []
-      for (i; i < params.length; i++) {
-        if (params[i].status) {
-          outArr.push(params[i].key + '=' + params[i].value)
-        }
-      }
-      this.requestModal.formData.url = this.requestModal.formData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
-    },
-    disableParamItem () {
-      this.setUrlStr(this.formatedParams)
-    },
-    changeFormatedParams (e) {
-      this.setUrlStr(this.formatedParams)
-    },
-    changeUrl () {
-      this.formatedParams = this.formatParams(this.requestModal.formData.url)
-    },
-    deleteModifyItem (index) {
-      this.formatedModifyParams.splice(Number(index), 1)
-      this.setModifyUrlStr(this.formatedModifyParams)
-    },
-    setModifyUrlStr (data) {
-      let params = JSON.parse(JSON.stringify(data))
-      let i = 0
-      let outArr = []
-      for (i; i < params.length; i++) {
-        if (params[i].status) {
-          outArr.push(params[i].key + '=' + params[i].value)
-        }
-      }
-      this.modifyModal.formData.url = this.modifyModal.formData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
-    },
-    disableModifyParamItem () {
-      this.setModifyUrlStr(this.formatedModifyParams)
-    },
-    changeModifyFormatedParams (e) {
-      this.setModifyUrlStr(this.formatedModifyParams)
-    },
-    changeModifyUrl () {
-      this.formatedModifyParams = this.formatParams(this.modifyModal.formData.url)
-    },
-    createFolder () {
-      this.folderModal.shown = false
-      this.requestsList = ipcRenderer.sendSync('set-requests-folder', {
-        label: this.folderModal.formData.label
-      })
-      this.$Notice.success({
-        desc: `创建目录【${this.folderModal.formData.label}】成功`
-      })
-    },
-    modifyFolder () {
-      this.modifyFolderModal.shown = false
-      this.baseParams = ipcRenderer.sendSync('modify-base-params', this.baseParamsModal.formData)
-      this.$Notice.success({
-        desc: `基础参数修改成功`
-      })
-    },
-    modifyBaseParams () {
-      this.baseParamsModal.shown = false
-      this.requestsList = ipcRenderer.sendSync('modify-requests-folder', this.modifyFolderModal.formData)
-      this.$Notice.success({
-        desc: `修改目录【${this.modifyFolderModal.formData.label}】成功`
-      })
-    },
-    getRequestsList () {
-      this.requestsList = ipcRenderer.sendSync('get-requests')
-    },
-    getBaseParams () {
-      this.baseParams = ipcRenderer.sendSync('get-base-params')
-      this.baseParamsModal.formData = JSON.parse(JSON.stringify(this.baseParams))
-    },
-    openMenu (id) {
-      let index = this.openedItem.indexOf(id)
-      if (index < 0) {
-        this.openedItem.push(id)
-      }
-    },
-    openAllMenu () {
-      this.requestsList.forEach(item => {
-        if (item.type === 'folder') {
-          this.openMenu(item.id)
-        }
-      })
-    },
-    toggleOpenedItem (id) {
-      let index = this.openedItem.indexOf(id)
-      if (index > -1) {
-        this.openedItem.splice(index, 1)
-      } else {
-        this.openedItem.push(id)
-      }
-    },
-    setActiveItem (index, subindex = -1) {
-      this.activeItem = [index, subindex]
-      if (index > -1) {
-        if (subindex > -1) {
-          global.eventHub.$emit('set-title', {
-            label: this.requestsList[index].children[subindex].label,
-            url: this.requestsList[index].children[subindex].url.replace(/^([^?]*)(\?.*)$/, '$1')
+        setTimeout(() => {
+          let el = this.$refs.jsonKeyInputRef[this.baseParamsModal.formData.length - 1]
+          el.focus()
+        }, 50)
+      },
+      deleteBaseParamByIndex (index) {
+        this.baseParamsModal.formData.splice(Number(index), 1)
+      },
+      exportRequests () {
+        let result = ipcRenderer.sendSync('export-requests')
+        if (result) {
+          this.$Notice.success({
+            desc: '请求列表导出成功'
           })
+        }
+      },
+      importRequests () {
+        this.requestsList = ipcRenderer.sendSync('import-requests')
+      },
+      importRequestsSuccess () {
+        this.$Notice.success({
+          desc: '导入成功'
+        })
+      },
+      openRequestModal (args) {
+        this.requestModal.shown = true
+        if (args && args.parent) {
+          this.requestModal.parent = args.parent
         } else {
-          global.eventHub.$emit('set-title', {
-            label: this.requestsList[index].label,
-            url: this.requestsList[index].label.replace(/^([^?]*)(\?.*)$/, '$1')
-          })
+          this.requestModal.parent = null
         }
-      }
-    },
-    getActiveObj () {
-      let activeObj = {}
-      if (this.activeItem[1] === -1) {
-        activeObj = this.requestsList[this.activeItem[0]] || {}
-      } else {
-        activeObj = this.requestsList[this.activeItem[0]] ? this.requestsList[this.activeItem[0]].children[this.activeItem[1]] : {}
-      }
-      return activeObj
-    },
-    saveRequest () {
-      if (this.requestModal.parent && this.requestModal.parent.id) {
-        this.openMenu(this.requestModal.parent.id)
-      }
-      this.requestsList = ipcRenderer.sendSync('set-requests', {
-        request: this.requestModal.formData,
-        parent: this.requestModal.parent
-      })
-      this.$Notice.success({
-        desc: `创建请求【${this.requestModal.formData.label}】成功`
-      })
-      this.resetAfterNewRequest()
-    },
-    resetAfterNewRequest () {
-      this.requestModal = {
-        shown: false,
-        paramFormatShown: false,
-        formData: {
-          url: '',
-          label: '',
-          method: 'GET',
-          body: {},
-          header: {},
-          cookie: {}
+      },
+      openFolderModal () {
+        this.folderModal.shown = true
+      },
+      openBaseParamsModal () {
+        this.baseParamsModal.shown = true
+      },
+      panelOperate (name) {
+        if (name === 'new-request') {
+          this.openRequestModal()
+        } else if (name === 'new-folder') {
+          this.openFolderModal()
+        } else if (name === 'base-params') {
+          // 基础参数
+          this.openBaseParamsModal()
         }
-      }
-    },
-    modifyRequest () {
-      this.requestsList = ipcRenderer.sendSync('modify-requests', {
-        request: this.modifyModal.formData
-      })
-      this.$Notice.success({
-        desc: `修改请求【${this.modifyModal.formData.label}】成功`
-      })
-      // global.eventHub.$emit('request-modified', this.modifyModal.formData)
-    },
-    moveToDir (request, dir) {
-      this.requestsList = ipcRenderer.sendSync('move-request-to-dir', {
-        request: request,
-        dir: dir
-      })
-      this.$Notice.success({
-        desc: `请求【${request.label}】已经移至目录【${dir.label}】`
-      })
-    },
-    moveOutFromDir (request, dir) {
-      this.requestsList = ipcRenderer.sendSync('move-request-out-from-dir', {
-        request: request,
-        dir: dir
-      })
-      this.$Notice.success({
-        desc: `请求【${request.label}】已经被移出目录【${dir.label}】`
-      })
-    },
-    showContextMenu (item, parent) {
-      // ipcRenderer.send('contextmenu-tool-request', item)
-      const menu = new Menu()
-      if (item.type === 'folder') {
+      },
+      formatParams (str) {
+        if (!str || !str.trim() || (str.indexOf('?') < 0)) {
+          return []
+        }
+        let search = str.replace(/^([^?]*)(\?)(.*)$/, '$3')
+        if (!search || !search.trim()) {
+          return []
+        }
+        return search.split('&').map(item => {
+          return {
+            key: item.split('=')[0],
+            value: item.split('=')[1],
+            status: true
+          }
+        })
+      },
+      toggleParamsFormat () {
+        if (!this.requestModal.formData.url) {
+          alert('url不能为空')
+          return
+        }
+        if (!this.requestModal.paramFormatShown) {
+          // 格式化参数
+          this.formatedParams = this.formatParams(this.requestModal.formData.url)
+        }
+        this.requestModal.paramFormatShown = !this.requestModal.paramFormatShown
+      },
+      toggleModifyParamsFormat () {
+        if (!this.modifyModal.formData.url) {
+          alert('url不能为空')
+          return
+        }
+        if (!this.modifyModal.paramFormatShown) {
+          // 格式化参数
+          this.formatedModifyParams = this.formatParams(this.modifyModal.formData.url)
+        }
+        this.modifyModal.paramFormatShown = !this.modifyModal.paramFormatShown
+      },
+      hoverInItem (e) {
+        if (!e.target.classList.contains('active')) {
+          e.target.classList.add('active')
+        }
+      },
+      hoverOutItem (e) {
+        if (e.target.classList.contains('active')) {
+          e.target.classList.remove('active')
+        }
+      },
+      deleteItem (index) {
+        this.formatedParams.splice(Number(index), 1)
+        this.setUrlStr(this.formatedParams)
+      },
+      setUrlStr (data) {
+        let params = JSON.parse(JSON.stringify(data))
+        let i = 0
+        let outArr = []
+        for (i; i < params.length; i++) {
+          if (params[i].status) {
+            outArr.push(params[i].key + '=' + params[i].value)
+          }
+        }
+        this.requestModal.formData.url = this.requestModal.formData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
+      },
+      disableParamItem () {
+        this.setUrlStr(this.formatedParams)
+      },
+      changeFormatedParams (e) {
+        this.setUrlStr(this.formatedParams)
+      },
+      changeUrl () {
+        this.formatedParams = this.formatParams(this.requestModal.formData.url)
+      },
+      deleteModifyItem (index) {
+        this.formatedModifyParams.splice(Number(index), 1)
+        this.setModifyUrlStr(this.formatedModifyParams)
+      },
+      setModifyUrlStr (data) {
+        let params = JSON.parse(JSON.stringify(data))
+        let i = 0
+        let outArr = []
+        for (i; i < params.length; i++) {
+          if (params[i].status) {
+            outArr.push(params[i].key + '=' + params[i].value)
+          }
+        }
+        this.modifyModal.formData.url = this.modifyModal.formData.url.replace(/^([^?]*)(\?)(.*)$/, '$1') + (outArr.length > 0 ? ('?' + outArr.join('&')) : outArr.join('&'))
+      },
+      disableModifyParamItem () {
+        this.setModifyUrlStr(this.formatedModifyParams)
+      },
+      changeModifyFormatedParams (e) {
+        this.setModifyUrlStr(this.formatedModifyParams)
+      },
+      changeModifyUrl () {
+        this.formatedModifyParams = this.formatParams(this.modifyModal.formData.url)
+      },
+      createFolder () {
+        this.folderModal.shown = false
+        this.requestsList = ipcRenderer.sendSync('set-requests-folder', {
+          label: this.folderModal.formData.label
+        })
+        this.$Notice.success({
+          desc: `创建目录【${this.folderModal.formData.label}】成功`
+        })
+      },
+      modifyFolder () {
+        this.modifyFolderModal.shown = false
+        this.requestsList = ipcRenderer.sendSync('modify-requests-folder', this.modifyFolderModal.formData)
+        this.$Notice.success({
+          desc: `修改目录【${this.modifyFolderModal.formData.label}】成功`
+        })
+      },
+      modifyBaseParams () {
+        this.baseParamsModal.shown = false
+        this.baseParams = ipcRenderer.sendSync('modify-base-params', {
+          baseParams: this.baseParamsModal.formData
+        })
+        this.$Notice.success({
+          desc: `基础参数修改成功`
+        })
+      },
+      getRequestsList () {
+        this.requestsList = ipcRenderer.sendSync('get-requests')
+      },
+      getBaseParams () {
+        let baseParams = ipcRenderer.sendSync('get-base-params')
+
+        this.store.commit(types.CACHE_BASE_PARAMS, baseParams)
+
+        this.baseParamsModal.formData = JSON.parse(JSON.stringify(baseParams))
+      },
+      openMenu (id) {
+        let index = this.openedItem.indexOf(id)
+        if (index < 0) {
+          this.openedItem.push(id)
+        }
+      },
+      openAllMenu () {
+        this.requestsList.forEach(item => {
+          if (item.type === 'folder') {
+            this.openMenu(item.id)
+          }
+        })
+      },
+      toggleOpenedItem (id) {
+        let index = this.openedItem.indexOf(id)
+        if (index > -1) {
+          this.openedItem.splice(index, 1)
+        } else {
+          this.openedItem.push(id)
+        }
+      },
+      setActiveItem (index, subindex = -1) {
+        this.activeItem = [index, subindex]
+        if (index > -1) {
+          if (subindex > -1) {
+            global.eventHub.$emit('set-title', {
+              label: this.requestsList[index].children[subindex].label,
+              url: this.requestsList[index].children[subindex].url.replace(/^([^?]*)(\?.*)$/, '$1')
+            })
+          } else {
+            global.eventHub.$emit('set-title', {
+              label: this.requestsList[index].label,
+              url: this.requestsList[index].label.replace(/^([^?]*)(\?.*)$/, '$1')
+            })
+          }
+        }
+      },
+      getActiveObj () {
+        let activeObj = {}
+        if (this.activeItem[1] === -1) {
+          activeObj = this.requestsList[this.activeItem[0]] || {}
+        } else {
+          activeObj = this.requestsList[this.activeItem[0]] ? this.requestsList[this.activeItem[0]].children[this.activeItem[1]] : {}
+        }
+        return activeObj
+      },
+      saveRequest () {
+        if (this.requestModal.parent && this.requestModal.parent.id) {
+          this.openMenu(this.requestModal.parent.id)
+        }
+        this.requestsList = ipcRenderer.sendSync('set-requests', {
+          request: this.requestModal.formData,
+          parent: this.requestModal.parent
+        })
+        this.$Notice.success({
+          desc: `创建请求【${this.requestModal.formData.label}】成功`
+        })
+        this.resetAfterNewRequest()
+      },
+      resetAfterNewRequest () {
+        this.requestModal = {
+          shown: false,
+          paramFormatShown: false,
+          formData: {
+            url: '',
+            label: '',
+            method: 'GET',
+            body: {},
+            header: {},
+            cookie: {}
+          }
+        }
+      },
+      modifyRequest () {
+        this.requestsList = ipcRenderer.sendSync('modify-requests', {
+          request: this.modifyModal.formData
+        })
+        this.$Notice.success({
+          desc: `修改请求【${this.modifyModal.formData.label}】成功`
+        })
+        // global.eventHub.$emit('request-modified', this.modifyModal.formData)
+      },
+      moveToDir (request, dir) {
+        this.requestsList = ipcRenderer.sendSync('move-request-to-dir', {
+          request: request,
+          dir: dir
+        })
+        this.$Notice.success({
+          desc: `请求【${request.label}】已经移至目录【${dir.label}】`
+        })
+      },
+      moveOutFromDir (request, dir) {
+        this.requestsList = ipcRenderer.sendSync('move-request-out-from-dir', {
+          request: request,
+          dir: dir
+        })
+        this.$Notice.success({
+          desc: `请求【${request.label}】已经被移出目录【${dir.label}】`
+        })
+      },
+      showContextMenu (item, parent) {
+        // ipcRenderer.send('contextmenu-tool-request', item)
+        const menu = new Menu()
+        if (item.type === 'folder') {
+          menu.append(new MenuItem({
+            label: '新建请求',
+            // icon: path.resolve(__dirname, '../../../../assets/add.png'),
+            click: () => {
+              this.openRequestModal({
+                parent: item
+              })
+            }
+          }))
+          menu.append(new MenuItem({
+            type: 'separator'
+          }))
+        } else {
+          if (parent) {
+            menu.append(new MenuItem({
+              label: `移出目录【${parent.label}】`,
+              click: () => {
+                this.moveOutFromDir(item, parent)
+              }
+            }))
+          } else {
+            let submenus = this.allDirs.map(itm => {
+              return {
+                label: itm.label,
+                click: () => {
+                  this.moveToDir(item, itm)
+                }
+              }
+            })
+            menu.append(new MenuItem({
+              label: '移动到',
+              submenu: submenus
+            }))
+          }
+          menu.append(new MenuItem({
+            type: 'separator'
+          }))
+        }
+
         menu.append(new MenuItem({
-          label: '新建请求',
-          // icon: path.resolve(__dirname, '../../../../assets/add.png'),
-          click: () => {
-            this.openRequestModal({
-              parent: item
+          label: '删除',
+          click: async () => {
+            this.$Modal.confirm({
+              title: `确定删除<span style="color: green;">【${item.label}】</span>吗`,
+              render (h) {
+                return h('div', {
+                  style: {
+                    paddingLeft: '40px',
+                    boxSizing: 'border-box'
+                  }
+                }, [
+                  h('span', {
+                    style: {
+                      color: '#ed4014'
+                    }
+                  }, '删除后将无法恢复，请确认后再操作')
+                ])
+              },
+              onOk: () => {
+                this.requestsList = ipcRenderer.sendSync('remove-request', item)
+                this.$Notice.success({
+                  desc: '【' + item.label + '】删除成功'
+                })
+              }
             })
           }
         }))
         menu.append(new MenuItem({
-          type: 'separator'
+          label: '修改',
+          click: () => {
+            this.requestItemModify(null, item)
+          }
         }))
-      } else {
-        if (parent) {
-          menu.append(new MenuItem({
-            label: `移出目录【${parent.label}】`,
-            click: () => {
-              this.moveOutFromDir(item, parent)
-            }
-          }))
+        menu.popup({ window: remote.getCurrentWindow() })
+      },
+      requestItemDelete (event, data) {
+        this.requestsList = data.requests
+        // this.$Message.success('【' + data.deleted.label + '】删除成功')
+        this.$Notice.success({
+          desc: '【' + data.deleted.label + '】删除成功'
+        })
+      },
+      requestItemModify (event, data) {
+        if (data.type === 'folder') {
+          this.modifyFolderModal.shown = true
+          this.modifyFolderModal.formData = JSON.parse(JSON.stringify(data))
         } else {
-          let submenus = this.allDirs.map(itm => {
-            return {
-              label: itm.label,
-              click: () => {
-                this.moveToDir(item, itm)
-              }
-            }
-          })
-          menu.append(new MenuItem({
-            label: '移动到',
-            submenu: submenus
-          }))
+          this.modifyModal.shown = true
+          this.modifyModal.formData = JSON.parse(JSON.stringify(data))
         }
-        menu.append(new MenuItem({
-          type: 'separator'
-        }))
-      }
-
-      menu.append(new MenuItem({
-        label: '删除',
-        click: async () => {
-          this.$Modal.confirm({
-            title: `确定删除<span style="color: green;">【${item.label}】</span>吗`,
-            render (h) {
-              return h('div', {
-                style: {
-                  paddingLeft: '40px',
-                  boxSizing: 'border-box'
-                }
-              }, [
-                h('span', {
-                  style: {
-                    color: '#ed4014'
-                  }
-                }, '删除后将无法恢复，请确认后再操作')
-              ])
-            },
-            onOk: () => {
-              this.requestsList = ipcRenderer.sendSync('remove-request', item)
-              this.$Notice.success({
-                desc: '【' + item.label + '】删除成功'
-              })
-            }
-          })
-        }
-      }))
-      menu.append(new MenuItem({
-        label: '修改',
-        click: () => {
-          this.requestItemModify(null, item)
-        }
-      }))
-      menu.popup({ window: remote.getCurrentWindow() })
-    },
-    requestItemDelete (event, data) {
-      this.requestsList = data.requests
-      // this.$Message.success('【' + data.deleted.label + '】删除成功')
-      this.$Notice.success({
-        desc: '【' + data.deleted.label + '】删除成功'
-      })
-    },
-    requestItemModify (event, data) {
-      if (data.type === 'folder') {
-        this.modifyFolderModal.shown = true
-        this.modifyFolderModal.formData = JSON.parse(JSON.stringify(data))
-      } else {
-        this.modifyModal.shown = true
-        this.modifyModal.formData = JSON.parse(JSON.stringify(data))
+      },
+      requestsUpdated (event, data) {
+        this.requestsList = data
+        this.$Notice.success({
+          desc: '请求列表已经更新'
+        })
+      },
+      baseParamsUpdated (event, data) {
+        this.baseParams = data
+        this.baseParamsModal.formData = data
+        this.$Notice.success({
+          desc: '基础参数已经更新'
+        })
       }
     },
-    requestsUpdated (event, data) {
-      this.requestsList = data
-      this.$Notice.success({
-        desc: '请求列表已经更新'
-      })
-    }
-  },
-  watch: {
-    activeItem: {
-      immediate: true,
-      handler (val) {
-        this.$emit('active', this.getActiveObj())
-      }
-    },
-    'folderModal.shown': {
-      handler (val) {
-        if (val) {
-          this.$nextTick(() => {
-            this.$refs.newFolderInputRef.focus()
-          })
+    watch: {
+      activeItem: {
+        immediate: true,
+        handler (val) {
+          this.$emit('active', this.getActiveObj())
         }
-      }
-    },
-    'modifyFolderModal.shown': {
-      handler (val) {
-        if (val) {
-          this.$nextTick(() => {
-            this.$refs.modifyFolderInputRef.focus()
-          })
+      },
+      'folderModal.shown': {
+        handler (val) {
+          if (val) {
+            this.$nextTick(() => {
+              this.$refs.newFolderInputRef.focus()
+            })
+          }
         }
-      }
-    },
-    filterText: {
-      handler (val) {
-        if (val) {
-          this.openAllMenu()
+      },
+      'modifyFolderModal.shown': {
+        handler (val) {
+          if (val) {
+            this.$nextTick(() => {
+              this.$refs.modifyFolderInputRef.focus()
+            })
+          }
+        }
+      },
+      filterText: {
+        handler (val) {
+          if (val) {
+            this.openAllMenu()
+          }
         }
       }
     }
   }
-}
 </script>
 
 <style lang="less" scoped>
-.w100p {
-  width: 100%;
-}
-.fs12 {
-  font-size: 12px;
-}
-.request_panel_list {
-  width: 100%;
-  height: 100%;
-  padding: 10px 0 0 0;
-  box-sizing: border-box;
-  .list_filter_container {
+  .w100p {
     width: 100%;
-    height: 36px;
-    padding: 0 15px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    // justify-content: space-around;
-    .request_panel_operation {
-      width: 48px;
-      height: 36px;
-      margin-left: 15px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-    }
   }
-  .requests_list_top_blank {
-    position: absolute;
-    left: 0;
-    top: 61px;
-    z-index: 1;
-    width: 100%;
-    height: 36px;
-    background-color: #2e2f2b;
+  .fs12 {
+    font-size: 12px;
   }
-  .requests_list {
-    position: relative;
+  .request_panel_list {
     width: 100%;
-    height: calc(100% - 36px - 48px - 15px);
-    // padding-top: 15px;
-    margin-top: 15px;
+    height: 100%;
+    padding: 10px 0 0 0;
     box-sizing: border-box;
-    overflow-y: auto;
-    overflow-x: hidden;
-    .requests_item {
+    .list_filter_container {
       width: 100%;
-      // min-height: 36px;
+      height: 36px;
+      padding: 0 15px;
+      box-sizing: border-box;
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: flex-start;
-      .requests_item_inner {
-        width: 100%;
+      // justify-content: space-around;
+      .request_panel_operation {
+        width: 48px;
         height: 36px;
-        padding: 0 8px;
-        box-sizing: border-box;
-        background-color: rgba(54, 55, 53, 0);
-        transition: all 0.2s ease-in-out;
+        margin-left: 15px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+      }
+    }
+    .requests_list_top_blank {
+      position: absolute;
+      left: 0;
+      top: 61px;
+      z-index: 1;
+      width: 100%;
+      height: 36px;
+      background-color: #2e2f2b;
+    }
+    .requests_list {
+      position: relative;
+      width: 100%;
+      height: calc(100% - 36px - 48px - 15px);
+      // padding-top: 15px;
+      margin-top: 15px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      overflow-x: hidden;
+      .requests_item {
+        width: 100%;
+        // min-height: 36px;
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
-        .requests_item_method {
-          font-size: 10px;
-          font-weight: bold;
-          width: 36px;
-          height: 36px;
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: center;
-        }
-        .requests_item_content {
-          font-size: 13px;
-          // margin-left: 8px;
-          width: calc(100% - 40px);
-          height: 36px;
-          line-height: 36px;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-          overflow: hidden;
-          color: rgb(141, 141, 141);
-        }
-        &:hover {
-          background-color: rgba(54, 55, 53, 1);
-          .requests_item_content {
-            color: rgb(234, 234, 234);
-          }
-        }
-        &.active {
-          background-color: rgba(54, 55, 53, 1);
-          border-left: 5px solid #5ea021;
-          border-top-left-radius: 3px;
-          border-bottom-left-radius: 3px;
-          .requests_item_content {
-            color: rgb(234, 234, 234);
-          }
-        }
-      }
-      .requests_item_folder_inner {
-        width: 100%;
-        min-height: 36px;
-        background-color: rgba(54, 55, 53, 0);
-        transition: all 0.2s ease-in-out;
-        display: flex;
-        flex-direction: column;
-        color: rgb(141, 141, 141);
-        &:hover {
-          .requests_item_folder_header {
-            color: rgb(234, 234, 234);
-          }
-        }
-        &.active {
-          .requests_item_folder_header {
-            color: rgb(234, 234, 234);
-          }
-        }
-        .requests_item_folder_header {
+        .requests_item_inner {
           width: 100%;
           height: 36px;
-          z-index: 2;
           padding: 0 8px;
           box-sizing: border-box;
+          background-color: rgba(54, 55, 53, 0);
+          transition: all 0.2s ease-in-out;
           display: flex;
           flex-direction: row;
           align-items: center;
-          position: sticky;
-          left: 0;
-          top: 0;
-          // background-color: #2e2f2b;
-          // color: rgb(145, 146, 145);
-          .requests_item_folder_header_icon {
+          justify-content: flex-start;
+          .requests_item_method {
+            font-size: 10px;
+            font-weight: bold;
             width: 36px;
             height: 36px;
             display: flex;
             flex-direction: row;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
-            svg {
-              width: 14px;
-              height: 14px;
-              fill: rgb(145, 146, 145);
-            }
           }
-          .requests_item_folder_header_content {
+          .requests_item_content {
             font-size: 13px;
-            margin-left: 8px;
+            // margin-left: 8px;
             width: calc(100% - 40px);
             height: 36px;
             line-height: 36px;
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
-            // color: rgb(141, 141, 141);
+            color: rgb(141, 141, 141);
           }
           &:hover {
             background-color: rgba(54, 55, 53, 1);
-            .requests_item_folder_header_content {
+            .requests_item_content {
               color: rgb(234, 234, 234);
             }
           }
           &.active {
             background-color: rgba(54, 55, 53, 1);
-            .requests_item_folder_header_content {
+            border-left: 5px solid #5ea021;
+            border-top-left-radius: 3px;
+            border-bottom-left-radius: 3px;
+            .requests_item_content {
               color: rgb(234, 234, 234);
             }
           }
         }
-        .requests_item_folder_content {
+        .requests_item_folder_inner {
           width: 100%;
-          // height: 120px;
-          background-color: rgb(40, 40, 40);
-          overflow: hidden;
-          transition: all 0.15s ease-in-out;
+          min-height: 36px;
+          background-color: rgba(54, 55, 53, 0);
+          transition: all 0.2s ease-in-out;
+          display: flex;
+          flex-direction: column;
+          color: rgb(141, 141, 141);
+          &:hover {
+            .requests_item_folder_header {
+              color: rgb(234, 234, 234);
+            }
+          }
+          &.active {
+            .requests_item_folder_header {
+              color: rgb(234, 234, 234);
+            }
+          }
+          .requests_item_folder_header {
+            width: 100%;
+            height: 36px;
+            z-index: 2;
+            padding: 0 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            position: sticky;
+            left: 0;
+            top: 0;
+            // background-color: #2e2f2b;
+            // color: rgb(145, 146, 145);
+            .requests_item_folder_header_icon {
+              width: 36px;
+              height: 36px;
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              justify-content: center;
+              font-size: 13px;
+              svg {
+                width: 14px;
+                height: 14px;
+                fill: rgb(145, 146, 145);
+              }
+            }
+            .requests_item_folder_header_content {
+              font-size: 13px;
+              margin-left: 8px;
+              width: calc(100% - 40px);
+              height: 36px;
+              line-height: 36px;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              // color: rgb(141, 141, 141);
+            }
+            &:hover {
+              background-color: rgba(54, 55, 53, 1);
+              .requests_item_folder_header_content {
+                color: rgb(234, 234, 234);
+              }
+            }
+            &.active {
+              background-color: rgba(54, 55, 53, 1);
+              .requests_item_folder_header_content {
+                color: rgb(234, 234, 234);
+              }
+            }
+          }
+          .requests_item_folder_content {
+            width: 100%;
+            // height: 120px;
+            background-color: rgb(40, 40, 40);
+            overflow: hidden;
+            transition: all 0.15s ease-in-out;
+          }
+        }
+      }
+      .empty_container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 1;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        svg {
+          width: 48px;
+          height: 48px;
+          fill: #444;
         }
       }
     }
-    .empty_container {
-      position: absolute;
+    .requests_footer {
       width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: 1;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      svg {
-        width: 48px;
-        height: 48px;
-        fill: #444;
-      }
-    }
-  }
-  .requests_footer {
-    width: 100%;
-    height: 48px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    .requests_footer_btn {
       height: 48px;
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: center;
-      svg {
-        width: 14px;
-        height: 14px;
-      }
-      &.requests_footer_btn_export {
-        width: 40%;
-        border-top: 1px solid #474846;
-        box-sizing: border-box;
-        border-radius: 0;
-        color: #2db7f5;
+      justify-content: space-between;
+      .requests_footer_btn {
+        height: 48px;
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: center;
         svg {
-          margin-right: 8px;
-          transform: scale(0.9);
-          fill: #2db7f5;
+          width: 14px;
+          height: 14px;
         }
-      }
-      &.requests_footer_btn_import {
-        width: 60%;
-        border-left: 1px solid #474846;
-        border-top: 1px solid #474846;
-        color: rgb(94, 160, 33);
-        border-radius: 0;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        svg {
-          margin-left: 8px;
-          fill: rgb(94, 160, 33);
+        &.requests_footer_btn_export {
+          width: 40%;
+          border-top: 1px solid #474846;
+          box-sizing: border-box;
+          border-radius: 0;
+          color: #2db7f5;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          svg {
+            margin-right: 8px;
+            transform: scale(0.9);
+            fill: #2db7f5;
+          }
+        }
+        &.requests_footer_btn_import {
+          width: 60%;
+          border-left: 1px solid #474846;
+          border-top: 1px solid #474846;
+          color: rgb(94, 160, 33);
+          border-radius: 0;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          svg {
+            margin-left: 8px;
+            fill: rgb(94, 160, 33);
+          }
         }
       }
     }
   }
-}
-.drop_down_item {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  i {
-    margin-right: 8px;
-  }
-}
-.format_param_container {
-  width: 100%;
-  max-height: 300px;
-  padding: 15px 0;
-  box-sizing: border-box;
-  overflow-y: auto;
-  background-color: #f8f8fa;
-  .format_param_item {
-    width: 100%;
-    height: 36px;
+  .drop_down_item {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    &.sticky {
-      position: sticky;
-      left: 0;
-      top: 0;
-      background-color: #ffffff;
+    i {
+      margin-right: 8px;
     }
-    .params_item_status {
-      width: 32px;
+  }
+  .format_param_container {
+    width: 100%;
+    max-height: 300px;
+    padding: 15px 0;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background-color: #f8f8fa;
+    .format_param_item {
+      width: 100%;
       height: 36px;
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: flex-end;
-    }
-    .params_item_label {
-      width: 150px;
-      height: 40px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
       justify-content: space-between;
-    }
-    .params_item_value {
-      flex: 1;
-      margin-left: 20px;
-      height: 40px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .params_item_delete {
-      width: 32px;
-      height: 36px;
-      opacity: 0;
-      transition: opacity 0.2s ease-in-out;
-      cursor: pointer;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-    }
-    &.active {
+      &.sticky {
+        position: sticky;
+        left: 0;
+        top: 0;
+        background-color: #ffffff;
+      }
+      .params_item_status {
+        width: 32px;
+        height: 36px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .params_item_label {
+        width: 150px;
+        height: 40px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .params_item_value {
+        flex: 1;
+        margin-left: 20px;
+        height: 40px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
       .params_item_delete {
-        opacity: 1;
+        width: 32px;
+        height: 36px;
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+        cursor: pointer;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+      &.active {
+        .params_item_delete {
+          opacity: 1;
+        }
       }
     }
   }
-}
 </style>

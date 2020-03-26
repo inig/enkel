@@ -21,7 +21,7 @@ axios.defaults.timeout = 5000
 db.defaults({
   requests: [
   ],
-  baseParams: {}
+  baseParams: []
 }).write()
 
 function S4 () {
@@ -191,6 +191,9 @@ ipcMain.on('set-requests', (event, args) => {
     }, args.request)
   }
   event.returnValue = setRequest(event, args)
+})
+ipcMain.on('set-base-params', (event, args) => {
+  event.returnValue = setBaseParams(event, args)
 })
 ipcMain.on('modify-requests', (event, args) => {
   if (args.request) {
