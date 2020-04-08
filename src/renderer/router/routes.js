@@ -181,6 +181,43 @@ export const mediaRouter = {
         }
       },
       component: require('@/components/tools/media/Flac/index').default
+    },
+    {
+      path: '/pray',
+      name: 'pray',
+      meta: {
+        label: 'Enkel半仙',
+        title: 'Enkel半仙',
+        icon: '#route-flac',
+        name: 'Enkel半仙',
+        desc: '过精致的生活，听无损的音乐',
+        createTime: '1582793691589',
+        hot: false,
+        closable: false,
+        withoutHeader: true,
+        windowOption: {
+          frame: false,
+          // resizable: false,
+          width: 360,
+          height: 250,
+          // height: 667,
+          modal: true,
+          transparent: true,
+          // hasShadow: false,
+          // backgroundColor: '#00ffffff',
+          titleBarStyle: 'default'
+        },
+        loginBefore: {
+          url: 'https://wappass.baidu.com/passport#/insert_account',
+          // url: 'https://wappass.baidu.com/passport?login&authsite=1&tpl=netdisk&overseas=1&regdomestic=1&smsLoginLink=1&display=mobile&u=https%3A%2F%2Fpan.baidu.com%2Fwap%2Fhome%3Fadapt%3Dpc%26fr%3Dftw%26realName%3D1%26wapBehaviorLog%3Dwap_click_welcome_login%26branchType%3DSMSlogin#/insert_account',
+          // url: 'https://pan.baidu.com',
+          cookies: ['BDUSS'],
+          insert: {
+            js: 'let bdheader = document.querySelector(".pass-header"); if (bdheader) { bdheader.style.display = "none"; }'
+          }
+        }
+      },
+      component: require('@/components/tools/media/Flac/index').default
     }
   ]
 }
