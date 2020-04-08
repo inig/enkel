@@ -9,9 +9,10 @@ require('./request')
 require('./npm')
 const { showSettingsWindow, createSettingsWindow } = require('./settings')
 const { showAboutWindow } = require('./about')
-require('./autoUpdate')
+// require('./autoUpdate')
 require('./video')
 require('./flac')
+require('./user')
 // const { checkUpdate } = require('./autoUpdate')
 // console.log('=======', !fs.existsSync(app.getAppPath() + path.sep + 'db.json'), app.getAppPath() + path.sep + 'db.json')
 // if (!fs.existsSync(app.getAppPath() + path.sep + 'db.json')) {
@@ -787,6 +788,12 @@ ipcMain.on('close-all-window', (event, args) => {
       item.destroy()
     }
   })
+})
+ipcMain.on('close-window', (event, args) => {
+  let win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    win.destroy()
+  }
 })
 
 ipcMain.on('capture-screen-qrcode', (event) => {

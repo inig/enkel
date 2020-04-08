@@ -46,6 +46,7 @@
 import { Button } from 'view-design'
 import { ipcRenderer, desktopCapturer, remote, shell } from 'electron'
 import { routes } from '../../router/routes'
+
 const { screen } = remote
 const fs = require('fs')
 const path = require('path')
@@ -78,20 +79,16 @@ export default {
       ipcRenderer.send('set-bounds', { width: 300, x: 400 })
     },
     goto (data) {
+
       let opt = {
         path: data.name
       }
       if (data.meta) {
-        if (data.meta.resources) {
-          opt.resources = data.meta.resources
-        }
-        if (data.meta.loginBefore) {
-          opt.loginBefore = data.meta.loginBefore
-        }
         if (data.meta.windowOption) {
           opt.windowOption = data.meta.windowOption
         }
       }
+      console.log('>>>>', opt)
       this.$goto(opt)
     },
     determineScreenShotSize () {

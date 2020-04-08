@@ -4,6 +4,29 @@ import { developRouter, mediaRouter } from './routes'
 
 Vue.use(Router)
 
+export const loginRouter = {
+  path: '/login',
+  name: 'login',
+  meta: {
+    label: 'Enkel无损音乐',
+    title: 'Enkel无损音乐',
+    withoutHeader: true,
+    windowOption: {
+      frame: false,
+      // resizable: false,
+      width: 250,
+      height: 390,
+      // height: 667,
+      modal: true,
+      transparent: true,
+      // hasShadow: false,
+      // backgroundColor: '#00ffffff',
+      titleBarStyle: 'default'
+    }
+  },
+  component: require('@/components/pages/Login').default
+}
+
 export default new Router({
   routes: [
     {
@@ -56,6 +79,7 @@ export default new Router({
       },
       component: require('@/components/pages/QrcodeResult').default
     },
+    loginRouter,
     ...developRouter.routes,
     ...mediaRouter.routes,
     {

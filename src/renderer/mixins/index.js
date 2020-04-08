@@ -2,7 +2,6 @@ import { ipcRenderer } from 'electron'
 export default {
   methods: {
     $goto (data) {
-      console.log('>>>', data)
       ipcRenderer.send('navigate-to', data)
     },
     S4 () {
@@ -42,6 +41,10 @@ export default {
       } else {
         return (hour < 10 ? '0' + hour : hour) + ':' + (minute < 10 ? '0' + minute : minute) + ':' + (second < 10 ? '0' + second : second)
       }
+    },
+    $initLoginInfo () {
+      let loginInfo = ipcRenderer.sendSync('init-login-info')
+      return loginInfo
     }
   }
 }
