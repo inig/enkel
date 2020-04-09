@@ -616,6 +616,44 @@ app.on('ready', async () => {
 
   app.setAsDefaultProtocolClient('enkel')
   app.setAsDefaultProtocolClient('file')
+
+
+  app.on('open-url', (event, url) => {
+    let params = getParamsFromUrl(url)
+    let pagePath = params.p || params.page
+    if (pagePath) {
+      // enkel://enkel.com?p=
+      let p = routes[pagePath]
+      let opt = {
+        path: p.name
+      }
+      let pathQueryString = getParamStr(url)
+      if (pathQueryString) {
+        opt.pathQueryString = pathQueryString
+      }
+      if (p.meta) {
+        if (p.meta.id) {
+          opt.id = p.meta.id
+        }
+        if (p.meta.resources) {
+          opt.resources = p.meta.resources
+        }
+        if (p.meta.loginBefore) {
+          opt.loginBefore = p.meta.loginBefore
+        }
+        if (p.meta.windowOption) {
+          opt.windowOption = p.meta.windowOption
+        }
+      }
+      if (!menuWindow) {
+        createMenuWindow()
+      }
+      menuWindow.show()
+      setTimeout(() => {
+        createNewWindow(opt)
+      }, 300)
+    }
+  })
 })
 app.on('will-quit', () => {
   globalShortcut.unregisterAll()
@@ -647,37 +685,6 @@ function getParamStr (url) {
   }
   return outStr.join('&')
 }
-
-app.on('open-url', (event, url) => {
-  let params = getParamsFromUrl(url)
-  let pagePath = params.p || params.page
-  if (pagePath) {
-    // enkel://enkel.com?p=
-    let p = routes[pagePath]
-    let opt = {
-      path: p.name
-    }
-    let pathQueryString = getParamStr(url)
-    if (pathQueryString) {
-      opt.pathQueryString = pathQueryString
-    }
-    if (p.meta) {
-      if (p.meta.id) {
-        opt.id = p.meta.id
-      }
-      if (p.meta.resources) {
-        opt.resources = p.meta.resources
-      }
-      if (p.meta.loginBefore) {
-        opt.loginBefore = p.meta.loginBefore
-      }
-      if (p.meta.windowOption) {
-        opt.windowOption = p.meta.windowOption
-      }
-    }
-    createNewWindow(opt)
-  }
-})
 
 app.on('window-all-closed', () => {
   // if (process.platform !== 'darwin') {
