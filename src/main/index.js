@@ -218,9 +218,13 @@ async function createNewWindow (arg) {
     }
   }, arg.windowOption, extraOptions))
 
-  const url = process.env.NODE_ENV === 'development'
+  let url = process.env.NODE_ENV === 'development'
     ? `http://localhost:9080/#/${arg.path}`
     : `file://${__dirname}/index.html?page=${arg.path}`
+
+  if (url.indexOf('file://') === 0 && arg.pathQueryString) {
+    url += '&' + arg.pathQueryString
+  }
 
   if (arg.loginBefore && arg.loginBefore.url) {
     await cookieValidate(arg.loginBefore, newWindow, url)
@@ -611,6 +615,7 @@ app.on('ready', async () => {
   // }, 1500)
 
   app.setAsDefaultProtocolClient('enkel')
+  app.setAsDefaultProtocolClient('file')
 })
 app.on('will-quit', () => {
   globalShortcut.unregisterAll()
@@ -640,16 +645,21 @@ function getParamStr (url) {
       outStr.push(k + '=' + params[k])
     }
   }
-  return outStr.length > 0 ? ('?' + outStr.join('&')) : outStr.join('&')
+  return outStr.join('&')
 }
 
 app.on('open-url', (event, url) => {
   let params = getParamsFromUrl(url)
-  if (params.p) {
+  let pagePath = params.p || params.page
+  if (pagePath) {
     // enkel://enkel.com?p=
-    let p = routes[params.p]
+    let p = routes[pagePath]
     let opt = {
-      path: p.name + getParamStr(url)
+      path: p.name
+    }
+    let pathQueryString = getParamStr(url)
+    if (pathQueryString) {
+      opt.pathQueryString = pathQueryString
     }
     if (p.meta) {
       if (p.meta.id) {
