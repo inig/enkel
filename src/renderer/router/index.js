@@ -11,6 +11,7 @@ export const loginRouter = {
     label: 'Enkel无损音乐',
     title: 'Enkel无损音乐',
     withoutHeader: true,
+    id: 'loginWindow', // 只能打开一次的窗口
     windowOption: {
       frame: false,
       // resizable: false,
@@ -25,6 +26,51 @@ export const loginRouter = {
     }
   },
   component: require('@/components/pages/Login').default
+}
+export const registerRouter = {
+  path: '/register',
+  name: 'register',
+  meta: {
+    label: 'Enkel无损音乐',
+    title: 'Enkel无损音乐',
+    withoutHeader: true,
+    windowOption: {
+      frame: false,
+      // resizable: false,
+      width: 250,
+      height: 390,
+      // height: 667,
+      modal: true,
+      transparent: true,
+      // hasShadow: false,
+      // backgroundColor: '#00ffffff',
+      titleBarStyle: 'default'
+    }
+  },
+  component: require('@/components/pages/Register').default
+}
+export const profileRouter = {
+  path: '/profile',
+  name: 'profile',
+  meta: {
+    label: 'Enkel无损音乐',
+    title: 'Enkel无损音乐',
+    withoutHeader: true,
+    id: 'profileWindow', // 只能打开一次的窗口
+    windowOption: {
+      frame: false,
+      // resizable: false,
+      width: 400,
+      height: 400,
+      // height: 667,
+      modal: true,
+      transparent: true,
+      // hasShadow: false,
+      // backgroundColor: '#00ffffff',
+      titleBarStyle: 'default'
+    }
+  },
+  component: require('@/components/pages/Profile').default
 }
 
 export default new Router({
@@ -80,6 +126,8 @@ export default new Router({
       component: require('@/components/pages/QrcodeResult').default
     },
     loginRouter,
+    registerRouter,
+    profileRouter,
     ...developRouter.routes,
     ...mediaRouter.routes,
     {

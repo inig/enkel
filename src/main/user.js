@@ -18,11 +18,12 @@ if (!fs.existsSync(app.getPath('userData'))) {
 } else if (!fs.existsSync(app.getPath('userData') + path.sep + 'user_info.json')) {
   fs.writeFileSync(app.getPath('userData') + path.sep + 'user_info.json', '{}')
 }
-console.log('===', app.getPath('userData') + path.sep + 'user_info.json')
+// console.log('===', app.getPath('userData') + path.sep + 'user_info.json')
 const adapter = new FileSync(app.getPath('userData') + path.sep + 'user_info.json')
 const db = low(adapter)
 const http = axios.create({
-  timeout: 5000
+  timeout: 5000,
+  baseURL: 'http://127.0.0.1:3000'
 })
 db.defaults({
   user: {}
@@ -76,9 +77,9 @@ ipcMain.on('init-login-info', (event, args) => {
 })
 
 ipcMain.on('login', async (event, args) => {
-  await axios({
+  await http({
     method: 'POST',
-    baseURL: 'http://talkapi.dei2.com',
+    // baseURL: 'http://talkapi.dei2.com',
     // baseURL: 'http://127.0.0.1:3000',
     url: '/enkel/user/login',
     data: qs.stringify(args)
@@ -104,6 +105,62 @@ ipcMain.on('login', async (event, args) => {
       })
 
   })
+})
+
+ipcMain.on('register', async (event, args) => {
+  await http({
+    method: 'POST',
+    url: '/enkel/user/register',
+    data: qs.stringify(args)
+  }).then(response => {
+    event.reply('register-response', response.data)
+  }).catch(err => {
+    event.reply('register-response', err.response ? {
+      data: {
+        errmsg: err.response.statusText,
+        status: err.response.status
+      },
+      headers: err.response.headers
+    } : {
+        data: {
+          errmsg: err.message,
+          status: 1001
+        },
+        headers: {}
+      })
+
+  })
+})
+
+ipcMain.on('save-profile', async (event, args) => {
+  await http({
+    method: 'POST',
+    url: '/enkel/user/updateUserInfo',
+    data: qs.stringify(args)
+  }).then(response => {
+    event.reply('save-profile-response', response.data)
+  }).catch(err => {
+    event.reply('save-profile-response', err.response ? {
+      data: {
+        errmsg: err.response.statusText,
+        status: err.response.status
+      },
+      headers: err.response.headers
+    } : {
+        data: {
+          errmsg: err.message,
+          status: 1001
+        },
+        headers: {}
+      })
+
+  })
+})
+
+ipcMain.on('update-user-info', (event, data) => {
+  let userInfo = getUser()
+  userInfo = Object.assign({}, userInfo, data)
+  setUser(event, userInfo)
 })
 
 ipcMain.on('logout', (event) => {

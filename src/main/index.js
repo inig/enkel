@@ -191,6 +191,18 @@ async function cookieChanged (changedCookie, loginBeforeOption, win, redirectUrl
 }
 
 async function createNewWindow (arg) {
+  let extraOptions = {}
+  if (arg.id) {
+    let targetWindows = BrowserWindow.getAllWindows().filter(item => (item.webContents.browserWindowOptions.id == arg.id))
+    if (targetWindows.length > 0) {
+      // 已经存在
+      targetWindows[0].setAlwaysOnTop(true)
+      return
+    } else {
+      extraOptions.id = arg.id
+    }
+  }
+
   let newWindow = new BrowserWindow(Object.assign({
     height: 563,
     // useContentSize: true,
@@ -205,7 +217,7 @@ async function createNewWindow (arg) {
       // preload: (arg.resources && arg.resources.js && (arg.resources.js.length > 0)) ? path.join(__dirname, `../renderer/assets/preload/js/${arg.resources.js[0]}`) : ''
       // preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
     }
-  }, arg.windowOption))
+  }, arg.windowOption, extraOptions))
 
   const url = process.env.NODE_ENV === 'development'
     ? `http://localhost:9080/#/${arg.path}`

@@ -70,9 +70,11 @@
                 @click="gotoLogin"></Avatar>
         <DropdownMenu slot="list">
           <DropdownItem name="show-all-window">显示所有窗口</DropdownItem>
-          <DropdownItem name="hide-all-window">隐藏所有窗口</DropdownItem>
+          <!-- <DropdownItem name="hide-all-window">隐藏所有窗口</DropdownItem> -->
           <DropdownItem name="close-all-window">关闭所有窗口</DropdownItem>
           <DropdownItem name="show-settings">设置</DropdownItem>
+          <DropdownItem name="show-profile"
+                        v-if="loginInfo.token">个人中心</DropdownItem>
           <DropdownItem name="login"
                         v-if="!loginInfo.token">
             <Icon type="md-log-in"
@@ -113,250 +115,259 @@
 </template>
 
 <script>
-import { ipcRenderer } from 'electron'
-import { routes } from '../../router/routes'
-import { loginRouter } from '../../router/index'
-import { Dropdown, DropdownMenu, DropdownItem, Icon, Avatar } from 'view-design'
-export default {
-  name: 'AppHeader',
-  components: {
-    Dropdown, DropdownMenu, DropdownItem, Icon, Avatar
-  },
-  data () {
-    return {
-      menuFolded: false,
-      title: '',
-      loginRouter: {},
-      loginInfo: {}
-    }
-  },
-  computed: {
-    renderTitle () {
-      return this.title ? this.title : (this.$route.meta ? (this.$route.meta.title || 'Enkel') : 'Enkel')
-    }
-  },
-  mounted () {
-    this.loginRouter = loginRouter
-    this.initLoginInfo()
-    ipcRenderer.on('menu-folded', () => {
-      this.menuFolded = true
-    })
-    ipcRenderer.on('menu-unfolded', () => {
-      this.menuFolded = false
-    })
-    ipcRenderer.on('login-info-updated', this.loginInfoUpdated)
-    ipcRenderer.on('logout-response', this.logoutResponse)
-
-    global.eventHub.$on('set-title', this.setTitle)
-  },
-  methods: {
-    initLoginInfo () {
-      this.loginInfo = this.$initLoginInfo()
+  import { ipcRenderer } from 'electron'
+  import { routes } from '../../router/routes'
+  import { loginRouter, profileRouter } from '../../router/index'
+  import { Dropdown, DropdownMenu, DropdownItem, Icon, Avatar } from 'view-design'
+  export default {
+    name: 'AppHeader',
+    components: {
+      Dropdown, DropdownMenu, DropdownItem, Icon, Avatar
     },
-    setTitle (title) {
-      this.title = `<span>【${title.label}】</span><span style="color: #888;">${title.url}</span>`
+    data () {
+      return {
+        menuFolded: false,
+        title: '',
+        loginRouter: {},
+        loginInfo: {}
+      }
     },
-    menuFold () {
-      ipcRenderer.send(!this.menuFolded ? 'menu-fold' : 'menu-unfold')
+    computed: {
+      renderTitle () {
+        return this.title ? this.title : (this.$route.meta ? (this.$route.meta.title || 'Enkel') : 'Enkel')
+      }
     },
-    goto (name) {
-      this.$goto(name)
-    },
-    closeMenu () {
-      ipcRenderer.send('close-menu')
-    },
-    showRightMenu () {
-      ipcRenderer.send('right-menu-click', {
-        routes: routes
+    mounted () {
+      this.loginRouter = loginRouter
+      this.initLoginInfo()
+      ipcRenderer.on('menu-folded', () => {
+        this.menuFolded = true
       })
+      ipcRenderer.on('menu-unfolded', () => {
+        this.menuFolded = false
+      })
+      ipcRenderer.on('login-info-updated', this.loginInfoUpdated)
+      ipcRenderer.on('logout-response', this.logoutResponse)
+
+      global.eventHub.$on('set-title', this.setTitle)
     },
-    operateHandler (name) {
-      if (name == 'login') {
-        this.gotoLogin()
-      } else {
-        ipcRenderer.send(name)
-      }
-    },
-    closeSettings () {
-      ipcRenderer.send('hide-settings')
-    },
-    toggleWindowSize () {
-      if (!this.$route.meta || !this.$route.meta.unresizable) {
-        ipcRenderer.send('toggle-window-size')
-      }
-    },
-    goto (data) {
-      let opt = {
-        path: data.name
-      }
-      if (data.meta) {
-        if (data.meta.resources) {
-          opt.resources = data.meta.resources
+    methods: {
+      initLoginInfo () {
+        this.loginInfo = this.$initLoginInfo()
+      },
+      setTitle (title) {
+        this.title = `<span>【${title.label}】</span><span style="color: #888;">${title.url}</span>`
+      },
+      menuFold () {
+        ipcRenderer.send(!this.menuFolded ? 'menu-fold' : 'menu-unfold')
+      },
+      goto (name) {
+        this.$goto(name)
+      },
+      closeMenu () {
+        ipcRenderer.send('close-menu')
+      },
+      showRightMenu () {
+        ipcRenderer.send('right-menu-click', {
+          routes: routes
+        })
+      },
+      operateHandler (name) {
+        if (name == 'login') {
+          this.gotoLogin()
+        } else if (name == 'show-profile') {
+          this.gotoProfile()
+        } else {
+          ipcRenderer.send(name)
         }
-        if (data.meta.loginBefore) {
-          opt.loginBefore = data.meta.loginBefore
+      },
+      closeSettings () {
+        ipcRenderer.send('hide-settings')
+      },
+      toggleWindowSize () {
+        if (!this.$route.meta || !this.$route.meta.unresizable) {
+          ipcRenderer.send('toggle-window-size')
         }
-        if (data.meta.windowOption) {
-          opt.windowOption = data.meta.windowOption
+      },
+      goto (data) {
+        let opt = {
+          path: data.name
         }
+        if (data.meta) {
+          if (data.meta.id) {
+            opt.id = data.meta.id
+          }
+          if (data.meta.resources) {
+            opt.resources = data.meta.resources
+          }
+          if (data.meta.loginBefore) {
+            opt.loginBefore = data.meta.loginBefore
+          }
+          if (data.meta.windowOption) {
+            opt.windowOption = data.meta.windowOption
+          }
+        }
+        this.$goto(opt)
+      },
+      gotoLogin () {
+        this.goto(this.loginRouter)
+      },
+      gotoProfile () {
+        this.goto(profileRouter)
+      },
+      loginInfoUpdated (event, loginInfo) {
+        this.loginInfo = loginInfo || {}
+      },
+      logoutResponse () {
+        this.loginInfo = {}
+        this.$Message.success('已经退出登录')
       }
-      this.$goto(opt)
     },
-    gotoLogin () {
-      this.goto(this.loginRouter)
-    },
-    loginInfoUpdated (event, loginInfo) {
-      this.loginInfo = loginInfo || {}
-    },
-    logoutResponse () {
-      this.loginInfo = {}
-      this.$Message.success('已经退出登录')
-    }
-  },
-  watch: {
-    '$route': {
-      immediate: true,
-      handler (val) {
-        this.title = ''
+    watch: {
+      '$route': {
+        immediate: true,
+        handler (val) {
+          this.title = ''
+        }
       }
     }
   }
-}
 </script>
 
 <style lang="less" scoped>
-@import url("../../themes/index.less");
-.bgWhite {
-  background-color: #000 !important;
-}
-.app_header {
-  position: relative;
-  width: 100%;
-  height: 48px;
-  cursor: move;
-  background-color: @primary-color;
-  -webkit-app-region: drag;
-  color: #ffffff;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  -webkit-user-select: none;
-}
-.close_wrapper {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 48px;
-  height: 48px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  svg {
-    width: 20px;
-    height: 20px;
-    fill: #ffffff;
+  @import url("../../themes/index.less");
+  .bgWhite {
+    background-color: #000 !important;
   }
-}
-.menu_fold {
-  position: absolute;
-  width: 48px;
-  height: 48px;
-  left: 0;
-  top: 0;
-  cursor: pointer;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  svg {
-    width: 20px;
-    height: 20px;
-    fill: #ffffff;
+  .app_header {
+    position: relative;
+    width: 100%;
+    height: 48px;
+    cursor: move;
+    background-color: @primary-color;
+    -webkit-app-region: drag;
+    color: #ffffff;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    -webkit-user-select: none;
   }
-  &:hover {
+  .close_wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
     svg {
-      fill: #c8c8c8;
+      width: 20px;
+      height: 20px;
+      fill: #ffffff;
     }
   }
-  img {
-    width: 100%;
-    height: 100%;
+  .menu_fold {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    left: 0;
+    top: 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    svg {
+      width: 20px;
+      height: 20px;
+      fill: #ffffff;
+    }
+    &:hover {
+      svg {
+        fill: #c8c8c8;
+      }
+    }
+    img {
+      width: 100%;
+      height: 100%;
+    }
   }
-}
-.menu_operate {
-  width: 48px;
-  height: 48px;
-  position: absolute;
-  right: 48px;
-  top: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  .menu_operate_dropdown {
-    width: 100%;
-    height: 100%;
+  .menu_operate {
+    width: 48px;
+    height: 48px;
+    position: absolute;
+    right: 48px;
+    top: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    .menu_operate_dropdown {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  .login_box {
+    width: 30px;
+    height: 48px;
+    cursor: pointer;
+    position: absolute;
+    right: 18px;
+    top: 0;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
   }
-}
-.login_box {
-  width: 30px;
-  height: 48px;
-  position: absolute;
-  right: 18px;
-  top: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-}
-.menu_home {
-  position: absolute;
-  width: 48px;
-  height: 48px;
-  top: 0;
-  cursor: pointer;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  svg {
-    width: 16px;
-    height: 16px;
-    fill: #ffffff;
-  }
-  &:hover {
+  .menu_home {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    top: 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
     svg {
-      fill: #c8c8c8;
+      width: 16px;
+      height: 16px;
+      fill: #ffffff;
+    }
+    &:hover {
+      svg {
+        fill: #c8c8c8;
+      }
     }
   }
-}
-.menu_close {
-  position: absolute;
-  width: 48px;
-  height: 48px;
-  right: 0;
-  top: 0;
-  cursor: pointer;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  svg {
-    width: 20px;
-    height: 20px;
-    fill: #ffffff;
-  }
-  &:hover {
+  .menu_close {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    right: 0;
+    top: 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
     svg {
-      fill: #c8c8c8;
+      width: 20px;
+      height: 20px;
+      fill: #ffffff;
+    }
+    &:hover {
+      svg {
+        fill: #c8c8c8;
+      }
     }
   }
-}
 </style>

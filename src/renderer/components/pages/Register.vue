@@ -10,43 +10,49 @@
         </div>
         <div class="main-container">
           <div class="user-icon">
-            <img :src="getHeadIcon(loginForm.username)">
+            <img :src="'/static/images/avatar_female.jpg'">
           </div>
           <div class="status-container"></div>
           <div class="login-form"
                v-if="loginStatus === -1">
-            <div class="username form-item">
+            <div class="phonenum form-item">
               <input type="text"
-                     :ref="refEle.username"
-                     v-model="loginForm.username"
-                     placeholder="输入账号" />
+                     :ref="refEle.phonenum"
+                     v-model="formData.phonenum"
+                     placeholder="输入手机号" />
+            </div>
+            <div class="password phonenum form-item">
+              <input type="password"
+                     :ref="refEle.password"
+                     v-model="formData.password"
+                     placeholder="输入密码" />
             </div>
             <div class="password form-item">
               <input type="password"
-                     :ref="refEle.password"
-                     v-model="loginForm.password"
-                     placeholder="输入密码" />
+                     :ref="refEle.confirmPassword"
+                     v-model="formData.confirmPassword"
+                     placeholder="再次输入密码" />
               <div class="login"
-                   :class="{'shown': (loginForm.username.trim() !== '' && loginForm.password.trim() !== '')}"
-                   @click="login">
+                   :class="{'shown': (formData.phonenum.trim() !== '' && formData.confirmPassword.trim() !== '' && (formData.confirmPassword.trim() == formData.password.trim()))}"
+                   @click="register">
                 <img src="~@/assets/login.png"
-                     alt="登录">
+                     alt="注册">
               </div>
             </div>
           </div>
           <div class="login-form-sending"
                v-if="loginStatus === 0">
-            <div class="info-username"
-                 v-text="loginForm.username"></div>
+            <div class="info-phonenum"
+                 v-text="formData.phonenum"></div>
             <div class="login-cancel">
               <button type="button">取消</button>
             </div>
           </div>
           <div class="login-form-sending"
                v-if="loginStatus === 1">
-            <div class="info-username"
-                 v-text="loginForm.username || 'ls'"></div>
-            <div class="info-username">
+            <div class="info-phonenum"
+                 v-text="formData.phonenum"></div>
+            <div class="info-phonenum">
               <img src="~@/assets/success.png">
             </div>
           </div>
@@ -60,23 +66,8 @@
       </div>
       <div class="bottom-container"
            :class="{'shown': bottomContainerShown}">
-        <div class="item">
-          <div class="left">
-            <input type="checkbox" /> 记住密码
-          </div>
-          <div class="right">
-            <button type="button">忘记密码</button>
-          </div>
-        </div>
-        <div class="item">
-          <div class="left">
-            <input type="checkbox" /> 自动登录
-          </div>
-          <div class="right">
-            <button type="button"
-                    @click="gotoRegisterPage">注册账号</button>
-          </div>
-        </div>
+        已有账号，<a href="javascript:void(0)"
+           @click="gotoLoginPage">去登录</a>
       </div>
     </div>
     <audio :src="bgAudio.src"
@@ -222,7 +213,7 @@
     .top-container
     .main-container
     .login-form-sending
-    .info-username {
+    .info-phonenum {
     font-size: 14px;
     color: #333;
     width: 100%;
@@ -275,7 +266,7 @@
     font-size: 14px;
     line-height: 28px;
   }
-  #login-container .top-container .main-container .login-form .username {
+  #login-container .top-container .main-container .login-form .phonenum {
     border-bottom: 1px solid #c8c8c8;
   }
   #login-container .top-container .main-container .login-form .password {
@@ -323,9 +314,9 @@
     padding: 12px 0;
     box-sizing: content-box;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     background-color: #ddd;
     -webkit-transform: translate3d(0, -100%, 0);
     -moz-transform: translate3d(0, -100%, 0);
@@ -342,6 +333,9 @@
     -moz-transform: translate3d(0, 0, 0);
     -o-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
+  }
+  #login-container .bottom-container a {
+    color: #19be6b;
   }
   #login-container .item {
     width: calc(100% - 30px);
@@ -373,53 +367,36 @@
   const adapter = new FileSync('db.json')
   const db = low(adapter)
   export default {
-    name: 'Login',
+    name: 'Register',
     data () {
       return {
         currentUser: {},
-        bottomContainerShown: false,
+        bottomContainerShown: true,
         bgAudio: {
           ref: 'ref-bg-audio',
           src: ''
         },
         refEle: {
-          username: 'ref-username',
-          password: 'ref-password'
+          phonenum: 'ref-phonenum',
+          password: 'ref-password',
+          confirmPassword: 'ref-confirm-password'
         },
-        loginForm: {
-          username: '',
-          password: ''
+        formData: {
+          phonenum: '18000000000',
+          password: '123123',
+          confirmPassword: '123123'
         },
-        loginInfo: {},
         loginStatus: -1 // 0: 登录中，-1：未登录，1：已经登录
       }
     },
     created () {
       this.$nextTick(() => {
-        this.initLoginInfo()
-
         window.removeEventListener('keydown', this.keyboardEventHandler)
         window.addEventListener('keydown', this.keyboardEventHandler)
 
         document.querySelector('#bg-audio').addEventListener('ended', this.audioEnded)
 
-        // remote.ipcMain.on('login-status', res => {
-        //   if (res.status === 200) {
-        //     // 登录成功
-        //     this.loginStatus = 1
-        //     this.initLoginInfo()
-        //     setTimeout(() => {
-        //       remote.ipcMain.emit('close-login-window')
-        //       this.loginStatus = -1
-        //       this.loginForm.password = ''
-        //     }, 1500)
-        //   } else {
-        //     // 登录失败
-        //     this.loginStatus = -1
-        //     alert(res.message)
-        //   }
-        // })
-        ipcRenderer.on('login-response', this.loginResponse)
+        ipcRenderer.on('register-response', this.registerResponse)
 
         ipcRenderer.send('set-always-on-top', true)
       })
@@ -435,27 +412,29 @@
       },
       keyboardEventHandler (evt) {
         if (evt.keyCode === 13) {
-          this.login()
+          this.register()
         }
       },
-      login () {
-        if (this.loginForm.username.trim() === '') {
-          this.$refs[this.refEle.username].focus()
+      register () {
+        if (this.formData.phonenum.trim() === '') {
+          this.$refs[this.refEle.phonenum].focus()
         } else {
-          if (this.loginForm.password.trim() === '') {
+          if (this.formData.password.trim() === '') {
             this.$refs[this.refEle.password].focus()
+          } else if (this.formData.confirmPassword.trim() === '') {
+            this.$refs[this.refEle.confirmPassword].focus()
           } else {
             // 登录
             this.loginStatus = 0
-            // remote.ipcMain.emit('login', this.loginForm)
-            ipcRenderer.send('login', {
-              username: this.loginForm.username,
-              password: this.loginForm.password
+            // remote.ipcMain.emit('login', this.formData)
+            ipcRenderer.send('register', {
+              phonenum: this.formData.phonenum,
+              password: this.formData.password,
             })
           }
         }
       },
-      loginResponse (event, res) {
+      registerResponse (event, res) {
         if (res.status === 200) {
           // 登录成功
           this.loginStatus = 1
@@ -465,15 +444,17 @@
           }, 500)
           setTimeout(() => {
             // remote.ipcMain.emit('close-login-window')
-            this.closeWindow()
+            // this.closeWindow()
+            this.bottomContainerShown = false
+            this.gotoLoginPage()
             this.loginStatus = -1
-            this.loginForm.password = ''
+            this.formData.password = ''
           }, 1500)
         } else {
           // 登录失败
           this.playSound('/static/resources/ls/Global.wav')
           this.loginStatus = -1
-          this.$Message.error(res.message || '登录失败')
+          this.$Message.error(res.message)
         }
       },
       playSound (src) {
@@ -484,28 +465,12 @@
       audioEnded () {
         this.bgAudio.src = ''
       },
-      initLoginInfo () {
-        this.loginInfo = this.$initLoginInfo()
-        if (this.loginInfo && this.loginInfo.username) {
-          this.loginForm.username = this.loginInfo.username
-        }
-      },
-      getHeadIcon (username) {
-        let headIcon = ''
-        if (this.loginInfo && this.loginInfo.headIcon) {
-          headIcon = this.loginInfo.headIcon
-        }
-        if (!headIcon) {
-          headIcon = ((!this.loginInfo || this.loginInfo.gender === 1) ? '/static/images/avatar_male.jpg' : '/static/images/avatar_female.jpg')
-        }
-        return headIcon
-      },
       setWindowSize (size) {
         ipcRenderer.sendSync('set-window-size', size)
       },
-      gotoRegisterPage () {
+      gotoLoginPage () {
         this.$router.replace({
-          name: 'register'
+          name: 'login'
         })
       }
     },

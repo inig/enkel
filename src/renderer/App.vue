@@ -461,4 +461,14 @@
     //   border: 2px solid #4fc08d;
     // }
   }
+
+  .profile_content .ivu-input {
+    border: none;
+    text-align: right;
+    background-color: transparent;
+  }
+  .profile_content .ivu-input:focus {
+    border: none;
+    box-shadow: none;
+  }
 </style>
