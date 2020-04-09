@@ -1,12 +1,24 @@
 <template>
   <div class="media_pray">
     Media Pray
+    <code>{{JSON.stringify(query, null, 2)}}</code>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'MediaPray'
+  name: 'MediaPray',
+  data () {
+    return {
+      query: {}
+    }
+  },
+  created () {
+    this.query = this.$getParamsFromUrl(location.href)
+  },
+  methods: {
+
+  }
 }
 </script>
 

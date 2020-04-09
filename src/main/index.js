@@ -1,9 +1,8 @@
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, clipboard, globalShortcut, screen, session } from 'electron'
 // import { autoUpdater } from 'electron-updater'
 import { screenshot } from './puppeteer'
-
 import path from 'path'
-
+import routes from './routes'
 import os from 'os'
 require('./request')
 require('./npm')
@@ -303,6 +302,8 @@ function createMenuWindow () {
     // https://segmentfault.com/a/1190000007616641
   })
 }
+
+
 
 function minimizeMenuWindow () {
   menuWindowNormalBounds = menuWindow.getNormalBounds()
@@ -608,9 +609,64 @@ app.on('ready', async () => {
   // setTimeout(() => {
   //   autoUpdater.checkForUpdates()
   // }, 1500)
+
+  app.setAsDefaultProtocolClient('enkel')
 })
 app.on('will-quit', () => {
   globalShortcut.unregisterAll()
+})
+
+function getParamsFromUrl (url) {
+  let params = {}
+  if (url.indexOf('?') > 0) {
+    let paramStr = url.replace(/^([^?]*)(\?)([^/#]*)(\/?\#?.*)$/, '$3')
+    params = paramStr.split('&').reduce((result, item) => {
+      result[item.split('=')[0]] = item.split('=')[1]
+      return result
+    }, {})
+  }
+  return params
+}
+
+function getParamStr (url) {
+  let params = getParamsFromUrl(url)
+  if (params.hasOwnProperty('p')) {
+    params.p = null
+    delete params.p
+  }
+  let outStr = []
+  for (let k in params) {
+    if (params.hasOwnProperty(k)) {
+      outStr.push(k + '=' + params[k])
+    }
+  }
+  return outStr.length > 0 ? ('?' + outStr.join('&')) : outStr.join('&')
+}
+
+app.on('open-url', (event, url) => {
+  let params = getParamsFromUrl(url)
+  if (params.p) {
+    // enkel://enkel.com?p=
+    let p = routes[params.p]
+    let opt = {
+      path: p.name + getParamStr(url)
+    }
+    if (p.meta) {
+      if (p.meta.id) {
+        opt.id = p.meta.id
+      }
+      if (p.meta.resources) {
+        opt.resources = p.meta.resources
+      }
+      if (p.meta.loginBefore) {
+        opt.loginBefore = p.meta.loginBefore
+      }
+      if (p.meta.windowOption) {
+        opt.windowOption = p.meta.windowOption
+      }
+    }
+    createNewWindow(opt)
+  }
 })
 
 app.on('window-all-closed', () => {

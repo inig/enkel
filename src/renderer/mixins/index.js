@@ -2,7 +2,24 @@ import { ipcRenderer } from 'electron'
 export default {
   methods: {
     $goto (data) {
-      ipcRenderer.send('navigate-to', data)
+      let opt = {
+        path: data.name
+      }
+      if (data.meta) {
+        if (data.meta.id) {
+          opt.id = data.meta.id
+        }
+        if (data.meta.resources) {
+          opt.resources = data.meta.resources
+        }
+        if (data.meta.loginBefore) {
+          opt.loginBefore = data.meta.loginBefore
+        }
+        if (data.meta.windowOption) {
+          opt.windowOption = data.meta.windowOption
+        }
+      }
+      ipcRenderer.send('navigate-to', opt)
     },
     S4 () {
       return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1)
@@ -45,6 +62,17 @@ export default {
     $initLoginInfo () {
       let loginInfo = ipcRenderer.sendSync('init-login-info')
       return loginInfo
+    },
+    $getParamsFromUrl (url) {
+      let params = {}
+      if (url.indexOf('?') > 0) {
+        let paramStr = url.replace(/^([^?]*)(\?)([^/#]*)(\/?\#?.*)$/, '$3')
+        params = paramStr.split('&').reduce((result, item) => {
+          result[item.split('=')[0]] = item.split('=')[1]
+          return result
+        }, {})
+      }
+      return params
     }
   }
 }

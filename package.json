@@ -1,6 +1,6 @@
 {
   "name": "Enkel",
-  "version": "0.0.9",
+  "version": "0.0.11",
   "author": "liangshan <loveliangshan@126.com>",
   "description": "An electron-vue project",
   "license": null,
@@ -69,6 +69,7 @@
     "@videojs/http-streaming": "^1.11.2",
     "axios": "^0.19.0",
     "crypto-js": "^3.1.9-1",
+    "easemob-websdk": "^3.0.10",
     "electron-find": "^1.0.6",
     "electron-updater": "^4.2.0",
     "express-http-proxy": "^1.6.0",

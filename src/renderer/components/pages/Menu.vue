@@ -80,16 +80,17 @@ export default {
     },
     goto (data) {
 
-      let opt = {
-        path: data.name
-      }
-      if (data.meta) {
-        if (data.meta.windowOption) {
-          opt.windowOption = data.meta.windowOption
-        }
-      }
-      console.log('>>>>', opt)
-      this.$goto(opt)
+      // let opt = {
+      //   path: data.name
+      // }
+      // if (data.meta) {
+      //   if (data.meta.windowOption) {
+      //     opt.windowOption = data.meta.windowOption
+      //   }
+      // }
+      // console.log('>>>>', opt)
+      // this.$goto(opt)
+      this.$goto(data)
     },
     determineScreenShotSize () {
       const screenSize = screen.getPrimaryDisplay().workAreaSize
