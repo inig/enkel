@@ -157,6 +157,31 @@ ipcMain.on('save-profile', async (event, args) => {
   })
 })
 
+ipcMain.on('modify-password', async (event, args) => {
+  await http({
+    method: 'POST',
+    url: '/enkel/user/modifyPassword',
+    data: qs.stringify(args)
+  }).then(response => {
+    event.reply('modify-password-response', response.data)
+  }).catch(err => {
+    event.reply('modify-password-response', err.response ? {
+      data: {
+        errmsg: err.response.statusText,
+        status: err.response.status
+      },
+      headers: err.response.headers
+    } : {
+        data: {
+          errmsg: err.message,
+          status: 1001
+        },
+        headers: {}
+      })
+
+  })
+})
+
 ipcMain.on('update-user-info', (event, data) => {
   let userInfo = getUser()
   userInfo = Object.assign({}, userInfo, data)
@@ -168,6 +193,11 @@ ipcMain.on('logout', (event) => {
   setUser(event, Object.assign({}, userInfo, {
     token: ''
   }))
+  BrowserWindow.getAllWindows().forEach(item => {
+    if (item.webContents !== event.sender) {
+      item.webContents.send('logout-response')
+    }
+  })
   event.reply('logout-response')
 })
 
