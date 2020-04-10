@@ -266,7 +266,9 @@ async function createNewWindow (arg) {
 
 const { autoUpdater } = require('electron-updater')
 
-function createMenuWindow () {
+let defaultOption;
+
+function createMenuWindow (args) {
   menuWindow = new BrowserWindow({
     height: 667,
     width: 375,
@@ -301,13 +303,20 @@ function createMenuWindow () {
   })
   menuWindow.once('ready-to-show', () => {
     menuWindow.show()
-
+    // setTimeout(() => {
+    if (defaultOption && defaultOption.defaultOpen) {
+      createNewWindow(defaultOption.defaultOpen)
+      minimizeMenuWindow()
+      menuWindow.webContents.send('menu-folded')
+      defaultOption = undefined
+    } else if (args && args.defaultOpen) {
+      createNewWindow(args.defaultOpen)
+    }
+    // }, 300)
     // https://www.cnblogs.com/qirui/p/8328069.html
     // https://segmentfault.com/a/1190000007616641
   })
 }
-
-
 
 function minimizeMenuWindow () {
   menuWindowNormalBounds = menuWindow.getNormalBounds()
@@ -568,7 +577,93 @@ function desktopCapturer () {
   menuWindow.webContents.send('desktop-capturer')
 }
 
+function getParamStr (url) {
+  let params = getParamsFromUrl(url)
+  if (params.hasOwnProperty('p')) {
+    params.p = null
+    delete params.p
+  }
+  let outStr = []
+  for (let k in params) {
+    if (params.hasOwnProperty(k)) {
+      outStr.push(k + '=' + params[k])
+    }
+  }
+  return outStr.join('&')
+}
+
+app.on('will-finish-launching', () => {
+  app.on('open-url', (event, url) => {
+    let params = getParamsFromUrl(url)
+    let pagePath = params.p || params.page
+    if (pagePath) {
+      // enkel://enkel.com?p=
+      let p = routes[pagePath]
+      let opt = {
+        path: p.name
+      }
+      let pathQueryString = getParamStr(url)
+      if (pathQueryString) {
+        opt.pathQueryString = pathQueryString
+      }
+      if (p.id) {
+        opt.id = p.id
+      }
+      if (p.meta) {
+        if (p.meta.id) {
+          opt.id = p.meta.id
+        }
+        if (p.meta.resources) {
+          opt.resources = p.meta.resources
+        }
+        if (p.meta.loginBefore) {
+          opt.loginBefore = p.meta.loginBefore
+        }
+        if (p.meta.windowOption) {
+          opt.windowOption = p.meta.windowOption
+        }
+      }
+      defaultOption = {
+        defaultOpen: opt
+      }
+      if (menuWindow) {
+        createNewWindow(opt)
+      }
+      // setTimeout(() => {
+      //   try {
+      //     dialog.showMessageBox({
+      //       message: (new Date().getTime()) + ': open url: ' + JSON.stringify(opt, null, 2)
+      //     })
+      //     if (!menuWindow) {
+      //       defaultOption = {
+      //         defaultOpen: opt
+      //       }
+      //       createMenuWindow({
+      //         defaultOpen: opt
+      //       })
+      //       menuWindow.show()
+      //       setTimeout(() => {
+      //         minimizeMenuWindow()
+      //         menuWindow.webContents.send('menu-folded')
+      //         dialog.showMessageBox({
+      //           message: 'minimizeMenuWindow'
+      //         })
+      //       }, 500)
+      //       // setTimeout(() => {
+      //       //   minimizeMenuWindow()
+      //       //   menuWindow.webContents.send('menu-folded')
+      //       // }, 300)
+      //     } else {
+      //       createNewWindow(opt)
+      //     }
+      //   } catch (err) { }
+      // }, 100)
+    }
+  })
+})
+
 app.on('ready', async () => {
+
   // if ((process.env.NODE_ENV == 'development') && !process.env.IS_TEST) {
   // Install Vue Devtools
   // await installVueDevtools()
@@ -617,43 +712,6 @@ app.on('ready', async () => {
   app.setAsDefaultProtocolClient('enkel')
   app.setAsDefaultProtocolClient('file')
 
-
-  app.on('open-url', (event, url) => {
-    let params = getParamsFromUrl(url)
-    let pagePath = params.p || params.page
-    if (pagePath) {
-      // enkel://enkel.com?p=
-      let p = routes[pagePath]
-      let opt = {
-        path: p.name
-      }
-      let pathQueryString = getParamStr(url)
-      if (pathQueryString) {
-        opt.pathQueryString = pathQueryString
-      }
-      if (p.meta) {
-        if (p.meta.id) {
-          opt.id = p.meta.id
-        }
-        if (p.meta.resources) {
-          opt.resources = p.meta.resources
-        }
-        if (p.meta.loginBefore) {
-          opt.loginBefore = p.meta.loginBefore
-        }
-        if (p.meta.windowOption) {
-          opt.windowOption = p.meta.windowOption
-        }
-      }
-      if (!menuWindow) {
-        createMenuWindow()
-      }
-      menuWindow.show()
-      setTimeout(() => {
-        createNewWindow(opt)
-      }, 300)
-    }
-  })
 })
 app.on('will-quit', () => {
   globalShortcut.unregisterAll()
@@ -669,21 +727,6 @@ function getParamsFromUrl (url) {
     }, {})
   }
   return params
-}
-
-function getParamStr (url) {
-  let params = getParamsFromUrl(url)
-  if (params.hasOwnProperty('p')) {
-    params.p = null
-    delete params.p
-  }
-  let outStr = []
-  for (let k in params) {
-    if (params.hasOwnProperty(k)) {
-      outStr.push(k + '=' + params[k])
-    }
-  }
-  return outStr.join('&')
 }
 
 app.on('window-all-closed', () => {
