@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, clipboard, globalShortcut, screen, session } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog, clipboard, globalShortcut, screen, session, Notification } from 'electron'
 // import { autoUpdater } from 'electron-updater'
 import { screenshot } from './puppeteer'
 import path from 'path'
@@ -592,74 +592,47 @@ function getParamStr (url) {
   return outStr.join('&')
 }
 
-app.on('will-finish-launching', () => {
-  app.on('open-url', (event, url) => {
-    let params = getParamsFromUrl(url)
-    let pagePath = params.p || params.page
-    if (pagePath) {
-      // enkel://enkel.com?p=
-      let p = routes[pagePath]
-      let opt = {
-        path: p.name
-      }
-      let pathQueryString = getParamStr(url)
-      if (pathQueryString) {
-        opt.pathQueryString = pathQueryString
-      }
-      if (p.id) {
-        opt.id = p.id
-      }
-      if (p.meta) {
-        if (p.meta.id) {
-          opt.id = p.meta.id
-        }
-        if (p.meta.resources) {
-          opt.resources = p.meta.resources
-        }
-        if (p.meta.loginBefore) {
-          opt.loginBefore = p.meta.loginBefore
-        }
-        if (p.meta.windowOption) {
-          opt.windowOption = p.meta.windowOption
-        }
-      }
-      defaultOption = {
-        defaultOpen: opt
-      }
-      if (menuWindow) {
-        createNewWindow(opt)
-      }
-      // setTimeout(() => {
-      //   try {
-      //     dialog.showMessageBox({
-      //       message: (new Date().getTime()) + ': open url: ' + JSON.stringify(opt, null, 2)
-      //     })
-      //     if (!menuWindow) {
-      //       defaultOption = {
-      //         defaultOpen: opt
-      //       }
-      //       createMenuWindow({
-      //         defaultOpen: opt
-      //       })
-      //       menuWindow.show()
-      //       setTimeout(() => {
-      //         minimizeMenuWindow()
-      //         menuWindow.webContents.send('menu-folded')
-      //         dialog.showMessageBox({
-      //           message: 'minimizeMenuWindow'
-      //         })
-      //       }, 500)
-      //       // setTimeout(() => {
-      //       //   minimizeMenuWindow()
-      //       //   menuWindow.webContents.send('menu-folded')
-      //       // }, 300)
-      //     } else {
-      //       createNewWindow(opt)
-      //     }
-      //   } catch (err) { }
-      // }, 100)
+function openUrlHandler (event, url) {
+  let params = getParamsFromUrl(url)
+  let pagePath = params.p || params.page
+  if (pagePath) {
+    // enkel://enkel.com?p=
+    let p = routes[pagePath]
+    let opt = {
+      path: p.name
     }
-  })
+    let pathQueryString = getParamStr(url)
+    if (pathQueryString) {
+      opt.pathQueryString = pathQueryString
+    }
+    if (p.id) {
+      opt.id = p.id
+    }
+    if (p.meta) {
+      if (p.meta.id) {
+        opt.id = p.meta.id
+      }
+      if (p.meta.resources) {
+        opt.resources = p.meta.resources
+      }
+      if (p.meta.loginBefore) {
+        opt.loginBefore = p.meta.loginBefore
+      }
+      if (p.meta.windowOption) {
+        opt.windowOption = p.meta.windowOption
+      }
+    }
+    defaultOption = {
+      defaultOpen: opt
+    }
+    if (menuWindow) {
+      createNewWindow(opt)
+    }
+  }
+}
+
+app.on('will-finish-launching', () => {
+  app.on('open-url', (event, url) => openUrlHandler(event, url))
 })
 
 app.on('ready', async () => {
@@ -941,6 +914,16 @@ ipcMain.on('set-window-size', (event, size) => {
     win.setBounds(size)
   }
   event.returnValue = true
+})
+
+ipcMain.on('notification', (event, args) => {
+  let _args = JSON.parse(JSON.stringify(args))
+  if (_args.icon) {
+    _args.icon = path.resolve(__dirname, '../../static/images/avatar_female.jpg')
+  }
+  let notify = new Notification(args)
+  notify.show()
+  notify.on('click', (event) => openUrlHandler(event, args.redirect || ''))
 })
 
 // checkUpdate()
