@@ -119,6 +119,8 @@ import { ipcRenderer } from 'electron'
 import { routes } from '../../router/routes'
 import { loginRouter, profileRouter } from '../../router/index'
 import { Dropdown, DropdownMenu, DropdownItem, Icon, Avatar } from 'view-design'
+import { createNamespacedHelpers } from 'vuex'
+const { mapActions } = createNamespacedHelpers('./store/modules')
 export default {
   name: 'AppHeader',
   components: {
@@ -129,7 +131,8 @@ export default {
       menuFolded: false,
       title: '',
       loginRouter: {},
-      loginInfo: {}
+      loginInfo: {},
+      IM: null
     }
   },
   computed: {
@@ -137,8 +140,9 @@ export default {
       return this.title ? this.title : (this.$route.meta ? (this.$route.meta.title || 'Enkel') : 'Enkel')
     }
   },
-  mounted () {
+  async mounted () {
     this.loginRouter = loginRouter
+    await this.initIm()
     this.initLoginInfo()
     ipcRenderer.on('menu-folded', () => {
       this.menuFolded = true
@@ -149,11 +153,99 @@ export default {
     ipcRenderer.on('login-info-updated', this.loginInfoUpdated)
     ipcRenderer.on('logout-response', this.logoutResponse)
 
+    ipcRenderer.on('im-login', this.imLogin)
+    // ipcRenderer.on('im-login-out', this.imLoginOut)
+    ipcRenderer.on('im-register', this.imRegister)
+    ipcRenderer.on('im-on-msg-receive', this.imOnMsgReceive)
+    ipcRenderer.on('im-on-update-self-info', this.imUpdateSelfInfo)
+    ipcRenderer.on('im-create-group', this.imCreateGroup)
+    ipcRenderer.on('im-get-groups', this.imGetGroups)
+
+    ipcRenderer.on('im-get-friend-list', this.imGetFriendList)
+    ipcRenderer.on('im-add-friend', this.imAddFriend)
+
     global.eventHub.$on('set-title', this.setTitle)
   },
   methods: {
-    initLoginInfo () {
+    ...mapActions([
+      'moduleIM'
+    ]),
+    initIm () {
+      return new Promise(async (resolve) => {
+        await this.$store.dispatch('moduleIM/init')
+        resolve(true)
+      })
+    },
+    imLogin (event, args) {
+      return new Promise(async (resolve) => {
+        let response = await this.$store.dispatch('moduleIM/login', args)
+        resolve(response)
+      })
+    },
+    imRegister (event, args) {
+      return new Promise(async (resolve) => {
+        let response = await this.$store.dispatch('moduleIM/register', args)
+        console.log('注册：', response)
+        resolve(response)
+      })
+    },
+    imCreateGroup (event, args) {
+      return new Promise(async (resolve) => {
+        let response = await this.$store.dispatch('moduleIM/createGroup', args)
+        ipcRenderer.send('im-get-groups')
+        resolve(response)
+      })
+    },
+    imGetGroups (event) {
+      return new Promise(async (resolve) => {
+        let response = await this.$store.dispatch('moduleIM/getGroups')
+        ipcRenderer.send('im-get-groups-response', response)
+        resolve(response)
+      })
+    },
+    imGetFriendList (event) {
+      return new Promise(async (resolve) => {
+        let response = await this.$store.dispatch('moduleIM/getFriendList')
+        ipcRenderer.send('im-get-friend-list-response', response)
+        resolve(response)
+      })
+    },
+    imAddFriend (event, args) {
+      return new Promise(async (resolve) => {
+        let response = await this.$store.dispatch('moduleIM/addFriend', args)
+        alert(JSON.stringify(response, null, 2))
+        ipcRenderer.send('im-get-friend-list')
+        resolve(response)
+      })
+    },
+    imLoginOut () {
+      this.$store.dispatch('moduleIM/loginOut')
+    },
+    imOnMsgReceive (event, msg) {
+      alert(JSON.stringify(msg, null, 2))
+    },
+    async imUpdateSelfInfo (event, data) {
+      let response = await this.$store.dispatch('moduleIM/updateSelfInfo', data)
+      console.log('imUpdateSelfInfo: ', response)
+    },
+    async imGetUserInfo (event, data) {
+      let response = await this.$store.dispatch('moduleIM/getUserInfo', data)
+      console.log('getUserInfo: ', response)
+    },
+    async initLoginInfo () {
       this.loginInfo = this.$initLoginInfo()
+      await this.imLogin(null, {
+        username: this.loginInfo.phonenum,
+        password: '123123'
+      })
+      // console.log('>>>>>>>>>.', loginData)
+      // await this.imGetUserInfo(null, {
+      //   username: this.loginInfo.phonenum
+      // })
+      // setTimeout(async () => {
+      //   let loginOutData = await this.imLoginOut()
+      //   console.log('退出 ', loginOutData)
+      // }, 3000)
     },
     setTitle (title) {
       this.title = `<span>【${title.label}】</span><span style="color: #888;">${title.url}</span>`
@@ -161,9 +253,6 @@ export default {
     menuFold () {
       ipcRenderer.send(!this.menuFolded ? 'menu-fold' : 'menu-unfold')
     },
-    // goto (name) {
-    //   this.$goto(name)
-    // },
     closeMenu () {
       ipcRenderer.send('close-menu')
     },
@@ -179,6 +268,9 @@ export default {
         this.gotoProfile()
       } else {
         ipcRenderer.send(name)
+        if (name === 'logout') {
+          this.imLoginOut()
+        }
       }
     },
     closeSettings () {
@@ -190,23 +282,6 @@ export default {
       }
     },
     goto (data) {
-      // let opt = {
-      //   path: data.name
-      // }
-      // if (data.meta) {
-      //   if (data.meta.id) {
-      //     opt.id = data.meta.id
-      //   }
-      //   if (data.meta.resources) {
-      //     opt.resources = data.meta.resources
-      //   }
-      //   if (data.meta.loginBefore) {
-      //     opt.loginBefore = data.meta.loginBefore
-      //   }
-      //   if (data.meta.windowOption) {
-      //     opt.windowOption = data.meta.windowOption
-      //   }
-      // }
       this.$goto(data)
     },
     gotoLogin () {

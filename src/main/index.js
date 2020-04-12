@@ -270,14 +270,16 @@ let defaultOption;
 
 function createMenuWindow (args) {
   menuWindow = new BrowserWindow({
-    height: 667,
-    width: 375,
+    width: 800,
+    height: 800,
+    // height: 667,
+    // width: 375,
     // titleBarStyle: 'hidden',
     // modal: true,
     // parent: mainWindow,
     frame: false,
     show: false,
-    resizable: false,
+    // resizable: false,
     alwaysOnTop: true,
     transparent: true,
     backgroundColor: '#00ffffff',

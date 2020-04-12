@@ -425,6 +425,7 @@ export default {
           // remote.ipcMain.emit('login', this.formData)
           ipcRenderer.send('register', {
             phonenum: this.formData.phonenum,
+            nickname: this.formData.phonenum,
             password: this.formData.password,
           })
         }
@@ -435,6 +436,7 @@ export default {
         // 登录成功
         this.loginStatus = 1
         // this.initLoginInfo()
+        this.$Message.success('注册成功')
         setTimeout(() => {
           this.playSound('/static/resources/ls/login.wav')
         }, 500)

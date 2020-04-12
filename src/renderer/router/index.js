@@ -70,7 +70,7 @@ export const profileRouter = {
       titleBarStyle: 'default'
     }
   },
-  component: require('@/components/pages/Profile').default
+  component: require('@/components/pages/Profile/index').default
 }
 
 export default new Router({

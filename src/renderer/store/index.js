@@ -5,12 +5,16 @@ import * as mutations from './mutations'
 // import { createPersistedState, createSharedMutations } from 'vuex-electron'
 import { createPersistedState } from 'vuex-electron'
 
-import modules from './modules'
+// import modules from './modules'
+import moduleIM from './modules/IM'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-  modules,
+  modules: {
+    moduleIM
+  },
+  // modules,
   plugins: [
     createPersistedState()
   ],

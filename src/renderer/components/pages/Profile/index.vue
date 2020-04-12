@@ -8,6 +8,19 @@
         <div class="profile_menu_item"
              :style="1 === activeMenuIndex ? profileMenuActiveStyles : profileMenuStyles"
              @click="chooseProfileMenu(1)">修改密码</div>
+
+        <div class="profile_menu_item"
+             :style="2 === activeMenuIndex ? profileMenuActiveStyles : profileMenuStyles"
+             @click="chooseProfileMenu(2)">好友</div>
+
+        <div class="profile_menu_item"
+             :style="3 === activeMenuIndex ? profileMenuActiveStyles : profileMenuStyles"
+             @click="chooseProfileMenu(3)">群</div>
+
+        <div class="profile_menu_item"
+             :style="4 === activeMenuIndex ? profileMenuActiveStyles : profileMenuStyles"
+             @click="chooseProfileMenu(4)">聊天室</div>
+
         <div class="header-btns">
           <Icon type="ios-close"
                 size="30"
@@ -169,6 +182,21 @@
             </Cell>
           </CellGroup>
         </transition>
+        <transition name="profile-content-inner-2-transition"
+                    enter-active-class="animated fadeIn"
+                    leave-active-class="animated fadeOut faster">
+          <ProfileFriends v-if="activeMenuIndex === 2"></ProfileFriends>
+        </transition>
+        <transition name="profile-content-inner-2-transition"
+                    enter-active-class="animated fadeIn"
+                    leave-active-class="animated fadeOut faster">
+          <ProfileGroup v-if="activeMenuIndex === 3"></ProfileGroup>
+        </transition>
+        <transition name="profile-content-inner-2-transition"
+                    enter-active-class="animated fadeIn"
+                    leave-active-class="animated fadeOut faster">
+          <ProfileChatRoom v-if="activeMenuIndex === 4"></ProfileChatRoom>
+        </transition>
       </div>
     </div>
   </div>
@@ -181,7 +209,10 @@ export default {
   name: 'Profile',
   components: {
     Avatar, CellGroup, Cell, Input, DatePicker, Tooltip, Icon, Button,
-    UploadAvatar: () => import('../custom/UploadAvatar.vue')
+    UploadAvatar: () => import('../../custom/UploadAvatar.vue'),
+    ProfileFriends: () => import('./Friends.vue'),
+    ProfileGroup: () => import('./Group.vue'),
+    ProfileChatRoom: () => import('./ChatRoom.vue')
   },
   data () {
     const valideRePassword = (rule, value, callback) => {
@@ -276,6 +307,7 @@ export default {
     async saveProfile () {
       this.saving = true
       ipcRenderer.send('save-profile', this.cachedLoginInfo)
+
       // let updatedData = await this.$store.dispatch(types.AJAX, {
       //   url: this.requestInfo.updateUserInfo,
       //   data: this.cachedLoginInfo
@@ -295,6 +327,11 @@ export default {
         this.saving = false
         if (response.status === 200) {
           this.initLoginInfo()
+          ipcRenderer.send('im-on-update-self-info', {
+            nickname: this.cachedLoginInfo.nickname,
+            birthday: this.cachedLoginInfo.birthday,
+            gender: this.cachedLoginInfo.gender
+          })
           this.$Message.success('保存成功')
         } else {
           this.$Message.error(response.message || '保存失败，请稍后再试')
@@ -344,7 +381,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
-@import url("../../themes/index.less");
+@import url("../../../themes/index.less");
 .profile_container {
   width: 100%;
   height: 100%;
@@ -401,6 +438,7 @@ export default {
 
 .profile_content {
   position: relative;
+  width: 300px;
   height: 400px;
   flex: 1;
   padding: 15px 0;

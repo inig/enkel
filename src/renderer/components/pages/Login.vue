@@ -459,6 +459,7 @@ export default {
         setTimeout(() => {
           this.playSound('/static/resources/ls/login.wav')
         }, 500)
+        this.$Message.success('登录成功')
         setTimeout(() => {
           // remote.ipcMain.emit('close-login-window')
           this.closeWindow()
