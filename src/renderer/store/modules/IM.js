@@ -38,6 +38,12 @@ import * as types from '../mutation-types'
 import { ipcRenderer } from 'electron'
 import '../../assets/js/jmessage-sdk-web.2.6.0.min.js'
 let IM = null
+function getFile (file) {
+  console.log('>>>>>>>>>>>>>>', file)
+  var fd = new FormData();
+  fd.append(file.name, file);
+  return fd;
+}
 const moduleIM = {
   namespaced: true,
   state: {
@@ -71,6 +77,7 @@ const moduleIM = {
        */
       return new Promise((resolve) => {
         IM.login(args).onSuccess(data => {
+          ipcRenderer.send('cache-im', IM)
           // 收到新消息
           IM.onMsgReceive(data => {
             ipcRenderer.send('im-on-msg-receive', data)
@@ -82,6 +89,12 @@ const moduleIM = {
           // 聊天室消息监听
           IM.onRoomMsg(data => {
             ipcRenderer.send('im-on-room-msg', data)
+          })
+          IM.onEventNotification(data => {
+            ipcRenderer.send('im-on-event-notification', data)
+          })
+          IM.onSyncEvent(data => {
+            ipcRenderer.send('im-on-sync-event', data)
           })
           resolve(data)
         }).onFail(data => {
@@ -169,6 +182,7 @@ const moduleIM = {
        * avatar: 头像头像图片的 DataForm 对象
        */
       return new Promise((resolve, reject) => {
+        console.log('@@@@@@上传', args)
         IM.updateSelfAvatar(args).onSuccess(data => {
           resolve(data)
         }).onFail(data => {
@@ -187,6 +201,20 @@ const moduleIM = {
           resolve(data)
         }).onFail(data => {
           reject(data)
+        })
+      })
+    },
+    onEventNotification ({ state }) {
+      return new Promise(resolve => {
+        IM.onEventNotification(data => {
+          resolve(data)
+        })
+      })
+    },
+    onSyncEvent ({ state }) {
+      return new Promise(resolve => {
+        IM.onSyncEvent(data => {
+          resolve(data)
         })
       })
     },

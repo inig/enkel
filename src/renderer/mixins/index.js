@@ -73,6 +73,11 @@ export default {
         }, {})
       }
       return params
+    },
+    $createFileFormData (file) {
+      var fd = new FormData();
+      fd.append(file.name, file);
+      return fd;
     }
   }
 }

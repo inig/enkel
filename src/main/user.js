@@ -4,7 +4,7 @@ import path from 'path'
 import os from 'os'
 import axios from 'axios'
 import qs from 'querystring'
-import { imLoginHandler, imRegisterHandler } from './im/index'
+import { imLoginHandler, imRegisterHandler, imUpdateSelfInfoHandler, imUpdateSelfAavatarHandler } from './im/index'
 const CryptoJS = require('crypto-js')
 const cryptType = 'TripleDES'
 const PRIVATE_KEY = 'ENKEL_LOVES_YOU'
@@ -155,6 +155,12 @@ ipcMain.on('save-profile', async (event, args) => {
     if (response.data.status === 200) {
       // 更新 成功
       setUser(event, response.data.data)
+      imUpdateSelfInfoHandler(event, {
+        username: response.data.data.phonenum,
+        nickname: response.data.data.nickname,
+        // birthday: String(response.data.data.birthday),
+        // gender: String(response.data.data.gender)
+      })
     }
     event.reply('save-profile-response', response.data)
   }).catch(err => {

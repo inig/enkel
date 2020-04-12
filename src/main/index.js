@@ -222,8 +222,12 @@ async function createNewWindow (arg) {
     ? `http://localhost:9080/#/${arg.path}`
     : `file://${__dirname}/index.html?page=${arg.path}`
 
-  if (url.indexOf('file://') === 0 && arg.pathQueryString) {
-    url += '&' + arg.pathQueryString
+  if (arg.pathQueryString) {
+    if (url.indexOf('file://') === 0) {
+      url += '&' + arg.pathQueryString
+    } else {
+      url += '?' + arg.pathQueryString
+    }
   }
 
   if (arg.loginBefore && arg.loginBefore.url) {

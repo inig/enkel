@@ -234,11 +234,52 @@ ipcMain.on('im-on-room-msg', (event, msg) => {
   })
 })
 
-ipcMain.on('im-on-update-self-info', (event, msg) => {
+export function imUpdateSelfInfoHandler (event, args) {
   BrowserWindow.getAllWindows().forEach(item => {
     // 聊天室消息监听
     if (item.webContents !== event.sender) {
-      item.webContents.send('im-on-update-self-info', msg)
+      item.webContents.send('im-update-self-info', args)
+    }
+  })
+}
+ipcMain.on('im-update-self-info', (event, args) => imUpdateSelfInfoHandler(event, args))
+
+export function imUpdateSelfAavatarHandler (event, args) {
+  console.log('upload avatar =======> ', args)
+  BrowserWindow.getAllWindows().forEach(item => {
+    // 聊天室消息监听
+    if (item.webContents !== event.sender) {
+      item.webContents.send('im-update-self-avatar', args)
+    }
+  })
+}
+ipcMain.on('im-update-self-avatar', (event, args) => imUpdateSelfAavatarHandler(event, args))
+
+ipcMain.on('im-on-event-notification', (event, args) => {
+  BrowserWindow.getAllWindows().forEach(item => {
+    // 聊天室消息监听
+    item.webContents.send('im-on-event-notification', args)
+  })
+})
+
+ipcMain.on('im-on-sync-event', (event, args) => {
+  BrowserWindow.getAllWindows().forEach(item => {
+    // 聊天室消息监听
+    item.webContents.send('im-on-sync-event', args)
+  })
+})
+
+ipcMain.on('im-get-event-notification', (event) => {
+  BrowserWindow.getAllWindows().forEach(item => {
+    // 聊天室消息监听
+    item.webContents.send('im-get-event-notification')
+  })
+})
+
+ipcMain.on('im-get-event-notification-response', (event, args) => {
+  BrowserWindow.getAllWindows().forEach(item => {
+    if (item.webContents !== event.sender) {
+      item.webContents.send('im-get-event-notification-response', args)
     }
   })
 })

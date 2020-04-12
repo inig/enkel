@@ -53,8 +53,8 @@ export const profileRouter = {
   path: '/profile',
   name: 'profile',
   meta: {
-    label: 'Enkel无损音乐',
-    title: 'Enkel无损音乐',
+    label: '个人中心',
+    title: '个人中心',
     withoutHeader: true,
     id: 'profileWindow', // 只能打开一次的窗口
     windowOption: {

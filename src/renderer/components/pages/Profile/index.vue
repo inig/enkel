@@ -21,6 +21,10 @@
              :style="4 === activeMenuIndex ? profileMenuActiveStyles : profileMenuStyles"
              @click="chooseProfileMenu(4)">聊天室</div>
 
+        <div class="profile_menu_item"
+             :style="5 === activeMenuIndex ? profileMenuActiveStyles : profileMenuStyles"
+             @click="chooseProfileMenu(5)">消息</div>
+
         <div class="header-btns">
           <Icon type="ios-close"
                 size="30"
@@ -197,6 +201,11 @@
                     leave-active-class="animated fadeOut faster">
           <ProfileChatRoom v-if="activeMenuIndex === 4"></ProfileChatRoom>
         </transition>
+        <transition name="profile-content-inner-2-transition"
+                    enter-active-class="animated fadeIn"
+                    leave-active-class="animated fadeOut faster">
+          <ProfileMessage v-if="activeMenuIndex === 5"></ProfileMessage>
+        </transition>
       </div>
     </div>
   </div>
@@ -212,7 +221,8 @@ export default {
     UploadAvatar: () => import('../../custom/UploadAvatar.vue'),
     ProfileFriends: () => import('./Friends.vue'),
     ProfileGroup: () => import('./Group.vue'),
-    ProfileChatRoom: () => import('./ChatRoom.vue')
+    ProfileChatRoom: () => import('./ChatRoom.vue'),
+    ProfileMessage: () => import('./Message.vue')
   },
   data () {
     const valideRePassword = (rule, value, callback) => {
@@ -230,7 +240,8 @@ export default {
       }
     }
     return {
-      activeMenuIndex: 0,
+      activeMenuIndex: 2,
+      targets: ['profile', 'password', 'friend', 'group', 'room', 'message'],
       cachedLoginInfo: {},
       saving: false,
       modifyPasswordForm: {
@@ -244,7 +255,8 @@ export default {
         femaleAvatar: '/static/images/avatar_female.jpg',
         maleAvatar: '/static/images/avatar_male.jpg'
       },
-      isPin: false // 是否置顶
+      isPin: false, // 是否置顶
+      query: {}
     }
   },
   computed: {
@@ -271,6 +283,10 @@ export default {
   mounted () {
     this.initLoginInfo()
     this.setAlwaysOnTop()
+    this.query = this.$getParamsFromUrl(location.href)
+    if (this.query.hasOwnProperty('target')) {
+      this.activeMenuIndex = Math.max(0, this.targets.indexOf(this.query.target))
+    }
     ipcRenderer.on('login-info-updated', this.loginInfoUpdated)
     ipcRenderer.on('logout-response', this.logoutResponse)
     ipcRenderer.on('save-profile-response', this.saveProfileResponse)
@@ -327,11 +343,6 @@ export default {
         this.saving = false
         if (response.status === 200) {
           this.initLoginInfo()
-          ipcRenderer.send('im-on-update-self-info', {
-            nickname: this.cachedLoginInfo.nickname,
-            birthday: this.cachedLoginInfo.birthday,
-            gender: this.cachedLoginInfo.gender
-          })
           this.$Message.success('保存成功')
         } else {
           this.$Message.error(response.message || '保存失败，请稍后再试')
@@ -361,6 +372,9 @@ export default {
       ipcRenderer.send('update-user-info', {
         headIcon: data.path
       })
+      // ipcRenderer.send('im-update-self-avatar', {
+      //   avatar: data.file
+      // })
       this.$Message.success('头像更新成功')
     }
   },

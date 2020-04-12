@@ -161,5 +161,27 @@ module.exports = {
         titleBarStyle: 'default'
       }
     }
+  },
+  profile: {
+    path: '/profile',
+    name: 'profile',
+    meta: {
+      label: '个人中心',
+      title: '个人中心',
+      withoutHeader: true,
+      id: 'profileWindow', // 只能打开一次的窗口
+      windowOption: {
+        frame: false,
+        // resizable: false,
+        width: 400,
+        height: 400,
+        // height: 667,
+        modal: true,
+        transparent: true,
+        // hasShadow: false,
+        // backgroundColor: '#00ffffff',
+        titleBarStyle: 'default'
+      }
+    }
   }
 }

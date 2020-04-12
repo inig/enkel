@@ -132,7 +132,7 @@ export default {
       title: '',
       loginRouter: {},
       loginInfo: {},
-      IM: null
+      eventNotifications: []
     }
   },
   computed: {
@@ -157,12 +157,23 @@ export default {
     // ipcRenderer.on('im-login-out', this.imLoginOut)
     ipcRenderer.on('im-register', this.imRegister)
     ipcRenderer.on('im-on-msg-receive', this.imOnMsgReceive)
-    ipcRenderer.on('im-on-update-self-info', this.imUpdateSelfInfo)
+    ipcRenderer.on('im-update-self-info', this.imUpdateSelfInfo)
+    ipcRenderer.on('im-update-self-avatar', this.imUpdateSelfAvatar)
     ipcRenderer.on('im-create-group', this.imCreateGroup)
     ipcRenderer.on('im-get-groups', this.imGetGroups)
 
     ipcRenderer.on('im-get-friend-list', this.imGetFriendList)
     ipcRenderer.on('im-add-friend', this.imAddFriend)
+    ipcRenderer.on('im-accept-friend', this.imAcceptFriend)
+
+    ipcRenderer.on('im-on-sync-conversation', this.imOnSyncConversation)
+
+    ipcRenderer.on('im-get-event-notification', this.imGetEventNotification)
+
+    // 业务事件监听
+    ipcRenderer.on('im-on-event-notification', this.imOnEventNotification)
+    // 业务事件监听
+    ipcRenderer.on('im-on-sync-event', this.imOnSyncEvent)
 
     global.eventHub.$on('set-title', this.setTitle)
   },
@@ -213,8 +224,15 @@ export default {
     imAddFriend (event, args) {
       return new Promise(async (resolve) => {
         let response = await this.$store.dispatch('moduleIM/addFriend', args)
-        alert(JSON.stringify(response, null, 2))
         ipcRenderer.send('im-get-friend-list')
+        resolve(response)
+      })
+    },
+    imAcceptFriend (event, args) {
+      return new Promise(async (resolve) => {
+        let response = await this.$store.dispatch('moduleIM/acceptFriend', args)
+        ipcRenderer.send('im-get-friend-list')
+        ipcRenderer.send('im-accept-friend-response', response)
         resolve(response)
       })
     },
@@ -228,9 +246,52 @@ export default {
       let response = await this.$store.dispatch('moduleIM/updateSelfInfo', data)
       console.log('imUpdateSelfInfo: ', response)
     },
+    async imUpdateSelfAvatar (event, data) {
+      let response = await this.$store.dispatch('moduleIM/updateSelfAvatar', data)
+      console.log('imUpdateSelfAvatar: ', response)
+    },
     async imGetUserInfo (event, data) {
       let response = await this.$store.dispatch('moduleIM/getUserInfo', data)
       console.log('getUserInfo: ', response)
+    },
+    addFriendHandler (data) {
+      this.eventNotifications.unshift(data)
+      ipcRenderer.send('notification', {
+        title: '请求添加好友',
+        body: `${data.from_nickname || data.from_username}: ${data.description}`,
+        redirect: 'https://dei2.com?p=profile&target=message'
+      })
+    },
+    async imOnEventNotification (event, data) {
+      switch (data.event_type) {
+        case 5:
+          // 添加好友
+          this.addFriendHandler(data)
+          break
+        default:
+          break
+      }
+      // alert(JSON.stringify(data, null, 2))
+    },
+    addFriendOfflineHandler (data) {
+      this.eventNotifications = data
+    },
+    imGetEventNotification () {
+      ipcRenderer.send('im-get-event-notification-response', this.eventNotifications)
+    },
+    async imOnSyncEvent (event, data) {
+      switch (data.event_type) {
+        case 5:
+          // 添加好友
+          this.addFriendOfflineHandler(data)
+          break
+        default:
+          break
+      }
+      // alert('sync: ' + JSON.stringify(data, null, 2))
+    },
+    async imOnSyncConversation (event, data) {
+      // alert('imOnSyncConversation: ' + JSON.stringify(data, null, 2))
     },
     async initLoginInfo () {
       this.loginInfo = this.$initLoginInfo()
@@ -239,9 +300,9 @@ export default {
         password: '123123'
       })
       // console.log('>>>>>>>>>.', loginData)
-      // await this.imGetUserInfo(null, {
-      //   username: this.loginInfo.phonenum
-      // })
+      await this.imGetUserInfo(null, {
+        username: this.loginInfo.phonenum
+      })
       // setTimeout(async () => {
       //   let loginOutData = await this.imLoginOut()
       //   console.log('退出 ', loginOutData)
