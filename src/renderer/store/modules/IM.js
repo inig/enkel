@@ -53,57 +53,90 @@ const moduleIM = {
   mutations: {
   },
   actions: {
-    init ({ state, commit }) {
-      return new Promise(resolve => {
-        if (IM) {
-          return resolve(true)
+    imInitCheck () {
+      return new Promise((resolve, reject) => {
+        if (!IM || !IM.isInit()) {
+          IM = new JMessage({
+            debug: true
+          })
+          let imConfig = ipcRenderer.sendSync('im-get-config')
+          IM.init(imConfig).onSuccess(data => {
+            resolve(true)
+          }).onFail(data => {
+            reject(new Error('IM初始化失败' + (data.message ? (': ' + data.message) : '')))
+          })
+        } else {
+          resolve(true)
         }
-        IM = new JMessage({
-          debug: true
-        })
-        let imConfig = ipcRenderer.sendSync('im-get-config')
-        IM.init(imConfig).onSuccess(data => {
+      })
+    },
+    init ({ dispatch }) {
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imInitCheck').then(() => {
           resolve(true)
-        }).onFail(data => {
-          resolve(true)
+        }).catch(err => {
+          reject(new Error(err.message))
         })
       })
     },
-    login ({ state }, args) {
+    imLoginCheck ({ dispatch }, args) {
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imInitCheck').then(async () => {
+          if (IM && IM.isLogin()) {
+            // 已经登录
+            resolve(true)
+          } else {
+            if (args) {
+              IM.login(args).onSuccess(data => {
+                // 收到新消息
+                IM.onMsgReceive(data => {
+                  ipcRenderer.send('im-on-msg-receive', data)
+                })
+                // 同步离线消息
+                IM.onSyncConversation(data => {
+                  ipcRenderer.send('im-on-sync-conversation', data)
+                })
+                // 聊天室消息监听
+                IM.onRoomMsg(data => {
+                  ipcRenderer.send('im-on-room-msg', data)
+                })
+                IM.onEventNotification(data => {
+                  ipcRenderer.send('im-on-event-notification', data)
+                })
+                IM.onSyncEvent(data => {
+                  ipcRenderer.send('im-on-sync-event', data)
+                })
+                resolve(true)
+              }).onFail(data => {
+                reject(new Error('IM登录失败' + (data.message ? ': ' + data.message : data.message)))
+              })
+            } else {
+              reject('IM登录失败')
+            }
+          }
+        }).catch(err => {
+          reject(new Error('IM登录失败' + (err.message ? ': ' + err.message : err.message)))
+        })
+      })
+    },
+    login ({ dispatch }, args) {
       /**
        * username: 用户名
        * password: 密码
        * is_md5: 密码是否是 MD5 密码，true/false。默认false
        */
-      return new Promise((resolve) => {
-        IM.login(args).onSuccess(data => {
-          ipcRenderer.send('cache-im', IM)
-          // 收到新消息
-          IM.onMsgReceive(data => {
-            ipcRenderer.send('im-on-msg-receive', data)
-          })
-          // 同步离线消息
-          IM.onSyncConversation(data => {
-            ipcRenderer.send('im-on-sync-conversation', data)
-          })
-          // 聊天室消息监听
-          IM.onRoomMsg(data => {
-            ipcRenderer.send('im-on-room-msg', data)
-          })
-          IM.onEventNotification(data => {
-            ipcRenderer.send('im-on-event-notification', data)
-          })
-          IM.onSyncEvent(data => {
-            ipcRenderer.send('im-on-sync-event', data)
-          })
-          resolve(data)
-        }).onFail(data => {
-          resolve(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck', args).then(() => {
+          resolve(true)
+        }).catch(err => {
+          reject(new Error(err.message))
         })
       })
     },
     loginOut ({ state }) {
-      IM.loginOut()
+      if (IM && IM.isLogin()) {
+        IM.loginOut()
+      }
     },
     register ({ state }, args) {
       /**
@@ -147,19 +180,47 @@ const moduleIM = {
         })
       })
     },
-    getUserInfo ({ state }, args) {
+    getResourceUrl ({ }, args) {
+      return new Promise(async (resolve, reject) => {
+        if (args.id) {
+          IM.getResource({ 'media_id': args.id }).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(new Error('未找到资源' + (data.message ? ': ' + data.message : data.message)))
+          })
+        } else {
+          reject(new Error('未找到资源'))
+        }
+      })
+    },
+    getUserInfo ({ dispatch }, args) {
       /**
        * username
        */
-      return new Promise((resolve, reject) => {
-        IM.getUserInfo(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.getUserInfo(args).onSuccess(async (data) => {
+            let _data = JSON.parse(JSON.stringify(data))
+            if (_data.code === 0 && _data.user_info && _data.user_info.avatar) {
+              let resourceResponse = await dispatch('getResourceUrl', {
+                id: _data.user_info.avatar
+              })
+              if (resourceResponse.code === 0) {
+                _data.user_info.avatar = resourceResponse.url
+              } else {
+                _data.user_info.avatar = ''
+              }
+            }
+            resolve(_data)
+          }).onFail(data => {
+            reject('获取个人信息失败' + (data.message ? ': ' + data.message : data.message))
+          })
+        }).catch(err => {
+          reject(new Error(err.message))
         })
       })
     },
-    updateSelfInfo ({ state }, args) {
+    updateSelfInfo ({ dispatch }, args) {
       /**
        * nickname: 昵称
        * birthday: 生日
@@ -169,11 +230,27 @@ const moduleIM = {
        * address: 地址
        * extras: 自定义 json 格式字段
        */
-      return new Promise((resolve, reject) => {
-        IM.updateSelfInfo(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.updateSelfInfo(args).onSuccess(async (data) => {
+            console.log('更新个人信息: ', data)
+            let _data = JSON.parse(JSON.stringify(data))
+            if (_data.code === 0 && _data.user_info && _data.user_info.avatar) {
+              let resourceResponse = await dispatch('getResourceUrl', {
+                id: _data.user_info.avatar
+              })
+              if (resourceResponse.code === 0) {
+                _data.user_info.avatar = resourceResponse.url
+              } else {
+                _data.user_info.avatar = ''
+              }
+            }
+            resolve(_data)
+          }).onFail(data => {
+            reject(new Error('更新个人信息失败' + (data.message ? ': ' + data.message : data.message)))
+          })
+        }).catch(err => {
+          reject(new Error(err.message))
         })
       })
     },

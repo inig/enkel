@@ -308,6 +308,7 @@ function createMenuWindow (args) {
     app.exit(0)
   })
   menuWindow.once('ready-to-show', () => {
+    openUrlHandler(null, 'http://enkel.com?p=profile&target=profile', false)
     menuWindow.show()
     // setTimeout(() => {
     if (defaultOption && defaultOption.defaultOpen) {
@@ -598,7 +599,7 @@ function getParamStr (url) {
   return outStr.join('&')
 }
 
-function openUrlHandler (event, url) {
+function openUrlHandler (event, url, autoOpen = true) {
   let params = getParamsFromUrl(url)
   let pagePath = params.p || params.page
   if (pagePath) {
@@ -628,9 +629,12 @@ function openUrlHandler (event, url) {
         opt.windowOption = p.meta.windowOption
       }
     }
-    defaultOption = {
-      defaultOpen: opt
+    if (autoOpen) {
+      defaultOption = {
+        defaultOpen: opt
+      }
     }
+
     if (menuWindow) {
       createNewWindow(opt)
     }

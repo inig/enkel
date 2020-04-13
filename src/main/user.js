@@ -155,12 +155,12 @@ ipcMain.on('save-profile', async (event, args) => {
     if (response.data.status === 200) {
       // 更新 成功
       setUser(event, response.data.data)
-      imUpdateSelfInfoHandler(event, {
-        username: response.data.data.phonenum,
-        nickname: response.data.data.nickname,
-        // birthday: String(response.data.data.birthday),
-        // gender: String(response.data.data.gender)
-      })
+      // imUpdateSelfInfoHandler(event, {
+      //   username: response.data.data.phonenum,
+      //   nickname: response.data.data.nickname,
+      //   // birthday: String(response.data.data.birthday),
+      //   // gender: String(response.data.data.gender)
+      // })
     }
     event.reply('save-profile-response', response.data)
   }).catch(err => {
