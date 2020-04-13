@@ -170,6 +170,7 @@ module.exports = {
       title: '个人中心',
       withoutHeader: true,
       id: 'profileWindow', // 只能打开一次的窗口
+      eternally: true, // 窗口是否可销毁
       windowOption: {
         frame: false,
         // resizable: false,

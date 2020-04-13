@@ -8,8 +8,8 @@ export const loginRouter = {
   path: '/login',
   name: 'login',
   meta: {
-    label: 'Enkel无损音乐',
-    title: 'Enkel无损音乐',
+    label: '登录',
+    title: '登录',
     withoutHeader: true,
     id: 'loginWindow', // 只能打开一次的窗口
     windowOption: {
@@ -31,8 +31,8 @@ export const registerRouter = {
   path: '/register',
   name: 'register',
   meta: {
-    label: 'Enkel无损音乐',
-    title: 'Enkel无损音乐',
+    label: '注册',
+    title: '注册',
     withoutHeader: true,
     windowOption: {
       frame: false,
@@ -56,6 +56,7 @@ export const profileRouter = {
     label: '个人中心',
     title: '个人中心',
     withoutHeader: true,
+    eternally: true, // 窗口是否可销毁
     id: 'profileWindow', // 只能打开一次的窗口
     windowOption: {
       frame: false,

@@ -7,6 +7,7 @@ import os from 'os'
 require('./request')
 require('./npm')
 const { showSettingsWindow, createSettingsWindow } = require('./settings')
+const { showProfileWindow, createProfileWindow } = require('./profile')
 const { showAboutWindow } = require('./about')
 // require('./autoUpdate')
 require('./video')
@@ -257,10 +258,13 @@ async function createNewWindow (arg) {
 
 
 
-  newWindow.on('closed', () => {
-    // newWindow = null
-    newWindow.destroy()
-    // app.quit()
+  newWindow.on('closed', (event) => {
+    if (arg.eternally) {
+      newWindow.hide()
+      event.preventDefault()
+    } else {
+      newWindow.destroy()
+    }
   })
 
   newWindow.once('ready-to-show', () => {
@@ -308,7 +312,7 @@ function createMenuWindow (args) {
     app.exit(0)
   })
   menuWindow.once('ready-to-show', () => {
-    openUrlHandler(null, 'http://enkel.com?p=profile&target=profile', false)
+    // openUrlHandler(null, 'http://enkel.com?p=profile&target=profile', false)
     menuWindow.show()
     // setTimeout(() => {
     if (defaultOption && defaultOption.defaultOpen) {
@@ -603,40 +607,44 @@ function openUrlHandler (event, url, autoOpen = true) {
   let params = getParamsFromUrl(url)
   let pagePath = params.p || params.page
   if (pagePath) {
-    // enkel://enkel.com?p=
-    let p = routes[pagePath]
-    let opt = {
-      path: p.name
-    }
-    let pathQueryString = getParamStr(url)
-    if (pathQueryString) {
-      opt.pathQueryString = pathQueryString
-    }
-    if (p.id) {
-      opt.id = p.id
-    }
-    if (p.meta) {
-      if (p.meta.id) {
-        opt.id = p.meta.id
+    if (pagePath === 'profile') {
+      showProfileWindow(params)
+    } else {
+      // enkel://enkel.com?p=
+      let p = routes[pagePath]
+      let opt = {
+        path: p.name
       }
-      if (p.meta.resources) {
-        opt.resources = p.meta.resources
+      let pathQueryString = getParamStr(url)
+      if (pathQueryString) {
+        opt.pathQueryString = pathQueryString
       }
-      if (p.meta.loginBefore) {
-        opt.loginBefore = p.meta.loginBefore
+      if (p.id) {
+        opt.id = p.id
       }
-      if (p.meta.windowOption) {
-        opt.windowOption = p.meta.windowOption
+      if (p.meta) {
+        if (p.meta.id) {
+          opt.id = p.meta.id
+        }
+        if (p.meta.resources) {
+          opt.resources = p.meta.resources
+        }
+        if (p.meta.loginBefore) {
+          opt.loginBefore = p.meta.loginBefore
+        }
+        if (p.meta.windowOption) {
+          opt.windowOption = p.meta.windowOption
+        }
       }
-    }
-    if (autoOpen) {
-      defaultOption = {
-        defaultOpen: opt
+      if (autoOpen) {
+        defaultOption = {
+          defaultOpen: opt
+        }
       }
-    }
 
-    if (menuWindow) {
-      createNewWindow(opt)
+      if (menuWindow) {
+        createNewWindow(opt)
+      }
     }
   }
 }
@@ -653,6 +661,7 @@ app.on('ready', async () => {
   // }
   // createWindow()
   // require('./shortcuts')
+  createProfileWindow()
   createMenuWindow()
 
   if (!modalLoadingWindow) {
@@ -758,7 +767,11 @@ ipcMain.on('menu-unfold', (event) => {
 })
 
 ipcMain.on('navigate-to', (event, arg) => {
-  createNewWindow(arg)
+  if (arg.path === 'profile') {
+    showProfileWindow(arg)
+  } else {
+    createNewWindow(arg)
+  }
   // if (mainWindow === null) {
   //   createWindow()
   // }

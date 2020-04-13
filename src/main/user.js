@@ -90,7 +90,7 @@ ipcMain.on('login', async (event, args) => {
       setUser(event, response.data.data)
       imLoginHandler(event, {
         username: response.data.data.phonenum,
-        password: args.password
+        password: response.data.data.password
       })
     }
     event.reply('login-response', response.data)
@@ -212,15 +212,21 @@ ipcMain.on('update-user-info', (event, data) => {
   setUser(event, userInfo)
 })
 
-ipcMain.on('logout', (event) => {
+ipcMain.on('login-out', (event) => {
+  BrowserWindow.getAllWindows().forEach(item => {
+    if (item.webContents !== event.sender) {
+      item.webContents.send('login-out')
+    }
+  })
+})
+ipcMain.on('login-out-response', (event) => {
   let userInfo = getUser()
   setUser(event, Object.assign({}, userInfo, {
     token: ''
   }))
   BrowserWindow.getAllWindows().forEach(item => {
     if (item.webContents !== event.sender) {
-      item.webContents.send('logout-response')
+      item.webContents.send('login-out-response')
     }
   })
-  event.reply('logout-response')
 })

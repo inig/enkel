@@ -437,6 +437,7 @@ export default {
         this.loginStatus = 1
         // this.initLoginInfo()
         this.$Message.success('注册成功')
+        ipcRenderer.send('update-user-info', res.data)
         setTimeout(() => {
           this.playSound('/static/resources/ls/login.wav')
         }, 500)

@@ -63,7 +63,8 @@ const moduleIM = {
           IM.init(imConfig).onSuccess(data => {
             resolve(true)
           }).onFail(data => {
-            reject(new Error('IM初始化失败' + (data.message ? (': ' + data.message) : '')))
+            reject(data)
+            // reject(new Error('IM初始化失败' + (data.message ? (': ' + data.message) : '')))
           })
         } else {
           resolve(true)
@@ -75,7 +76,8 @@ const moduleIM = {
         await dispatch('imInitCheck').then(() => {
           resolve(true)
         }).catch(err => {
-          reject(new Error(err.message))
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
@@ -87,7 +89,9 @@ const moduleIM = {
             resolve(true)
           } else {
             if (args) {
-              IM.login(args).onSuccess(data => {
+              IM.login(Object.assign({}, args, {
+                is_md5: true
+              })).onSuccess(data => {
                 // 收到新消息
                 IM.onMsgReceive(data => {
                   ipcRenderer.send('im-on-msg-receive', data)
@@ -108,14 +112,17 @@ const moduleIM = {
                 })
                 resolve(true)
               }).onFail(data => {
-                reject(new Error('IM登录失败' + (data.message ? ': ' + data.message : data.message)))
+                // console.log('!!!!!!!!!!!!!!!', data)
+                reject(data)
+                // reject(new Error('IM登录失败' + (data.message ? ': ' + data.message : data.message)))
               })
             } else {
               reject('IM登录失败')
             }
           }
         }).catch(err => {
-          reject(new Error('IM登录失败' + (err.message ? ': ' + err.message : err.message)))
+          reject(err)
+          // reject(new Error('IM登录失败' + (err.message ? ': ' + err.message : err.message)))
         })
       })
     },
@@ -126,10 +133,35 @@ const moduleIM = {
        * is_md5: 密码是否是 MD5 密码，true/false。默认false
        */
       return new Promise(async (resolve, reject) => {
-        await dispatch('imLoginCheck', args).then(() => {
-          resolve(true)
-        }).catch(err => {
-          reject(new Error(err.message))
+        let _args = args
+        await dispatch('imLoginCheck', _args).then(async () => {
+          await dispatch('getUserInfo', {
+            username: _args.username
+          }).then(async (res) => {
+            resolve(res)
+          }).catch(err => {
+            reject(err)
+            // reject(new Error('头像更新失败' + (err.message ? (': ' + err.message) : err.message)))
+          })
+        }).catch(async (err) => {
+          if (err.code == 880103) {
+            // 该用户未注册IM
+            await dispatch('register', {
+              username: _args.username,
+              password: _args.password,
+              nickname: _args.username,
+              is_md5: true
+            }).then(async () => {
+              await dispatch('login', _args).then(async (res) => {
+                resolve(res)
+              }).catch(err => {
+                reject(err)
+                // reject(new Error('头像更新失败' + (err.message ? (': ' + err.message) : err.message)))
+              })
+            })
+          } else {
+            reject(new Error(err.message))
+          }
         })
       })
     },
@@ -138,7 +170,7 @@ const moduleIM = {
         IM.loginOut()
       }
     },
-    register ({ state }, args) {
+    register ({ dispatch }, args) {
       /**
        * username: 用户名
        * password: 密码
@@ -152,11 +184,18 @@ const moduleIM = {
        * extras: 自定义 json 格式字段
        * media_id: 头像 id
        */
-      return new Promise(resolve => {
-        IM.register(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          resolve(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imInitCheck').then(async () => {
+          IM.register(Object.assign({}, args, {
+            is_md5: true
+          })).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            resolve(data)
+          })
+        }).catch(err => {
+          // reject(new Error(err.message))
+          reject(err)
         })
       })
     },
@@ -186,7 +225,8 @@ const moduleIM = {
           IM.getResource({ 'media_id': args.id }).onSuccess(data => {
             resolve(data)
           }).onFail(data => {
-            reject(new Error('未找到资源' + (data.message ? ': ' + data.message : data.message)))
+            reject(data)
+            // reject(new Error('未找到资源' + (data.message ? ': ' + data.message : data.message)))
           })
         } else {
           reject(new Error('未找到资源'))
@@ -213,10 +253,12 @@ const moduleIM = {
             }
             resolve(_data)
           }).onFail(data => {
-            reject('获取个人信息失败' + (data.message ? ': ' + data.message : data.message))
+            reject(data)
+            // reject(new Error('获取个人信息失败' + (data.message ? ': ' + data.message : data.message)))
           })
         }).catch(err => {
-          reject(new Error(err.message))
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
@@ -233,7 +275,6 @@ const moduleIM = {
       return new Promise(async (resolve, reject) => {
         await dispatch('imLoginCheck').then(() => {
           IM.updateSelfInfo(args).onSuccess(async (data) => {
-            console.log('更新个人信息: ', data)
             let _data = JSON.parse(JSON.stringify(data))
             if (_data.code === 0 && _data.user_info && _data.user_info.avatar) {
               let resourceResponse = await dispatch('getResourceUrl', {
@@ -247,23 +288,43 @@ const moduleIM = {
             }
             resolve(_data)
           }).onFail(data => {
-            reject(new Error('更新个人信息失败' + (data.message ? ': ' + data.message : data.message)))
+            reject(data)
+            // reject(new Error('更新个人信息失败' + (data.message ? ': ' + data.message : data.message)))
           })
         }).catch(err => {
-          reject(new Error(err.message))
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
-    updateSelfAvatar ({ state }, args) {
+    updateSelfAvatar ({ dispatch }, args) {
       /**
        * avatar: 头像头像图片的 DataForm 对象
        */
-      return new Promise((resolve, reject) => {
-        console.log('@@@@@@上传', args)
-        IM.updateSelfAvatar(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.updateSelfAvatar(args).onSuccess(async (data) => {
+            if (data.code === 0) {
+              // 头像更新成功
+              await dispatch('getUserInfo', {
+                username: args.username
+              }).then(async (res) => {
+                resolve(res)
+              }).catch(err => {
+                reject(err)
+                // reject(new Error('头像更新失败' + (err.message ? (': ' + err.message) : err.message)))
+              })
+            } else {
+              reject(data)
+              // reject(new Error('头像更新失败' + (data.message ? (': ' + data.message) : data.message)))
+            }
+          }).onFail(data => {
+            reject(data)
+            // reject(new Error('头像更新失败' + (data.message ? ': ' + data.message : data.message)))
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },

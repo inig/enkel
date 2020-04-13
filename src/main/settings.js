@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, dialog, screen } from 'electron'
+import { ipcMain, BrowserWindow } from 'electron'
 
 let settingsWindow
 export function createSettingsWindow () {

@@ -416,6 +416,7 @@ export default {
       //   }
       // })
       ipcRenderer.on('login-response', this.loginResponse)
+      ipcRenderer.on('login-info-updated', this.initLoginInfo)
 
       ipcRenderer.send('set-always-on-top', true)
     })
@@ -459,7 +460,7 @@ export default {
         setTimeout(() => {
           this.playSound('/static/resources/ls/login.wav')
         }, 500)
-        this.$Message.success('登录成功')
+        // this.$Message.success('登录成功')
         setTimeout(() => {
           // remote.ipcMain.emit('close-login-window')
           this.closeWindow()
@@ -483,8 +484,8 @@ export default {
     },
     initLoginInfo () {
       this.loginInfo = this.$initLoginInfo()
-      if (this.loginInfo && this.loginInfo.username) {
-        this.loginForm.username = this.loginInfo.username
+      if (this.loginInfo && this.loginInfo.phonenum) {
+        this.loginForm.username = this.loginInfo.phonenum
       }
     },
     getHeadIcon (username) {
