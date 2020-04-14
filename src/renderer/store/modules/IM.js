@@ -51,7 +51,7 @@ let loginInfo = ipcRenderer.sendSync('init-login-info')
 // IM_INIT()
 
 function getFile (file) {
-  console.log('>>>>>>>>>>>>>>', file)
+
   var fd = new FormData();
   fd.append(file.name, file);
   return fd;
@@ -74,22 +74,22 @@ const moduleIM = {
       return new Promise((resolve, reject) => {
         let imConfig = ipcRenderer.sendSync('im-get-config')
         IM.init(imConfig).onSuccess(data => {
-          console.log('~~~~~~~~~2', IM.isInit())
+
           resolve(data)
         }).onFail(data => {
-          console.log('~~~~~~~~~3', IM.isInit())
+
           resolve(data)
         })
       })
     },
     init ({ dispatch }) {
       return new Promise(async (resolve, reject) => {
-        console.log('~~~~~~~~~1', IM.isInit())
+
         if (!IM.isInit()) {
           // let imConfig = ipcRenderer.sendSync('im-get-config')
           await dispatch('doInit')
           resolve(true)
-          console.log('~~~~~~~~~4', IM.isInit())
+
         } else {
           resolve(true)
         }
@@ -102,7 +102,7 @@ const moduleIM = {
         }
         if (IM.isInit() && !IM.isLogin()) {
 
-          // console.log('>>>>>>>>>>>>>>>', IM.isLogin(), _args)
+          // 
           // resolve(data)
         } else {
           resolve(true)
@@ -121,12 +121,6 @@ const moduleIM = {
        * is_md5: 密码是否是 MD5 密码，true/false。默认false
        */
       return new Promise(async (resolve, reject) => {
-        console.log('$$$$$$$$$$$%%%%%%%', args, IM.isInit(), IM.isLogin())
-        if (!IM.init()) {
-          // 未初始化
-          await dispatch('init')
-        }
-        console.log('...........@@@@@@@', IM.isLogin())
         if (!IM.isLogin()) {
           let _args = args
           if (!_args) {
@@ -135,7 +129,7 @@ const moduleIM = {
               password: md5(loginInfo.password)
             }
           }
-          console.log('~~~~~~~~~', _args)
+
           IM.login(Object.assign({}, _args, {
             is_md5: true
           })).onSuccess(data => {
@@ -152,6 +146,7 @@ const moduleIM = {
               ipcRenderer.send('im-on-room-msg', data)
             })
             IM.onEventNotification(data => {
+              console.log('onEventNotification', data)
               ipcRenderer.send('im-on-event-notification', data)
             })
             IM.onSyncEvent(data => {
@@ -159,7 +154,7 @@ const moduleIM = {
             })
             resolve(data)
           }).onFail(data => {
-            console.log('%%%%%%%%%%%%%%%%%33333333', data)
+
             reject(data)
             // reject(new Error('IM登录失败' + (data.message ? ': ' + data.message : data.message)))
           })
@@ -430,14 +425,14 @@ const moduleIM = {
        */
       return new Promise(async (resolve, reject) => {
         await dispatch('imLoginCheck').then(() => {
-          console.log('AAAAAAAAAAAAA')
+
           IM.getFriendList().onSuccess(data => {
             resolve(data)
           }).onFail(data => {
             reject(data)
           })
         }).catch(err => {
-          console.log('############', err)
+
           reject(err)
           // reject(new Error(err.message))
         })
