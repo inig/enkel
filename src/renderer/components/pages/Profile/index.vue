@@ -212,459 +212,479 @@
 </template>
 
 <script>
-import md5 from 'blueimp-md5'
-import { Avatar, CellGroup, Cell, Input, DatePicker, Tooltip, Icon, Button } from 'view-design'
-import { ipcRenderer } from 'electron'
-import { createNamespacedHelpers } from 'vuex'
-const { mapActions } = createNamespacedHelpers('./store/modules')
-export default {
-  name: 'Profile',
-  components: {
-    Avatar, CellGroup, Cell, Input, DatePicker, Tooltip, Icon, Button,
-    UploadAvatar: () => import('../../custom/UploadAvatar.vue'),
-    ProfileFriends: () => import('./Friends.vue'),
-    ProfileGroup: () => import('./Group.vue'),
-    ProfileChatRoom: () => import('./ChatRoom.vue'),
-    ProfileMessage: () => import('./Message.vue')
-  },
-  data () {
-    const valideRePassword = (rule, value, callback) => {
-      if (value !== this.modifyPasswordForm.newPass) {
-        callback(new Error('两次输入密码不一致'))
-      } else {
-        callback()
+  import md5 from 'blueimp-md5'
+  import { Avatar, CellGroup, Cell, Input, DatePicker, Tooltip, Icon, Button } from 'view-design'
+  import { ipcRenderer } from 'electron'
+  import { createNamespacedHelpers } from 'vuex'
+  const { mapActions } = createNamespacedHelpers('./store/modules')
+  export default {
+    name: 'Profile',
+    components: {
+      Avatar, CellGroup, Cell, Input, DatePicker, Tooltip, Icon, Button,
+      UploadAvatar: () => import('../../custom/UploadAvatar.vue'),
+      ProfileFriends: () => import('./Friends.vue'),
+      ProfileGroup: () => import('./Group.vue'),
+      ProfileChatRoom: () => import('./ChatRoom.vue'),
+      ProfileMessage: () => import('./Message.vue')
+    },
+    data () {
+      const valideRePassword = (rule, value, callback) => {
+        if (value !== this.modifyPasswordForm.newPass) {
+          callback(new Error('两次输入密码不一致'))
+        } else {
+          callback()
+        }
       }
-    }
-    const valideNewPassword = (rule, value, callback) => {
-      if (value === this.modifyPasswordForm.oldPass) {
-        callback(new Error('新密码不能和原密码一致'))
-      } else {
-        callback()
+      const valideNewPassword = (rule, value, callback) => {
+        if (value === this.modifyPasswordForm.oldPass) {
+          callback(new Error('新密码不能和原密码一致'))
+        } else {
+          callback()
+        }
       }
-    }
-    return {
-      activeMenuIndex: 0,
-      targets: ['profile', 'password', 'friend', 'group', 'room', 'message'],
-      cachedLoginInfo: {},
-      saving: false,
-      modifyPasswordForm: {
-        old: '',
-        newPass: '',
-        rePass: ''
-      },
-      modifyPasswordLoading: false,
-      loginInfo: {},
-      assets: {
-        femaleAvatar: '/static/images/avatar_female.jpg',
-        maleAvatar: '/static/images/avatar_male.jpg'
-      },
-      isPin: false, // 是否置顶
-      query: {}
-    }
-  },
-  computed: {
-    profileMenuActiveStyles () {
       return {
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        color: '#ffffff',
-        fontSize: '13px'
+        activeMenuIndex: 2,
+        targets: ['profile', 'password', 'friend', 'group', 'room', 'message'],
+        cachedLoginInfo: {},
+        saving: false,
+        modifyPasswordForm: {
+          old: '',
+          newPass: '',
+          rePass: ''
+        },
+        modifyPasswordLoading: false,
+        loginInfo: {},
+        assets: {
+          femaleAvatar: '/static/images/avatar_female.jpg',
+          maleAvatar: '/static/images/avatar_male.jpg'
+        },
+        isPin: false, // 是否置顶
+        query: {}
       }
     },
-    profileMenuStyles () {
-      return {}
-    },
-    needSave () {
-      return (JSON.stringify(this.cachedLoginInfo) !== JSON.stringify(this.loginInfo))
-    },
-    requestInfo () {
-      return this.$store.state.requestInfo
-    },
-    needModifyPassword () {
-      return this.modifyPasswordForm.old && this.modifyPasswordForm.newPass && this.modifyPasswordForm.rePass && (this.modifyPasswordForm.newPass === this.modifyPasswordForm.rePass)
-    },
-    hasLogin () {
-      return !!this.loginInfo.token
-    }
-  },
-  mounted () {
-    this.initLoginInfo()
-    this.setAlwaysOnTop()
-    ipcRenderer.on('change-query', (event, params) => {
-      if (params.hasOwnProperty('target')) {
-        this.activeMenuIndex = Math.max(0, this.targets.indexOf(params.target))
-      }
-    })
-    ipcRenderer.on('im-login', this.imLogin)
-    ipcRenderer.on('im-register', this.imRegister)
-    ipcRenderer.on('login-info-updated', this.loginInfoUpdated)
-    ipcRenderer.on('login-out', this.imLoginOut)
-    ipcRenderer.on('save-profile-response', this.saveProfileResponse)
-    ipcRenderer.on('modify-password-response', this.modifyPasswordResponse)
-  },
-  methods: {
-    ...mapActions([
-      'moduleIM'
-    ]),
-    closeWindow () {
-      ipcRenderer.send('hide-profile')
-    },
-    setAlwaysOnTop () {
-      this.isPin = !this.isPin
-      ipcRenderer.send('set-always-on-top', this.isPin)
-    },
-    async imLogin (event, args) {
-      if (this.hasLogin) {
-        await this.$store.dispatch('moduleIM/login', {
-          username: args.username,
-          password: md5(args.password),
-          is_md5: true
-        }).then((data) => {
-          let _data = JSON.parse(JSON.stringify(data))
-          if (_data.code === 0) {
-            if (_data.user_info) {
-              let _updateObj = {}
-              if (_data.user_info.avatar) {
-                _updateObj.headIcon = _data.user_info.avatar
-              }
-              if (_data.user_info.nickname) {
-                _updateObj.nickname = _data.user_info.nickname
-              }
-              this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
-            }
-            ipcRenderer.send('update-user-info', this.loginInfo)
-          }
-        }).catch(err => {
-        })
-      } else {
+    computed: {
+      profileMenuActiveStyles () {
+        return {
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          color: '#ffffff',
+          fontSize: '13px'
+        }
+      },
+      profileMenuStyles () {
+        return {}
+      },
+      needSave () {
+        return (JSON.stringify(this.cachedLoginInfo) !== JSON.stringify(this.loginInfo))
+      },
+      requestInfo () {
+        return this.$store.state.requestInfo
+      },
+      needModifyPassword () {
+        return this.modifyPasswordForm.old && this.modifyPasswordForm.newPass && this.modifyPasswordForm.rePass && (this.modifyPasswordForm.newPass === this.modifyPasswordForm.rePass)
+      },
+      hasLogin () {
+        return !!this.loginInfo.token
       }
     },
-    async imRegister (event, args) {
-      await this.$store.dispatch('moduleIM/register', args).then((data) => {
-        // let _data = JSON.parse(JSON.stringify(data))
-        // if (_data.code === 0) {
-        //   if (_data.user_info) {
-        //     let _updateObj = {}
-        //     if (_data.user_info.avatar) {
-        //       _updateObj.headIcon = _data.user_info.avatar
-        //     }
-        //     if (_data.user_info.nickname) {
-        //       _updateObj.nickname = _data.user_info.nickname
-        //     }
-        //     this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
-        //   }
-        //   ipcRenderer.send('update-user-info', this.loginInfo)
-        // }
-      }).catch(err => {
-      })
-    },
-    async imLoginOut () {
-      await this.$store.dispatch('moduleIM/loginOut')
-      ipcRenderer.send('login-out-response')
-      this.loginInfo = {}
-      this.$Message.success('已经退出登录')
-      // this.closeWindow()
-    },
-    async imGetSelfInfo () {
-      return new Promise(async (resolve, reject) => {
-        if (this.hasLogin) {
-          await this.$store.dispatch('moduleIM/getUserInfo', {
-            username: this.loginInfo.phonenum
-          }).then(data => {
-            resolve(data)
-          }).catch(err => {
-            reject(new Error(err.message))
-          })
-        } else {
-          reject(new Error('未登录'))
+    async mounted () {
+      await this.initLoginInfo()
+      this.setAlwaysOnTop()
+      ipcRenderer.on('change-query', (event, params) => {
+        if (params.hasOwnProperty('target')) {
+          this.activeMenuIndex = Math.max(0, this.targets.indexOf(params.target))
         }
       })
+      ipcRenderer.on('im-login', this.imLogin)
+      ipcRenderer.on('im-register', this.imRegister)
+      ipcRenderer.on('login-info-updated', this.loginInfoUpdated)
+      ipcRenderer.on('login-out', this.imLoginOut)
+      ipcRenderer.on('save-profile-response', this.saveProfileResponse)
+      ipcRenderer.on('modify-password-response', this.modifyPasswordResponse)
     },
-    async imUpdateSelfInfo (args) {
-      return new Promise(async (resolve, reject) => {
+    methods: {
+      ...mapActions([
+        'moduleIM'
+      ]),
+      closeWindow () {
+        ipcRenderer.send('hide-profile')
+      },
+      setAlwaysOnTop () {
+        this.isPin = !this.isPin
+        ipcRenderer.send('set-always-on-top', this.isPin)
+      },
+      async imLogin (event, args) {
         if (this.hasLogin) {
-          await this.$store.dispatch('moduleIM/updateSelfInfo', args).then(data => {
-            resolve(data)
-          }).catch(err => {
-            reject(new Error(err.message))
-          })
-        } else {
-          reject(new Error('未登录'))
-        }
-      })
-    },
-    async imUpdateSelfAvatar (args) {
-      return new Promise(async (resolve, reject) => {
-        if (this.hasLogin) {
-          await this.$store.dispatch('moduleIM/updateSelfAvatar', args).then(data => {
-            if (data.code === 0 && data.user_info) {
-              let _updateObj = {}
-              if (data.user_info.avatar) {
-                _updateObj.headIcon = data.user_info.avatar
-              }
-              this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
-              ipcRenderer.send('update-user-info', {
-                headIcon: data.user_info.avatar
-              })
-            } else {
-            }
-
-            resolve(data)
-          }).catch(err => {
-            reject(new Error(err.message))
-          })
-        } else {
-          reject(new Error('未登录'))
-        }
-      })
-    },
-    async initLoginInfo () {
-      this.loginInfo = this.$initLoginInfo()
-      if (this.hasLogin) {
-        await this.imLogin(null, {
-          username: this.loginInfo.phonenum,
-          password: md5(this.loginInfo.password)
-        }).then(async () => {
-          await this.imGetSelfInfo().then(imSelfInfo => {
-            if (imSelfInfo.code === 0) {
-              if (imSelfInfo.user_info) {
+          await this.$store.dispatch('moduleIM/login', {
+            username: args.username,
+            password: md5(args.password),
+            is_md5: true
+          }).then((data) => {
+            let _data = JSON.parse(JSON.stringify(data))
+            if (_data.code === 0) {
+              if (_data.user_info) {
                 let _updateObj = {}
-                if (imSelfInfo.user_info.avatar) {
-                  _updateObj.headIcon = imSelfInfo.user_info.avatar
+                if (_data.user_info.avatar) {
+                  _updateObj.headIcon = _data.user_info.avatar
                 }
-                if (imSelfInfo.user_info.nickname) {
-                  _updateObj.nickname = imSelfInfo.user_info.nickname
+                if (_data.user_info.nickname) {
+                  _updateObj.nickname = _data.user_info.nickname
                 }
                 this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
               }
+              ipcRenderer.send('update-user-info', this.loginInfo)
             }
-            ipcRenderer.send('update-user-info', this.loginInfo)
           }).catch(err => {
-
           })
-        }).catch(async (err) => {
-          console.log('...........', err)
-          // await this.imRegister(null, {
-          //   username: this.loginInfo.phonenum,
-          //   nickname: this.loginInfo.phonenum,
-          //   password: this.loginInfo.password
-          // }).then(async () => {
-          //   await this.initLoginInfo()
-          // }).catch(err => {
-          //   // this.$Message.error('操作失败')
-          // })
+        } else {
+        }
+      },
+      async imRegister (event, args) {
+        await this.$store.dispatch('moduleIM/register', args).then((data) => {
+          // let _data = JSON.parse(JSON.stringify(data))
+          // if (_data.code === 0) {
+          //   if (_data.user_info) {
+          //     let _updateObj = {}
+          //     if (_data.user_info.avatar) {
+          //       _updateObj.headIcon = _data.user_info.avatar
+          //     }
+          //     if (_data.user_info.nickname) {
+          //       _updateObj.nickname = _data.user_info.nickname
+          //     }
+          //     this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
+          //   }
+          //   ipcRenderer.send('update-user-info', this.loginInfo)
+          // }
+        }).catch(err => {
         })
-      }
-    },
-    loginInfoUpdated (event, loginInfo) {
-      this.loginInfo = loginInfo || {}
-    },
-    chooseProfileMenu (index) {
-      this.activeMenuIndex = Number(index)
-    },
-    changeSex (gender) {
-      this.cachedLoginInfo.gender = Number(gender)
-    },
-    changeBirthDay (d1) {
-      this.cachedLoginInfo.birthday = String(+new Date(d1))
-    },
-    saveProfile () {
-      this.saving = true
-      ipcRenderer.send('save-profile', this.cachedLoginInfo)
+      },
+      async imLoginOut () {
+        await this.$store.dispatch('moduleIM/loginOut')
+        ipcRenderer.send('login-out-response')
+        this.loginInfo = {}
+        this.$Message.success('已经退出登录')
+        // this.closeWindow()
+      },
+      async imGetSelfInfo () {
+        return new Promise(async (resolve, reject) => {
+          if (this.hasLogin) {
+            await this.$store.dispatch('moduleIM/getUserInfo', {
+              username: this.loginInfo.phonenum
+            }).then(data => {
+              resolve(data)
+            }).catch(err => {
+              reject(new Error(err.message))
+            })
+          } else {
+            reject(new Error('未登录'))
+          }
+        })
+      },
+      async imUpdateSelfInfo (args) {
+        return new Promise(async (resolve, reject) => {
+          if (this.hasLogin) {
+            await this.$store.dispatch('moduleIM/updateSelfInfo', args).then(data => {
+              resolve(data)
+            }).catch(err => {
+              reject(new Error(err.message))
+            })
+          } else {
+            reject(new Error('未登录'))
+          }
+        })
+      },
+      async imUpdateSelfAvatar (args) {
+        return new Promise(async (resolve, reject) => {
+          if (this.hasLogin) {
+            await this.$store.dispatch('moduleIM/updateSelfAvatar', args).then(data => {
+              if (data.code === 0 && data.user_info) {
+                let _updateObj = {}
+                if (data.user_info.avatar) {
+                  _updateObj.headIcon = data.user_info.avatar
+                }
+                this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
+                ipcRenderer.send('update-user-info', {
+                  headIcon: data.user_info.avatar
+                })
+              } else {
+              }
 
-      // let updatedData = await this.$store.dispatch(types.AJAX, {
-      //   url: this.requestInfo.updateUserInfo,
-      //   data: this.cachedLoginInfo
-      // })
-      // setTimeout(() => {
-      //   this.saving = false
-      //   if (updatedData.status === 200) {
-      //     this.$store.commit(types.CACHE_LOGIN_INFO, updatedData.data)
-      //     this.$Message.success('保存成功')
-      //   } else {
-      //     this.$Message.error(updatedData.message || '保存失败，请稍后再试')
-      //   }
-      // }, 2000)
-    },
-    async saveProfileResponse (event, response) {
-      if (response.status === 200) {
-        await this.imUpdateSelfInfo({
-          username: this.loginInfo.phonenum,
-          nickname: this.cachedLoginInfo.nickname,
-          gender: this.cachedLoginInfo.gender
+              resolve(data)
+            }).catch(err => {
+              reject(new Error(err.message))
+            })
+          } else {
+            reject(new Error('未登录'))
+          }
         })
-      }
-      setTimeout(() => {
-        this.saving = false
+      },
+      async initLoginInfo () {
+        // this.loginInfo = this.$initLoginInfo()
+        // if (this.hasLogin) {
+        //   await this.imLogin(null, {
+        //     username: this.loginInfo.phonenum,
+        //     password: this.loginInfo.password
+        //   }).then(async () => {
+        //     await this.imGetSelfInfo().then(imSelfInfo => {
+        //       if (imSelfInfo.code === 0) {
+        //         if (imSelfInfo.user_info) {
+        //           let _updateObj = {}
+        //           if (imSelfInfo.user_info.avatar) {
+        //             _updateObj.headIcon = imSelfInfo.user_info.avatar
+        //           }
+        //           if (imSelfInfo.user_info.nickname) {
+        //             _updateObj.nickname = imSelfInfo.user_info.nickname
+        //           }
+        //           this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
+        //         }
+        //       }
+        //       ipcRenderer.send('update-user-info', this.loginInfo)
+        //     }).catch(err => {
+        //     })
+        //   }).catch(async (err) => {
+        //   })
+        // }
+        return new Promise(async (resolve) => {
+          this.loginInfo = this.$initLoginInfo()
+          await this.$store.dispatch('moduleIM/init')
+          if (this.hasLogin) {
+            await this.imLogin(null, {
+              username: this.loginInfo.phonenum,
+              password: this.loginInfo.password
+            }).then(async () => {
+              await this.imGetSelfInfo().then(imSelfInfo => {
+                if (imSelfInfo.code === 0) {
+                  if (imSelfInfo.user_info) {
+                    let _updateObj = {}
+                    if (imSelfInfo.user_info.avatar) {
+                      _updateObj.headIcon = imSelfInfo.user_info.avatar
+                    }
+                    if (imSelfInfo.user_info.nickname) {
+                      _updateObj.nickname = imSelfInfo.user_info.nickname
+                    }
+                    this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
+                  }
+                }
+                ipcRenderer.send('update-user-info', this.loginInfo)
+                resolve(true)
+              }).catch(err => {
+                resolve(true)
+              })
+            }).catch(async (err) => {
+              resolve(true)
+            })
+          }
+        })
+      },
+      loginInfoUpdated (event, loginInfo) {
+        this.loginInfo = loginInfo || {}
+      },
+      chooseProfileMenu (index) {
+        this.activeMenuIndex = Number(index)
+      },
+      changeSex (gender) {
+        this.cachedLoginInfo.gender = Number(gender)
+      },
+      changeBirthDay (d1) {
+        this.cachedLoginInfo.birthday = String(+new Date(d1))
+      },
+      saveProfile () {
+        this.saving = true
+        ipcRenderer.send('save-profile', this.cachedLoginInfo)
+
+        // let updatedData = await this.$store.dispatch(types.AJAX, {
+        //   url: this.requestInfo.updateUserInfo,
+        //   data: this.cachedLoginInfo
+        // })
+        // setTimeout(() => {
+        //   this.saving = false
+        //   if (updatedData.status === 200) {
+        //     this.$store.commit(types.CACHE_LOGIN_INFO, updatedData.data)
+        //     this.$Message.success('保存成功')
+        //   } else {
+        //     this.$Message.error(updatedData.message || '保存失败，请稍后再试')
+        //   }
+        // }, 2000)
+      },
+      async saveProfileResponse (event, response) {
         if (response.status === 200) {
-          this.initLoginInfo()
-          this.$Message.success('保存成功')
-        } else {
-          this.$Message.error(response.message || '保存失败，请稍后再试')
+          await this.imUpdateSelfInfo({
+            username: this.loginInfo.phonenum,
+            nickname: this.cachedLoginInfo.nickname,
+            gender: this.cachedLoginInfo.gender
+          })
         }
-      }, 800)
-    },
-    async modifyPassword () {
-      this.modifyPasswordLoading = true
-      ipcRenderer.send('modify-password', Object.assign({}, this.modifyPasswordForm, {
-        phonenum: this.loginInfo.phonenum,
-        token: this.loginInfo.token
-      }))
-    },
-    modifyPasswordResponse (event, response) {
-      setTimeout(() => {
-        this.modifyPasswordLoading = false
-        if (response.status === 200) {
-          this.$Message.success('保存成功')
-        } else {
-          this.$Message.error(response.message || '保存失败，请稍后再试')
-        }
-      }, 800)
-    },
-    async modifyAvatar (data) {
-      await this.imUpdateSelfAvatar({
-        avatar: this.$createFileFormData(data.file),
-        username: this.loginInfo.phonenum
-      })
-      // ipcRenderer.send('im-update-self-avatar', {
-      //   avatar: data.file
-      // })
-      this.$Message.success('头像更新成功')
-    }
-  },
-  watch: {
-    'loginInfo': {
-      immediate: true,
-      handler (val) {
-        this.cachedLoginInfo = JSON.parse(JSON.stringify(val))
+        setTimeout(() => {
+          this.saving = false
+          if (response.status === 200) {
+            this.initLoginInfo()
+            this.$Message.success('保存成功')
+          } else {
+            this.$Message.error(response.message || '保存失败，请稍后再试')
+          }
+        }, 800)
+      },
+      async modifyPassword () {
+        this.modifyPasswordLoading = true
+        ipcRenderer.send('modify-password', Object.assign({}, this.modifyPasswordForm, {
+          phonenum: this.loginInfo.phonenum,
+          token: this.loginInfo.token
+        }))
+      },
+      modifyPasswordResponse (event, response) {
+        setTimeout(() => {
+          this.modifyPasswordLoading = false
+          if (response.status === 200) {
+            this.$Message.success('保存成功')
+          } else {
+            this.$Message.error(response.message || '保存失败，请稍后再试')
+          }
+        }, 800)
+      },
+      async modifyAvatar (data) {
+        await this.imUpdateSelfAvatar({
+          avatar: this.$createFileFormData(data.file),
+          username: this.loginInfo.phonenum
+        })
+        // ipcRenderer.send('im-update-self-avatar', {
+        //   avatar: data.file
+        // })
+        this.$Message.success('头像更新成功')
       }
-    }
-  },
-  filters: {
-    date (text) {
-      return new Date(Number(text))
+    },
+    watch: {
+      'loginInfo': {
+        immediate: true,
+        handler (val) {
+          this.cachedLoginInfo = JSON.parse(JSON.stringify(val))
+        }
+      }
+    },
+    filters: {
+      date (text) {
+        return new Date(Number(text))
+      }
     }
   }
-}
 </script>
 
 <style lang="less" scoped>
-@import url("../../../themes/index.less");
-.profile_container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  -webkit-app-region: drag;
-}
-.profile_inner {
-  position: relative;
-  width: 400px;
-  height: 400px;
-  // background-color: rgba(255, 255, 255, 0.6);
-  border-radius: 5px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-.profile_menu {
-  position: relative;
-  width: 100px;
-  height: 100%;
-  padding: 60px 0;
-  background-color: @primary-color;
-  box-sizing: border-box;
-}
-.profile_menu_item {
-  width: 100%;
-  height: 32px;
-  cursor: pointer;
-  padding: 0 15px;
-  box-sizing: border-box;
-  color: #888;
-  font-size: 12px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease-in-out;
-}
-.profile_menu_item:hover,
-.profile_menu_item:active {
-  background-color: rgba(0, 0, 0, 0.7);
-}
-.header-btns {
-  position: absolute;
-  height: 32px;
-  left: 10px;
-  top: 10px;
-  cursor: pointer;
-}
+  @import url("../../../themes/index.less");
+  .profile_container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    -webkit-app-region: drag;
+  }
+  .profile_inner {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    // background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 5px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .profile_menu {
+    position: relative;
+    width: 100px;
+    height: 100%;
+    padding: 60px 0;
+    background-color: @primary-color;
+    box-sizing: border-box;
+  }
+  .profile_menu_item {
+    width: 100%;
+    height: 32px;
+    cursor: pointer;
+    padding: 0 15px;
+    box-sizing: border-box;
+    color: #888;
+    font-size: 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease-in-out;
+  }
+  .profile_menu_item:hover,
+  .profile_menu_item:active {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+  .header-btns {
+    position: absolute;
+    height: 32px;
+    left: 10px;
+    top: 10px;
+    cursor: pointer;
+  }
 
-.profile_content {
-  position: relative;
-  width: 300px;
-  height: 400px;
-  flex: 1;
-  padding: 15px 0;
-  box-sizing: border-box;
-  border-left: 1px solid rgba(255, 255, 255, 0.4);
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: -1px 0 10px rgba(0, 0, 0, 0.4);
-}
-.profile_content_inner {
-  position: absolute;
-}
-.sex_box {
-  width: 40px;
-  height: 24px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-}
-.sex_item {
-  width: 20px;
-  height: 24px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-}
-.pin {
-  position: absolute;
-  right: 10px;
-  top: 15px;
-  z-index: 2;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  &:hover {
-    svg {
-      fill: #888;
-    }
+  .profile_content {
+    position: relative;
+    width: 300px;
+    height: 400px;
+    flex: 1;
+    padding: 15px 0;
+    box-sizing: border-box;
+    border-left: 1px solid rgba(255, 255, 255, 0.4);
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: -1px 0 10px rgba(0, 0, 0, 0.4);
   }
-  svg {
-    width: 16px;
-    height: 16px;
-    fill: #555;
-    pointer-events: none;
+  .profile_content_inner {
+    position: absolute;
   }
-  &.active {
-    svg {
-      fill: #4fc08d;
-    }
+  .sex_box {
+    width: 40px;
+    height: 24px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .sex_item {
+    width: 20px;
+    height: 24px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+  .pin {
+    position: absolute;
+    right: 10px;
+    top: 15px;
+    z-index: 2;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
     &:hover {
+      svg {
+        fill: #888;
+      }
+    }
+    svg {
+      width: 16px;
+      height: 16px;
+      fill: #555;
+      pointer-events: none;
+    }
+    &.active {
       svg {
         fill: #4fc08d;
       }
+      &:hover {
+        svg {
+          fill: #4fc08d;
+        }
+      }
     }
   }
-}
 </style>

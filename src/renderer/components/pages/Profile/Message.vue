@@ -31,6 +31,8 @@
 <script>
   import { ipcRenderer } from 'electron'
   import { Button } from 'view-design'
+  import { createNamespacedHelpers } from 'vuex'
+  const { mapActions } = createNamespacedHelpers('./store/modules')
   export default {
     name: 'ProfileMessage',
     components: {
@@ -63,12 +65,19 @@
       // ipcRenderer.on('im-accept-friend-response', this.imAcceptFriendResponse)
     },
     methods: {
+      ...mapActions([
+        'moduleIM'
+      ]),
       imGetEventNotificationResponse (event, data) {
         this.message = data
       },
-      acceptFriendRequest (index) {
-        ipcRenderer.send('im-accept-friend', {
+      async acceptFriendRequest (index) {
+        await this.$store.dispatch('moduleIM/acceptFriend', {
           target_name: this.message[Number(index)].from_username
+        }).then(res => {
+          console.log('accept friend: ', res)
+        }).catch(err => {
+          console.log('accept friend error: ', err.message)
         })
       },
       imAcceptFriendResponse (event, data) {

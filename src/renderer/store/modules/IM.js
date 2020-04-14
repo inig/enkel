@@ -36,8 +36,20 @@
  */
 import * as types from '../mutation-types'
 import { ipcRenderer } from 'electron'
+import md5 from 'blueimp-md5'
 import '../../assets/js/jmessage-sdk-web.2.6.0.min.js'
-let IM = null
+let IM = new JMessage({
+  debug: true
+})
+let loginInfo = ipcRenderer.sendSync('init-login-info')
+// function IM_INIT () {
+//   if (!IM.isInit()) {
+//     let imConfig = ipcRenderer.sendSync('im-get-config')
+//     IM.init(imConfig)
+//   }
+// }
+// IM_INIT()
+
 function getFile (file) {
   console.log('>>>>>>>>>>>>>>', file)
   var fd = new FormData();
@@ -53,77 +65,53 @@ const moduleIM = {
   mutations: {
   },
   actions: {
-    imInitCheck () {
+    imInitCheck ({ dispatch }) {
+      return new Promise(async (resolve, reject) => {
+        resolve(IM && IM.isInit())
+      })
+    },
+    doInit () {
       return new Promise((resolve, reject) => {
-        if (!IM || !IM.isInit()) {
-          IM = new JMessage({
-            debug: true
-          })
-          let imConfig = ipcRenderer.sendSync('im-get-config')
-          IM.init(imConfig).onSuccess(data => {
-            resolve(true)
-          }).onFail(data => {
-            reject(data)
-            // reject(new Error('IM初始化失败' + (data.message ? (': ' + data.message) : '')))
-          })
+        let imConfig = ipcRenderer.sendSync('im-get-config')
+        IM.init(imConfig).onSuccess(data => {
+          console.log('~~~~~~~~~2', IM.isInit())
+          resolve(data)
+        }).onFail(data => {
+          console.log('~~~~~~~~~3', IM.isInit())
+          resolve(data)
+        })
+      })
+    },
+    init ({ dispatch }) {
+      return new Promise(async (resolve, reject) => {
+        console.log('~~~~~~~~~1', IM.isInit())
+        if (!IM.isInit()) {
+          // let imConfig = ipcRenderer.sendSync('im-get-config')
+          await dispatch('doInit')
+          resolve(true)
+          console.log('~~~~~~~~~4', IM.isInit())
         } else {
           resolve(true)
         }
       })
     },
-    init ({ dispatch }) {
+    imDoLogin ({ dispatch }, args) {
       return new Promise(async (resolve, reject) => {
-        await dispatch('imInitCheck').then(() => {
+        if (!IM.isInit()) {
+          await dispatch('init')
+        }
+        if (IM.isInit() && !IM.isLogin()) {
+
+          // console.log('>>>>>>>>>>>>>>>', IM.isLogin(), _args)
+          // resolve(data)
+        } else {
           resolve(true)
-        }).catch(err => {
-          reject(err)
-          // reject(new Error(err.message))
-        })
+        }
       })
     },
     imLoginCheck ({ dispatch }, args) {
-      return new Promise(async (resolve, reject) => {
-        await dispatch('imInitCheck').then(async () => {
-          if (IM && IM.isLogin()) {
-            // 已经登录
-            resolve(true)
-          } else {
-            if (args) {
-              IM.login(Object.assign({}, args, {
-                is_md5: true
-              })).onSuccess(data => {
-                // 收到新消息
-                IM.onMsgReceive(data => {
-                  ipcRenderer.send('im-on-msg-receive', data)
-                })
-                // 同步离线消息
-                IM.onSyncConversation(data => {
-                  ipcRenderer.send('im-on-sync-conversation', data)
-                })
-                // 聊天室消息监听
-                IM.onRoomMsg(data => {
-                  ipcRenderer.send('im-on-room-msg', data)
-                })
-                IM.onEventNotification(data => {
-                  ipcRenderer.send('im-on-event-notification', data)
-                })
-                IM.onSyncEvent(data => {
-                  ipcRenderer.send('im-on-sync-event', data)
-                })
-                resolve(true)
-              }).onFail(data => {
-                // console.log('!!!!!!!!!!!!!!!', data)
-                reject(data)
-                // reject(new Error('IM登录失败' + (data.message ? ': ' + data.message : data.message)))
-              })
-            } else {
-              reject('IM登录失败')
-            }
-          }
-        }).catch(err => {
-          reject(err)
-          // reject(new Error('IM登录失败' + (err.message ? ': ' + err.message : err.message)))
-        })
+      return new Promise((resolve, reject) => {
+        resolve(IM && IM.isInit() && IM.isLogin())
       })
     },
     login ({ dispatch }, args) {
@@ -133,36 +121,79 @@ const moduleIM = {
        * is_md5: 密码是否是 MD5 密码，true/false。默认false
        */
       return new Promise(async (resolve, reject) => {
-        let _args = args
-        await dispatch('imLoginCheck', _args).then(async () => {
-          await dispatch('getUserInfo', {
-            username: _args.username
-          }).then(async (res) => {
-            resolve(res)
-          }).catch(err => {
-            reject(err)
-            // reject(new Error('头像更新失败' + (err.message ? (': ' + err.message) : err.message)))
-          })
-        }).catch(async (err) => {
-          if (err.code == 880103) {
-            // 该用户未注册IM
-            await dispatch('register', {
-              username: _args.username,
-              password: _args.password,
-              nickname: _args.username,
-              is_md5: true
-            }).then(async () => {
-              await dispatch('login', _args).then(async (res) => {
-                resolve(res)
-              }).catch(err => {
-                reject(err)
-                // reject(new Error('头像更新失败' + (err.message ? (': ' + err.message) : err.message)))
-              })
-            })
-          } else {
-            reject(new Error(err.message))
+        console.log('$$$$$$$$$$$%%%%%%%', args, IM.isInit(), IM.isLogin())
+        if (!IM.init()) {
+          // 未初始化
+          await dispatch('init')
+        }
+        console.log('...........@@@@@@@', IM.isLogin())
+        if (!IM.isLogin()) {
+          let _args = args
+          if (!_args) {
+            _args = {
+              username: loginInfo.phonenum,
+              password: md5(loginInfo.password)
+            }
           }
-        })
+          console.log('~~~~~~~~~', _args)
+          IM.login(Object.assign({}, _args, {
+            is_md5: true
+          })).onSuccess(data => {
+            // 收到新消息
+            IM.onMsgReceive(data => {
+              ipcRenderer.send('im-on-msg-receive', data)
+            })
+            // 同步离线消息
+            IM.onSyncConversation(data => {
+              ipcRenderer.send('im-on-sync-conversation', data)
+            })
+            // 聊天室消息监听
+            IM.onRoomMsg(data => {
+              ipcRenderer.send('im-on-room-msg', data)
+            })
+            IM.onEventNotification(data => {
+              ipcRenderer.send('im-on-event-notification', data)
+            })
+            IM.onSyncEvent(data => {
+              ipcRenderer.send('im-on-sync-event', data)
+            })
+            resolve(data)
+          }).onFail(data => {
+            console.log('%%%%%%%%%%%%%%%%%33333333', data)
+            reject(data)
+            // reject(new Error('IM登录失败' + (data.message ? ': ' + data.message : data.message)))
+          })
+        }
+        // let _args = args
+        // await dispatch('imDoLogin', _args).then(async () => {
+        //   await dispatch('getUserInfo', {
+        //     username: _args.username
+        //   }).then(async (res) => {
+        //     resolve(res)
+        //   }).catch(err => {
+        //     reject(err)
+        //     // reject(new Error('头像更新失败' + (err.message ? (': ' + err.message) : err.message)))
+        //   })
+        // }).catch(async (err) => {
+        //   if (err.code == 880103) {
+        //     // 该用户未注册IM
+        //     await dispatch('register', {
+        //       username: _args.username,
+        //       password: _args.password,
+        //       nickname: _args.username,
+        //       is_md5: true
+        //     }).then(async () => {
+        //       await dispatch('login', _args).then(async (res) => {
+        //         resolve(res)
+        //       }).catch(err => {
+        //         reject(err)
+        //         // reject(new Error('头像更新失败' + (err.message ? (': ' + err.message) : err.message)))
+        //       })
+        //     })
+        //   } else {
+        //     reject(new Error(err.message))
+        //   }
+        // })
       })
     },
     loginOut ({ state }) {
@@ -328,7 +359,7 @@ const moduleIM = {
         })
       })
     },
-    updateSelfPwd ({ state }, args) {
+    updateSelfPwd ({ dispatch }, args) {
       /**
        * old_pwd: 旧的密码
        * new_pwd: 新的密码
@@ -342,14 +373,14 @@ const moduleIM = {
         })
       })
     },
-    onEventNotification ({ state }) {
+    onEventNotification ({ dispatch }) {
       return new Promise(resolve => {
         IM.onEventNotification(data => {
           resolve(data)
         })
       })
     },
-    onSyncEvent ({ state }) {
+    onSyncEvent ({ dispatch }) {
       return new Promise(resolve => {
         IM.onSyncEvent(data => {
           resolve(data)
@@ -357,110 +388,152 @@ const moduleIM = {
       })
     },
     /** 群组相关 */
-    createGroup ({ state }, args) {
+    createGroup ({ dispatch }, args) {
       /**
        * group_name: 群组名
        * group_description: 群组描述
        * avatar: 群头像图片的 DataForm 对象
        * is_limit: 是否是公开群,默认 false
        */
-      return new Promise((resolve, reject) => {
-        IM.createGroup(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.createGroup(args).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
-    getGroups ({ state }) {
-      return new Promise((resolve, reject) => {
-        IM.getGroups().onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+    getGroups ({ dispatch }) {
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.getGroups().onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
     /** 群组相关 */
     /** 好友相关 */
-    getFriendList ({ state }) {
+    getFriendList ({ dispatch }) {
       /**
        * 好友列表
        */
-      return new Promise((resolve, reject) => {
-        IM.getFriendList().onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          console.log('AAAAAAAAAAAAA')
+          IM.getFriendList().onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          console.log('############', err)
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
-    addFriend ({ state }, args) {
+    addFriend ({ dispatch }, args) {
       /**
        * 添加好友
        * target_name: 目标 username
        * why: 邀请说明
        */
-      return new Promise((resolve, reject) => {
-        IM.addFriend(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.addFriend(args).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
-    acceptFriend ({ state }, args) {
+    acceptFriend ({ dispatch }, args) {
       /**
        * 同意好友请求
        * target_name: 目标 username
        */
-      return new Promise((resolve, reject) => {
-        IM.acceptFriend(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.acceptFriend(args).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
-    declineFriend ({ state }, args) {
+    declineFriend ({ dispatch }, args) {
       /**
        * 拒绝好友请求
        * target_name: 目标 username
        * why: 拒绝理由
        */
-      return new Promise((resolve, reject) => {
-        IM.declineFriend(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.declineFriend(args).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
-    delFriend ({ state }, args) {
+    delFriend ({ dispatch }, args) {
       /**
        * 删除好友
        * target_name: 目标 username
        */
-      return new Promise((resolve, reject) => {
-        IM.delFriend(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.delFriend(args).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },
-    updateFriendMemo ({ state }, args) {
+    updateFriendMemo ({ dispatch }, args) {
       /**
        * 更新好友备注
        * target_name: 目标 username
        * memo_name: 名称备注
        * memo_others: 其他备注
        */
-      return new Promise((resolve, reject) => {
-        IM.updateFriendMemo(args).onSuccess(data => {
-          resolve(data)
-        }).onFail(data => {
-          reject(data)
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.updateFriendMemo(args).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
         })
       })
     },

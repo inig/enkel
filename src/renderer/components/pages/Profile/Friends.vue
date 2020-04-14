@@ -2,7 +2,8 @@
   <div class="container">
     <div class="friend_item"
          v-for="(item, index) in friends"
-         :key="item.uid">
+         :key="item.uid"
+         @contextmenu="showContextMenu(item)">
       <div class="friend_item_left">
         <Avatar size="34"
                 shape="square"
@@ -31,7 +32,10 @@
 
 <script>
   import { Button, Avatar } from 'view-design'
-  import { ipcRenderer } from 'electron'
+  import { ipcRenderer, remote } from 'electron'
+  import { createNamespacedHelpers } from 'vuex'
+  const { mapActions } = createNamespacedHelpers('./store/modules')
+  const { Menu, MenuItem } = remote
   export default {
     name: 'ProfileFriends',
     components: {
@@ -46,14 +50,31 @@
         }
       }
     },
-    mounted () {
+    async mounted () {
       // ipcRenderer.on('im-get-friend-list-response', this.imGetFriendListResponse)
       // ipcRenderer.on('im-add-friend-response', this.imGetFriendListResponse)
-      // this.imGetFriendList()
+      this.$nextTick(async () => {
+        await this.imGetFriendList()
+      })
     },
     methods: {
-      imGetFriendList () {
-        ipcRenderer.send('im-get-friend-list')
+      ...mapActions([
+        'moduleIM'
+      ]),
+      async imGetFriendList () {
+        // ipcRenderer.send('im-get-friend-list')
+        console.log('========0000======')
+        await this.$store.dispatch('moduleIM/getFriendList').then(res => {
+          console.log('==============', res)
+          if (res.code == 0) {
+            this.friends = res.friend_list
+          } else {
+            this.friends = []
+          }
+        }).catch(err => {
+          console.log('>>>>>>>error', err)
+          this.friends = []
+        })
       },
       imGetFriendListResponse (event, data) {
         alert(JSON.stringify(data, null, 2))
@@ -70,6 +91,17 @@
           why: '添加理由: ' + Math.floor(Math.random() * 100)
         }
         ipcRenderer.send('im-add-friend', this.addFriendData)
+      },
+      showContextMenu (item) {
+        const menu = new Menu()
+        menu.append(new MenuItem({
+          label: '删除好友',
+          // icon: path.resolve(__dirname, '../../../../assets/add.png'),
+          click: () => {
+            alert('删除好友：' + JSON.stringify(item, null, 2))
+          }
+        }))
+        menu.popup({ window: remote.getCurrentWindow() })
       }
     }
   }

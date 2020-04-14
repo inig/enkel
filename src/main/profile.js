@@ -18,7 +18,7 @@ export function createProfileWindowHandler () {
       show: true,
       transparent: true,
       alwaysOnTop: true,
-      resizable: false,
+      // resizable: false,
       backgroundColor: '#00ffffff',
       frame: false,
       webPreferences: {
