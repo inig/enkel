@@ -369,6 +369,8 @@ export default {
     },
     async acceptFriendHandler (data) {
       let _data = JSON.parse(JSON.stringify(data))
+      _data.username = _data.from_username
+      _data.nickname = _data.from_nickname
       _data.avatar = await this.getResource(data.media_id)
       this.friends.unshift(_data)
     },
@@ -383,6 +385,9 @@ export default {
             // 同意添加好友
             this.acceptFriendHandler(data)
           }
+          break
+        case 6:
+          // 被 好友删除
           break
         default:
           break
