@@ -42,6 +42,7 @@
 
 <style lang="less">
   // @import url("/static/css/ace/themes/theme-tomorrow-night.css");
+  @import url("/static/css/animate.min.css");
   html,
   body {
     background: rgba(0, 0, 0, 0);

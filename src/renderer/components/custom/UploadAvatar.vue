@@ -114,12 +114,15 @@
     },
     methods: {
       beforeUpload (file) {
+        this.$Message.loading({
+          content: '头像上传中...',
+          duration: 0
+        })
         this.cachedFile = file
         return true
       },
       uploadSuccess (event, file, fileList) {
-        let fd = this.$createFileFormData(this.cachedFile)
-        console.log('=========', fd)
+        // let fd = this.$createFileFormData(this.cachedFile)
         // ipcRenderer.send('im-update-self-avatar', {
         //   file: fd
         // })

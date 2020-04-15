@@ -24,7 +24,8 @@ export function getIMConfig () {
     appkey: APP_KEY,
     random_str: rs,
     timestamp: ts,
-    signature: getSignature(ts, rs)
+    signature: getSignature(ts, rs),
+    flag: 1
   }
 }
 
@@ -210,18 +211,18 @@ ipcMain.on('im-get-groups-response', (event, args) => imGetGroupsResponseHandler
 ipcMain.on('im-on-msg-receive', (event, msg) => {
   BrowserWindow.getAllWindows().forEach(item => {
     // 广播 消息
-    if (item.webContents !== event.sender) {
-      item.webContents.send('im-on-msg-receive', msg)
-    }
+    // if (item.webContents !== event.sender) {
+    item.webContents.send('im-on-msg-receive', msg)
+    // }
   })
 })
 
 ipcMain.on('im-on-sync-conversation', (event, msg) => {
   BrowserWindow.getAllWindows().forEach(item => {
     // 离线消息同步监听
-    if (item.webContents !== event.sender) {
-      item.webContents.send('im-on-sync-conversation', msg)
-    }
+    // if (item.webContents !== event.sender) {
+    item.webContents.send('im-on-sync-conversation', msg)
+    // }
   })
 })
 
