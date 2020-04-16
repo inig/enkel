@@ -94,6 +94,12 @@
         default () {
           return []
         }
+      },
+      query: {
+        type: Object,
+        default () {
+          return {}
+        }
       }
     },
     data () {
@@ -134,11 +140,27 @@
     mounted () {
       // ipcRenderer.on('im-on-msg-receive', this.imOnMsgReceive)
       // ipcRenderer.on('im-on-sync-conversation', this.imOnSyncConversation)
+      this.$nextTick(() => {
+        if (this.query.hasOwnProperty('friend')) {
+          let _friend = this.findFriend(this.query.friend)
+          if (_friend) {
+            this.showChatWindow(_friend)
+          }
+        }
+      })
     },
     methods: {
       ...mapActions([
         'moduleIM'
       ]),
+      findFriend (username) {
+        let _f = this.cachedFriends.filter(item => item.username == username)
+        if (_f.length) {
+          return _f[0]
+        } else {
+          return null
+        }
+      },
       getMsgsByUsername (username) {
         let targetItemIndex = -1
         this.conversations.some((item, index) => {

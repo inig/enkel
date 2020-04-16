@@ -137,6 +137,10 @@ const moduleIM = {
             IM.onMsgReceive(data => {
               ipcRenderer.send('im-on-msg-receive', data)
             })
+            IM.onSyncMsgReceipt(data => {
+              console.log('onSyncMsgReceipt: ', data)
+              ipcRenderer.send('im-on-sync-msg-receipt', data)
+            })
             // 同步离线消息
             IM.onSyncConversation(data => {
               ipcRenderer.send('im-on-sync-conversation', data)
@@ -256,7 +260,8 @@ const moduleIM = {
             // reject(new Error('未找到资源' + (data.message ? ': ' + data.message : data.message)))
           })
         } else {
-          reject(new Error('未找到资源'))
+          resolve(true)
+          // reject(new Error('未找到资源'))
         }
       })
     },

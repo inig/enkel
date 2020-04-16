@@ -198,6 +198,7 @@
           <ProfileFriends :friends="friends"
                           :user-info="cachedLoginInfo"
                           :conversations="conversations"
+                          :query="query"
                           v-if="activeMenuIndex === 2"></ProfileFriends>
         </transition>
         <transition name="profile-content-inner-2-transition"
@@ -225,7 +226,7 @@
 <script>
   import md5 from 'blueimp-md5'
   import { Avatar, CellGroup, Cell, Input, DatePicker, Tooltip, Icon, Button } from 'view-design'
-  import { ipcRenderer } from 'electron'
+  import { ipcRenderer, remote } from 'electron'
   import { createNamespacedHelpers } from 'vuex'
   const { mapActions } = createNamespacedHelpers('./store/modules')
   export default {
@@ -304,6 +305,7 @@
       await this.initLoginInfo()
       this.setAlwaysOnTop()
       ipcRenderer.on('change-query', (event, params) => {
+        this.query = params
         console.log('change-query', params)
         this.activeMenuIndex = 0
         setTimeout(() => {
@@ -345,6 +347,17 @@
           })
           if (targetItemIndex > -1) {
             this.conversations[targetItemIndex].msgs.push(message)
+          }
+          let win = remote.getCurrentWindow()
+          if (!win.isVisible()) {
+            // 当前窗口不可见
+            if (message.from_username !== this.cachedLoginInfo.phonenum) {
+              ipcRenderer.send('notification', {
+                title: '新消息',
+                body: `${message.from_username}: ${message.content.msg_body.text}`,
+                redirect: 'https://dei2.com?p=profile&target=friend&friend=' + message.from_username
+              })
+            }
           }
         } else if (message.msg_type == 4) {
           // 群消息
