@@ -7,8 +7,8 @@
         <Avatar size="34"
                 shape="square"
                 style="background-color: #fff;"
-                :src="friendInfo.headIcon"
-                v-if="friendInfo.headIcon"></Avatar>
+                :src="memberInfo.headIcon"
+                v-if="memberInfo.headIcon"></Avatar>
         <Avatar size="34"
                 shape="square"
                 icon="ios-person"
@@ -18,7 +18,7 @@
       <div class="msg_box_left_content">
         <div class="msg_box_left_content_time">
           <span style="color: #888; margin-right: 10px;"
-                v-if="friendInfo.memo_name || friendInfo.nickname">{{friendInfo.memo_name || friendInfo.nickname}}</span>
+                v-if="info.content.from_name">{{info.content.from_name}}</span>
           {{info.ctime_ms | msgTimeFilter}}</div>
         <div class="msg_box_left_content_box"
              :style="[leftTheme]"
@@ -64,7 +64,7 @@
 <script>
 import { Avatar } from 'view-design'
 export default {
-  name: 'ChatWindowMsgBox',
+  name: 'ChatWindowGroupMsgBox',
   components: {
     Avatar
   },
@@ -75,13 +75,13 @@ export default {
         return {}
       }
     },
-    friendInfo: {
+    userInfo: {
       type: Object,
       default () {
         return {}
       }
     },
-    userInfo: {
+    memberInfo: {
       type: Object,
       default () {
         return {}

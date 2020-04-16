@@ -7,18 +7,18 @@
               style="pointer-events: none;"
               size="20" />
       </div>
-      {{friendInfo.memo_name || friendInfo.nickname || friendInfo.username}}
+      {{info.name}}
     </div>
     <div class="chat_window_content">
       <div class="chat_window_content_wrapper"
            ref="chatWindowContentRef">
-        <MsgBox v-for="(item, index) in messages"
-                :key="item.msg_id"
-                style="margin-top: 20px;"
-                :user-info="userInfo"
-                :friend-info="friendInfo"
-                :ref="'msgBoxRef-' + index"
-                :info="item"></MsgBox>
+        <GroupMsgBox v-for="(item, index) in messages"
+                     :key="item.msg_id"
+                     style="margin-top: 20px;"
+                     :user-info="userInfo"
+                     :member-info="membersInfo[item.content.from_id]"
+                     :ref="'msgBoxRef-' + index"
+                     :info="item"></GroupMsgBox>
       </div>
     </div>
     <div class="chat_window_footer">
@@ -43,25 +43,19 @@
 <script>
 import { ipcRenderer } from 'electron'
 import { Icon, Input, Button } from 'view-design'
-import MsgBox from './MsgBox'
+import GroupMsgBox from './GroupMsgBox'
 import { createNamespacedHelpers } from 'vuex'
 const { mapActions } = createNamespacedHelpers('./store/modules')
 require('../../../assets/js/scrollTo.js')
 
 export default {
-  name: 'ProfileChatWindow',
+  name: 'ProfileGroupChatWindow',
   components: {
     Icon, Input, Button,
-    MsgBox
+    GroupMsgBox
   },
   props: {
     info: {
-      type: [Object, Array],
-      default () {
-        return []
-      }
-    },
-    friendInfo: {
       type: Object,
       default () {
         return {}
@@ -72,6 +66,12 @@ export default {
       default () {
         return {}
       }
+    },
+    msgs: {
+      types: Array,
+      default () {
+        return []
+      }
     }
   },
   data () {
@@ -81,14 +81,17 @@ export default {
       sendData: {
         type: 'text',
         content: ''
-      }
+      },
+      members: [],
+      membersInfo: {}
     }
   },
-  mounted () {
-    ipcRenderer.on('im-on-msg-receive', this.imOnMsgReceive)
+  async mounted () {
+    // ipcRenderer.on('im-on-msg-receive', this.imOnMsgReceive)
     this.$nextTick(() => {
       this.scrollToEnd()
     })
+    await this.imGetGroupMembers()
   },
   methods: {
     ...mapActions([
@@ -96,6 +99,40 @@ export default {
     ]),
     hide () {
       this.$emit('hide')
+    },
+    getResource (id) {
+      return new Promise(async (resolve) => {
+        let resourceResponse = await this.$store.dispatch('moduleIM/getResourceUrl', {
+          id: id
+        })
+        if (resourceResponse.code === 0) {
+          resolve(resourceResponse.url)
+        } else {
+          resolve('')
+        }
+      })
+    },
+    async imGetGroupMembers () {
+      await this.$store.dispatch('moduleIM/getGroupMembers', {
+        gid: this.info.gid
+      }).then(async (res) => {
+        if (res.code == 0) {
+          let arr = JSON.parse(JSON.stringify(res.member_list))
+          let membersInfo = {}
+          for (let i = 0; i < arr.length; i++) {
+            arr[i].headIcon = await this.getResource(arr[i].avatar)
+            if (!membersInfo.hasOwnProperty(arr[i].username)) {
+              membersInfo[arr[i].username] = arr[i]
+            }
+          }
+          this.members = arr
+          this.membersInfo = membersInfo
+        } else {
+          this.members = []
+        }
+      }).catch(err => {
+        this.members = []
+      })
     },
     imOnMsgReceive (event, data) {
       let message = data.messages[0]
@@ -125,17 +162,18 @@ export default {
       }, 300)
     },
     async send () {
-      await this.$store.dispatch('moduleIM/sendSingleMsg', {
-        target_username: this.friendInfo.username,
-        target_nickname: this.friendInfo.nickname,
+      await this.$store.dispatch('moduleIM/sendGroupMsg', {
+        target_gid: this.info.gid,
         content: this.sendData.content.replace(/[\r\n]/g, "\\n")
       }).then(res => {
+        console.log('send >>>>>', res)
         if (res.code == 0) {
           this.messages.push({
             content: {
               create_time: res.ctime_ms,
-              from_appkey: res.appkey,
+              from_appkey: '',
               from_id: this.userInfo.username,
+              from_name: this.userInfo.nickname,
               from_platform: 'web',
               from_type: 'user',
               msg_body: {
@@ -144,7 +182,9 @@ export default {
               },
               msg_type: 'text',
               sui_mtime: 0,
-              target_type: 'single',
+              target_type: 'group',
+              target_name: this.info.name,
+              target_id: this.info.gid,
               version: 1
             },
             custom_notification: {
@@ -156,7 +196,7 @@ export default {
             ctime_ms: new Date().getTime(),
             msg_id: res.msg_id,
             msg_level: 0,
-            msg_type: 3,
+            msg_type: 4,
             need_receipt: false
           })
           this.sendData.content = ''
@@ -168,7 +208,7 @@ export default {
     }
   },
   watch: {
-    info: {
+    msgs: {
       deep: true,
       immediate: true,
       handler (val) {

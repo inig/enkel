@@ -136,6 +136,31 @@ export default {
         return (hour < 10 ? '0' + hour : hour) + ':' + (minute < 10 ? '0' + minute : minute) + ':' + (second < 10 ? '0' + second : second)
       }
     },
+    $msgTimeFilter (ts, format = 'YYYY-MM-DD hh:mm:ss') {
+      let nowYear = (new Date()).getFullYear()
+      let time = (new Date(ts))
+      let year = time.getFullYear()
+      let month = time.getMonth() + 1
+      month = (month < 10 ? ('0' + month) : month)
+      let date = time.getDate()
+      date = (date < 10 ? ('0' + date) : date)
+      let hour = time.getHours()
+      hour = (hour < 10 ? ('0' + hour) : hour)
+      let minute = time.getMinutes()
+      minute = (minute < 10 ? ('0' + minute) : minute)
+      let second = time.getSeconds()
+      second = (second < 10 ? ('0' + second) : second)
+      let _format = format
+      if (nowYear == year) {
+        _format = _format.replace(/(YYYY.)/, '')
+      }
+      return _format.replace('YYYY', year)
+        .replace('MM', month)
+        .replace('DD', date)
+        .replace('hh', hour)
+        .replace('mm', minute)
+        .replace('ss', second)
+    },
     $initLoginInfo () {
       let loginInfo = ipcRenderer.sendSync('init-login-info')
       return loginInfo

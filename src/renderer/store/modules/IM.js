@@ -240,12 +240,13 @@ const moduleIM = {
        */
       return new Promise((resolve, reject) => {
         IM.sendSingleMsg(args).onSuccess(data => {
+          console.log('success>>>>>>>>', data)
           resolve(data)
         }).onFail(data => {
+          console.log('fail>>>>>>>', data)
           reject(data)
         }).onTimeout(data => {
-          reject(data)
-        }).onAck(data => {
+          console.log('timeout>>>>>>>', data)
           reject(data)
         })
       })
@@ -413,6 +414,57 @@ const moduleIM = {
       return new Promise(async (resolve, reject) => {
         await dispatch('imLoginCheck').then(() => {
           IM.getGroups().onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
+        })
+      })
+    },
+    sendGroupMsg ({ dispatch }, args) {
+      /**
+       * 发送群消息
+       * target_gid: 群id
+       * content: 文本
+       */
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.sendGroupMsg(args).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
+        })
+      })
+    },
+    getConversation ({ dispatch }) {
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.getConversation().onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
+        })
+      })
+    },
+    getGroupMembers ({ dispatch }, args) {
+      /**
+       * 获取群成员
+       * gid: 群id
+       */
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.getGroupMembers(args).onSuccess(data => {
             resolve(data)
           }).onFail(data => {
             reject(data)
