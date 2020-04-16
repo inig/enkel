@@ -7,8 +7,8 @@
         <Avatar size="34"
                 shape="square"
                 style="background-color: #fff;"
-                :src="item.avatar"
-                v-if="item.avatar"></Avatar>
+                :src="item.headIcon"
+                v-if="item.headIcon"></Avatar>
         <Avatar size="34"
                 shape="square"
                 icon="ios-person"
@@ -150,6 +150,9 @@
     width: 100%;
     height: 100%;
     overflow-y: auto;
+    position: relative;
+    padding: 15px 0;
+    box-sizing: border-box;
     .item {
       width: 100%;
       height: 64px;

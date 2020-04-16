@@ -146,10 +146,10 @@ const moduleIM = {
               ipcRenderer.send('im-on-room-msg', data)
             })
             IM.onEventNotification(data => {
-              console.log('onEventNotification', data)
               ipcRenderer.send('im-on-event-notification', data)
             })
             IM.onSyncEvent(data => {
+              console.log('________onSyncEvent: ', data)
               ipcRenderer.send('im-on-sync-event', data)
             })
             resolve(data)
@@ -213,7 +213,8 @@ const moduleIM = {
       return new Promise(async (resolve, reject) => {
         await dispatch('imInitCheck').then(async () => {
           IM.register(Object.assign({}, args, {
-            is_md5: true
+            is_md5: true,
+            password: md5(args.password)
           })).onSuccess(data => {
             resolve(data)
           }).onFail(data => {
