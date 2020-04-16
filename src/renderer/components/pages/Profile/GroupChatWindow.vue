@@ -87,7 +87,7 @@ export default {
     }
   },
   async mounted () {
-    // ipcRenderer.on('im-on-msg-receive', this.imOnMsgReceive)
+    ipcRenderer.on('im-on-msg-receive', this.imOnMsgReceive)
     this.$nextTick(() => {
       this.scrollToEnd()
     })
@@ -136,7 +136,7 @@ export default {
     },
     imOnMsgReceive (event, data) {
       let message = data.messages[0]
-      if (message.msg_type == 3) {
+      if (message.msg_type == 4) {
         this.scrollToEnd()
       }
     },

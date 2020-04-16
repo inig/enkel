@@ -347,7 +347,7 @@ export default {
         // 单聊消息
         let targetItemIndex = -1
         this.conversations.some((item, index) => {
-          if (item.from_username === message.from_username) {
+          if (item.from_username == message.from_username) {
             targetItemIndex = index
           }
         })
@@ -357,7 +357,7 @@ export default {
         let win = remote.getCurrentWindow()
         if (!win.isVisible()) {
           // 当前窗口不可见
-          if (message.from_username !== this.cachedLoginInfo.phonenum) {
+          if (message.from_username != this.cachedLoginInfo.phonenum) {
             ipcRenderer.send('notification', {
               title: '新消息',
               body: `${message.from_username}: ${message.content.msg_body.text.replace(/\\n/g, ' ')}`,
@@ -369,7 +369,7 @@ export default {
         // 群消息
         let targetGroupItemIndex = -1
         this.groupConversations.some((item, index) => {
-          if (item.from_gid === message.from_gid) {
+          if (item.from_gid == message.from_gid) {
             targetGroupItemIndex = index
           }
         })
