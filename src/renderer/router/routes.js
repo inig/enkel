@@ -186,10 +186,10 @@ export const mediaRouter = {
       path: '/pray',
       name: 'pray',
       meta: {
-        label: 'Enkel半仙',
-        title: 'Enkel半仙',
+        label: 'Enkel调查',
+        title: 'Enkel调查',
         icon: '#route-pray',
-        name: 'Enkel半仙',
+        name: 'Enkel调查',
         desc: '过精致的生活，听无损的音乐',
         createTime: '1582793691589',
         hot: false,

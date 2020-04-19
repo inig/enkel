@@ -284,3 +284,9 @@ ipcMain.on('im-get-event-notification-response', (event, args) => {
     }
   })
 })
+
+ipcMain.on('send-group-custom-msg', (event, args) => {
+  BrowserWindow.getAllWindows().forEach(item => {
+    item.webContents.send('send-group-custom-msg', args)
+  })
+})

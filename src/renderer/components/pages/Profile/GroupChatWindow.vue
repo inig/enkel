@@ -7,12 +7,12 @@
               style="pointer-events: none;"
               size="20" />
       </div>
-      {{info.name}}
+      <div class="chat_window_header_title">{{info.name}}</div>
     </div>
     <div class="chat_window_content">
       <div class="chat_window_content_wrapper"
            ref="chatWindowContentRef">
-        <GroupMsgBox v-for="(item, index) in messages"
+        <GroupMsgBox v-for="(item, index) in renderMessages"
                      :key="item.msg_id"
                      style="margin-top: 20px;"
                      :user-info="userInfo"
@@ -20,6 +20,11 @@
                      :ref="'msgBoxRef-' + index"
                      :info="item"></GroupMsgBox>
       </div>
+      <transition name="fade">
+        <div class="chat_window_mask"
+             v-if="operationShown"
+             @click="hideOperation"></div>
+      </transition>
     </div>
     <div class="chat_window_footer">
       <div class="msg_send_input">
@@ -27,15 +32,43 @@
                type="textarea"
                style="width: 100%;"
                :autosize="{minRows: 1, maxRows: 4}"
-               v-model="sendData.content"></Input>
+               v-model="sendData.content"
+               @on-focus="hideOperation"></Input>
       </div>
       <transition name="send-btn-transition"
                   enter-active-class="animated fadeIn"
                   leave-active-class="animated fadeOut faster">
-        <Button type="success"
-                v-if="sendData.content"
-                @click="send">发送</Button>
+        <div class="msg_send_operation"
+             v-if="sendData.content">
+          <Button type="success"
+                  @click="send">发送</Button>
+        </div>
       </transition>
+
+      <transition name="send-btn-transition"
+                  enter-active-class="animated fadeIn"
+                  leave-active-class="animated fadeOut faster">
+        <div class="msg_send_operation"
+             v-if="!sendData.content">
+          <Button type="primary"
+                  shape="circle"
+                  icon="md-add"
+                  @click="toggleOperation"></Button>
+        </div>
+      </transition>
+    </div>
+    <div class="chat_window_operation"
+         :style="{minHeight: operationShown ? '180px' : '0px', height: operationShown ? '180px' : '0px'}">
+      <div class="chat_window_operation_wrapper">
+        <component v-for="(item, index) in customItems"
+                   :key="index"
+                   :is="'custom-item-' + item.name"
+                   :icon="item.icon"
+                   :text="item.text"
+                   :user-info="userInfo"
+                   @click="sendCustom"
+                   type="group"></component>
+      </div>
     </div>
   </div>
 </template>
@@ -52,7 +85,9 @@ export default {
   name: 'ProfileGroupChatWindow',
   components: {
     Icon, Input, Button,
-    GroupMsgBox
+    GroupMsgBox,
+    CustomItem: () => import('./items/index'),
+    CustomItemSurvey: () => import('./items/Survey')
   },
   props: {
     info: {
@@ -83,7 +118,20 @@ export default {
         content: ''
       },
       members: [],
-      membersInfo: {}
+      membersInfo: {},
+      operationShown: false,
+      customItems: [
+        {
+          name: 'survey',
+          icon: 'survey',
+          text: '调查'
+        }
+      ]
+    }
+  },
+  computed: {
+    renderMessages () {
+      return this.messages // .filter(item => !item.content.msg_body.hasOwnProperty('answer'))
     }
   },
   async mounted () {
@@ -99,6 +147,12 @@ export default {
     ]),
     hide () {
       this.$emit('hide')
+    },
+    toggleOperation () {
+      this.operationShown = !this.operationShown
+    },
+    hideOperation () {
+      this.operationShown = false
     },
     getResource (id) {
       return new Promise(async (resolve) => {
@@ -142,10 +196,10 @@ export default {
     },
     scrollToEnd () {
       let scrollToEndTimeout = setTimeout(() => {
-        let targetRef = this.$refs['msgBoxRef-' + (this.messages.length - 1)][0].$el
+        let targetRef = this.$refs['msgBoxRef-' + (this.renderMessages.length - 1)][0].$el
         this.initScroller(targetRef)
         clearTimeout(scrollToEndTimeout)
-      }, 20)
+      }, 80)
     },
     initScroller (scrollTo) {
       if (this.scrollerTimeout) {
@@ -153,10 +207,9 @@ export default {
       }
       this.scrollerTimeout = setTimeout(() => {
         animateScrollTo(scrollTo, {
-          elementToScroll: document.querySelector('.chat_window_content'),
+          elementToScroll: document.querySelector('.chat_window_content_wrapper'),
           minDuration: 400
         }).then(res => {
-          console.log('+++++++', res)
           clearTimeout(this.scrollerTimeout)
         })
       }, 300)
@@ -166,7 +219,6 @@ export default {
         target_gid: this.info.gid,
         content: this.sendData.content.replace(/[\r\n]/g, "\\n")
       }).then(res => {
-        console.log('send >>>>>', res)
         if (res.code == 0) {
           this.messages.push({
             content: {
@@ -205,6 +257,50 @@ export default {
       }).catch(err => {
         console.log('发送消息失败：', err)
       })
+    },
+    async sendCustom (data) {
+      this.hideOperation()
+      await this.$store.dispatch('moduleIM/sendGroupCustom', {
+        target_gid: this.info.gid,
+        target_gname: this.info.name,
+        custom: data
+      }).then(res => {
+        if (res.data.code == 0) {
+          this.messages.push(res.msg)
+          // this.messages.push({
+          //   content: {
+          //     create_time: res.ctime_ms,
+          //     from_appkey: '',
+          //     from_id: this.userInfo.username,
+          //     from_name: this.userInfo.nickname,
+          //     from_platform: 'web',
+          //     from_type: 'user',
+          //     msg_body: data,
+          //     msg_type: 'custom',
+          //     sui_mtime: 0,
+          //     target_type: 'group',
+          //     target_name: this.info.name,
+          //     target_id: this.info.gid,
+          //     version: 1
+          //   },
+          //   custom_notification: {
+          //     alert: '',
+          //     at_prefix: '',
+          //     enabled: false,
+          //     title: ''
+          //   },
+          //   ctime_ms: new Date().getTime(),
+          //   msg_id: res.msg_id,
+          //   msg_level: 0,
+          //   msg_type: 4,
+          //   need_receipt: false
+          // })
+          this.sendData.content = ''
+          this.scrollToEnd()
+        }
+      }).catch(err => {
+        console.log('自定义消息发送失败：', err)
+      })
     }
   },
   watch: {
@@ -213,6 +309,7 @@ export default {
       immediate: true,
       handler (val) {
         this.messages = val
+        this.scrollToEnd()
       }
     }
   }
@@ -227,6 +324,7 @@ export default {
   top: 0;
   width: 100%;
   height: 100%;
+  overflow: hidden;
   background-color: #fff;
   display: flex;
   flex-direction: column;
@@ -262,18 +360,34 @@ export default {
         opacity: 0.7;
       }
     }
+    &_title {
+      height: 48px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
   }
   &_content {
+    position: relative;
     width: 100%;
-    // height: calc(~"100% - 40px - 48px");
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 15px;
-    box-sizing: border-box;
+    height: calc(~"100% - 48px - 48px");
+    // flex: 1;
+    // overflow-y: auto;
+
+    &_wrapper {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding-bottom: 15px;
+      box-sizing: border-box;
+    }
   }
   &_footer {
+    position: relative;
     width: 100%;
     min-height: 48px;
+    z-index: 1;
     background-color: #f8f8f8;
     padding: 8px 10px;
     box-sizing: border-box;
@@ -281,12 +395,47 @@ export default {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    border-top: 1px solid #eee;
+    box-shadow: 0 -1px 20px 1px #eee;
     .msg_send_input {
       text-align: left;
-      width: 100%;
-      padding: 0 10px 0 0;
+      width: calc(~"100% - 60px");
+      padding: 0;
       box-sizing: border-box;
     }
+    .msg_send_operation {
+      position: absolute;
+      right: 10px;
+      top: 0;
+      width: 60px;
+      height: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  &_operation {
+    width: 100%;
+    background-color: #f5f5f5;
+    transition: all 0.2s ease-in-out;
+    &_wrapper {
+      width: 100%;
+      height: 100%;
+      padding: 10px 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+  }
+  &_mask {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0);
   }
 }
 </style>

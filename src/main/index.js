@@ -190,20 +190,38 @@ async function cookieChanged (changedCookie, loginBeforeOption, win, redirectUrl
   }
 }
 
-async function createNewWindow (arg) {
+async function createNewWindow (arg, extraData) {
   let extraOptions = {}
   if (arg.id) {
     let targetWindows = BrowserWindow.getAllWindows().filter(item => (item.webContents.browserWindowOptions.id == arg.id))
     if (targetWindows.length > 0) {
       // 已经存在
-      targetWindows[0].setAlwaysOnTop(true)
+      // targetWindows[0].setAlwaysOnTop(true)
+      targetWindows[0].show()
       return
     } else {
       extraOptions.id = arg.id
     }
   }
+  if (extraData && extraData.content && extraData.content.msg_body) {
+    if (extraData.content.msg_body.id) {
+      let id = extraData.content.msg_body.id
+      let targetWindows = BrowserWindow.getAllWindows().filter(item => (item.webContents.browserWindowOptions.id == id))
+      if (targetWindows.length > 0) {
+        // 已经存在
+        targetWindows[0].show()
+        return
+      } else {
+        extraOptions.id = id
+      }
+    }
 
-  let newWindow = new BrowserWindow(Object.assign({
+    if (extraData.content.msg_body.windowOption) {
+      extraOptions = Object.assign({}, extraOptions, extraData.content.msg_body.windowOption)
+    }
+  }
+
+  let windowCreateOption = Object.assign({
     height: 563,
     // useContentSize: true,
     width: 1000,
@@ -217,7 +235,9 @@ async function createNewWindow (arg) {
       // preload: (arg.resources && arg.resources.js && (arg.resources.js.length > 0)) ? path.join(__dirname, `../renderer/assets/preload/js/${arg.resources.js[0]}`) : ''
       // preload: path.join(__dirname, '../renderer/index.js') // 但预加载的 js 文件内仍可以使用 Nodejs 的 API
     }
-  }, arg.windowOption, extraOptions))
+  }, arg.windowOption, extraOptions)
+
+  let newWindow = new BrowserWindow(windowCreateOption)
 
   let url = process.env.NODE_ENV === 'development'
     ? `http://localhost:9080/#/${arg.path}`
@@ -269,6 +289,10 @@ async function createNewWindow (arg) {
 
   newWindow.once('ready-to-show', () => {
     newWindow.show()
+
+    if (extraData) {
+      newWindow.webContents.send('init-data', extraData)
+    }
   })
 }
 
@@ -603,7 +627,7 @@ function getParamStr (url) {
   return outStr.join('&')
 }
 
-function openUrlHandler (event, url, autoOpen = true) {
+function openUrlHandler (event, url, extraData, autoOpen = true) {
   let params = getParamsFromUrl(url)
   let pagePath = params.p || params.page
   if (pagePath) {
@@ -643,7 +667,7 @@ function openUrlHandler (event, url, autoOpen = true) {
       }
 
       if (menuWindow) {
-        createNewWindow(opt)
+        extraData ? createNewWindow(opt, extraData) : createNewWindow(opt)
       }
     }
   }
@@ -937,6 +961,11 @@ ipcMain.on('set-window-size', (event, size) => {
     win.setBounds(size)
   }
   event.returnValue = true
+})
+
+ipcMain.on('open-window', (event, args) => {
+  console.log('=========', args)
+  openUrlHandler(event, `http://enkel.com?p=${args.content.msg_body.path}`, args)
 })
 
 ipcMain.on('notification', (event, args) => {

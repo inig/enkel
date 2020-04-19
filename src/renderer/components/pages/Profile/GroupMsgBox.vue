@@ -1,8 +1,17 @@
 <template>
   <div class="msg_box">
     <!-- {{JSON.stringify(info)}} -->
+    <div class="msg_box_custom"
+         v-if="info.content && (info.content.msg_type == 'custom') && (info.content.msg_body.hasOwnProperty('answer'))">
+      <div class="msg_box_custom_bg_line"></div>
+      <div class="msg_box_custom_content">
+        <span class="msg_box_custom_content_username">{{info.content.from_name || info.content.from_id}}</span>提交了<span class="msg_box_custom_content_name"
+              v-if="info.content.msg_body.name"
+              @click="clickHandler">{{info.content.msg_body.name}}</span>
+      </div>
+    </div>
     <div class="msg_box_left"
-         v-if="userInfo.username !== info.content.from_id">
+         v-else-if="userInfo.username !== info.content.from_id">
       <div class="msg_box_left_avatar">
         <Avatar size="34"
                 shape="square"
@@ -16,7 +25,13 @@
                 v-else></Avatar>
       </div>
       <div class="msg_box_left_content">
-        <div class="msg_box_left_content_time">
+        <MsgText :info="info"
+                 :user-info="userInfo"
+                 v-if="info.content.msg_type == 'text'"></MsgText>
+        <MsgCustom :info="info"
+                   :user-info="userInfo"
+                   v-else-if="info.content.msg_type == 'custom'"></MsgCustom>
+        <!-- <div class="msg_box_left_content_time">
           <span style="color: #888; margin-right: 10px;"
                 v-if="info.content.from_name">{{info.content.from_name}}</span>
           {{info.ctime_ms | msgTimeFilter}}</div>
@@ -26,13 +41,19 @@
         <div class="msg_box_left_content_arrow">
           <div class="triangle"
                :style="[leftTheme]"></div>
-        </div>
+        </div> -->
       </div>
     </div>
     <div class="msg_box_right"
          v-else>
       <div class="msg_box_right_content">
-        <div class="msg_box_right_content_time">
+        <MsgText :info="info"
+                 :user-info="userInfo"
+                 v-if="info.content.msg_type == 'text'"></MsgText>
+        <MsgCustom :info="info"
+                   :user-info="userInfo"
+                   v-else-if="info.content.msg_type == 'custom'"></MsgCustom>
+        <!-- <div class="msg_box_right_content_time">
           {{info.ctime_ms | msgTimeFilter}}
           <span style="color: #888; margin-left: 8px;"
                 v-if="userInfo.memo_name || userInfo.nickname">{{userInfo.memo_name || userInfo.nickname}}</span>
@@ -43,7 +64,7 @@
         <div class="msg_box_right_content_arrow">
           <div class="triangle"
                :style="[rightTheme]"></div>
-        </div>
+        </div> -->
       </div>
       <div class="msg_box_right_avatar">
         <Avatar size="34"
@@ -63,10 +84,13 @@
 
 <script>
 import { Avatar } from 'view-design'
+import { ipcRenderer } from 'electron'
 export default {
   name: 'ChatWindowGroupMsgBox',
   components: {
-    Avatar
+    Avatar,
+    MsgText: () => import('./msg-type/Text'),
+    MsgCustom: () => import('./msg-type/Custom')
   },
   props: {
     info: {
@@ -100,15 +124,77 @@ export default {
         color: '#fff'
       }
     }
+  },
+  methods: {
+    clickHandler () {
+      let info = JSON.parse(JSON.stringify(this.info))
+      info.content.msg_body = Object.assign({}, info.content.msg_body, {
+        path: 'pray',
+        type: 'survey',
+        userInfo: this.userInfo,
+        windowOption: {
+          width: 375,
+          height: 667,
+          withoutHeader: false
+        }
+      })
+      // alert(JSON.stringify(this.info, null, 2))
+      ipcRenderer.send('open-window', info)
+    }
   }
 }
 </script>
 
 <style lang="less" scoped>
+@import url("../../../themes/index.less");
 .msg_box {
   width: 100%;
   min-height: 34px;
   overflow: hidden;
+  &_custom {
+    position: relative;
+    width: 100%;
+    height: 28px;
+    // background-color: red;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #999;
+    &_bg_line {
+      width: 80%;
+      height: 1px;
+      position: absolute;
+      background-color: #f5f5f5;
+    }
+    &_content {
+      padding: 0 8px;
+      background: #fff;
+      z-index: 2;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      &_username {
+        margin-right: 5px;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+      }
+      &_name {
+        margin-left: 5px;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        color: @a-color;
+        cursor: pointer;
+      }
+    }
+  }
   &_left {
     width: 100%;
     min-height: 34px;

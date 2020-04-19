@@ -443,6 +443,29 @@ const moduleIM = {
         })
       })
     },
+    sendGroupCustom ({ dispatch }, args) {
+      /**
+       * 发送群消息
+       * target_gid: 群id
+       * target_gname: 群名称
+       * custom: 自定义 json object 消息
+       */
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.sendGroupCustom(args).onSuccess((data, msg) => {
+            resolve({
+              data,
+              msg
+            })
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
+        })
+      })
+    },
     getConversation ({ dispatch }) {
       return new Promise(async (resolve, reject) => {
         await dispatch('imLoginCheck').then(() => {

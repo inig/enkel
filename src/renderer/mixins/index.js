@@ -102,7 +102,7 @@ export default {
       return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1)
     },
     getUUID (perfix) {
-      return ((perfix ? (perfix + '-') : '') + this.S4() + '-' + this.S4())
+      return ((perfix ? (perfix + '-') : '') + this.S4() + this.S4() + '-' + this.S4() + this.S4())
     },
     $loadCss (path) {
       if (!path || path.length === 0) {

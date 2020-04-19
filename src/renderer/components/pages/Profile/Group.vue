@@ -53,185 +53,198 @@
 </template>
 
 <script>
-  import { Button, Avatar } from 'view-design'
-  import { ipcRenderer } from 'electron'
-  import { createNamespacedHelpers } from 'vuex'
-  const { mapActions } = createNamespacedHelpers('./store/modules')
-  export default {
-    name: 'ProfileGroup',
-    components: {
-      Button, Avatar,
-      GroupChatWindow: () => import('./GroupChatWindow')
-    },
-    props: {
-      userInfo: {
-        type: Object,
-        default () {
-          return {}
-        }
-      },
-      conversations: {
-        type: Array,
-        default () {
-          return []
-        }
-      },
-      groups: {
-        type: Array,
-        default () {
-          return []
-        }
-      },
-      query: {
-        type: Object,
-        default () {
-          return {}
-        }
+import { Button, Avatar } from 'view-design'
+import { ipcRenderer } from 'electron'
+import { createNamespacedHelpers } from 'vuex'
+const { mapActions } = createNamespacedHelpers('./store/modules')
+export default {
+  name: 'ProfileGroup',
+  components: {
+    Button, Avatar,
+    GroupChatWindow: () => import('./GroupChatWindow')
+  },
+  props: {
+    userInfo: {
+      type: Object,
+      default () {
+        return {}
       }
     },
-    data () {
-      return {
-        formData: {
-          'group_name': '',
-          'group_description': '',
-          'avatar': '',
-          'is_limit': true
-        },
-        chatWindow: {
-          shown: false,
-          info: '',
-          messages: []
-        }
+    conversations: {
+      type: Array,
+      default () {
+        return []
       }
     },
-    async mounted () {
-      this.$nextTick(() => {
+    groups: {
+      type: Array,
+      default () {
+        return []
+      }
+    },
+    query: {
+      type: Object,
+      default () {
+        return {}
+      }
+    }
+  },
+  data () {
+    return {
+      formData: {
+        'group_name': '',
+        'group_description': '',
+        'avatar': '',
+        'is_limit': true
+      },
+      chatWindow: {
+        shown: false,
+        info: '',
+        messages: []
+      }
+    }
+  },
+  async mounted () {
+    this.$nextTick(() => {
+      setTimeout(() => {
+        this.query.group = 43377018
         if (this.query.hasOwnProperty('group')) {
-          let _group = this.findgroup(this.query.group)
+          console.log('=============', this.groups)
+          let _group = this.findGroup(this.query.group)
+          console.log('>>>>>>>>>>>>>>>>>>', _group)
           if (_group) {
             this.showChatWindow(_group)
           }
         }
-      })
-    },
-    methods: {
-      ...mapActions([
-        'moduleIM'
-      ]),
-      createGroup () {
-        this.formData['group_name'] = '群组' + (Math.floor(Math.random() * 100))
-        ipcRenderer.send('im-create-group', this.formData)
-      },
-      findMessagesByGid (gid) {
-        let arr = this.conversations.filter(item => String(item.from_gid) == String(gid))
-        if (arr && arr.length) {
-          return arr[0].msgs
-        } else {
-          return []
-        }
-      },
-      showChatWindow (data) {
-        this.chatWindow.info = data
-        this.chatWindow.messages = this.findMessagesByGid(data.gid)
-        this.chatWindow.shown = true
-      },
-      hideChatWindow () {
-        this.chatWindow.shown = false
-      },
-      async imGetConversation () {
-        let response = await this.$store.dispatch('moduleIM/getConversation')
-        console.log('imGetConversation>>>>>>', response)
+      }, 1500)
+    })
+  },
+  methods: {
+    ...mapActions([
+      'moduleIM'
+    ]),
+    findGroup (gid) {
+      let _f = this.groups.filter(item => item.gid == gid)
+      if (_f.length) {
+        return _f[0]
+      } else {
+        return null
       }
+    },
+    createGroup () {
+      this.formData['group_name'] = '群组' + (Math.floor(Math.random() * 100))
+      ipcRenderer.send('im-create-group', this.formData)
+    },
+    findMessagesByGid (gid) {
+      let arr = this.conversations.filter(item => String(item.from_gid) == String(gid))
+      if (arr && arr.length) {
+        return arr[0].msgs
+      } else {
+        return []
+      }
+    },
+    showChatWindow (data) {
+      this.chatWindow.info = data
+      this.chatWindow.messages = this.findMessagesByGid(data.gid)
+      this.chatWindow.shown = true
+    },
+    hideChatWindow () {
+      this.chatWindow.shown = false
+    },
+    async imGetConversation () {
+      let response = await this.$store.dispatch('moduleIM/getConversation')
+      console.log('imGetConversation>>>>>>', response)
     }
   }
+}
 </script>
 
 <style lang="less" scoped>
-  @import url("../../../themes/index.less");
-  .container {
-    position: relative;
-    padding: 0 0 15px 0;
-    box-sizing: border-box;
+@import url("../../../themes/index.less");
+.container {
+  position: relative;
+  padding: 0 0 15px 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  .container_header {
     width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    .container_header {
+    height: 48px;
+    background-color: @primary-color;
+    color: #fff;
+    font-size: 14px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 10px 1px #888;
+  }
+  .container_content {
+    width: 100%;
+    height: calc(~"100% - 48px");
+    .group_item {
       width: 100%;
       height: 48px;
-      background-color: @primary-color;
-      color: #fff;
-      font-size: 14px;
+      padding: 0 10px 0 0;
+      box-sizing: border-box;
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: center;
-      box-shadow: 0 1px 10px 1px #888;
-    }
-    .container_content {
-      width: 100%;
-      height: calc(~"100% - 48px");
-      .group_item {
-        width: 100%;
+      justify-content: space-between;
+      transition: all 0.2s ease-in-out;
+      cursor: pointer;
+      &:hover {
+        background-color: #f8f8f8;
+      }
+      &_left {
+        width: 64px;
         height: 48px;
-        padding: 0 10px 0 0;
-        box-sizing: border-box;
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: space-between;
-        transition: all 0.2s ease-in-out;
-        cursor: pointer;
-        &:hover {
-          background-color: #f8f8f8;
+        justify-content: center;
+      }
+      &_right {
+        width: calc(~"100% - 64px");
+        height: 48px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        &_title {
+          width: 100%;
+          height: 20px;
+          line-height: 20px;
+          font-size: 14px;
+          color: #333;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
         }
-        &_left {
-          width: 64px;
-          height: 48px;
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: center;
-        }
-        &_right {
-          width: calc(~"100% - 64px");
-          height: 48px;
-          border-bottom: 1px solid #f0f0f0;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          &_title {
-            width: 100%;
-            height: 20px;
-            line-height: 20px;
-            font-size: 14px;
-            color: #333;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-          }
-          &_desc {
-            width: 100%;
-            height: 16px;
-            line-height: 16px;
-            font-size: 11px;
-            color: #888;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-          }
+        &_desc {
+          width: 100%;
+          height: 16px;
+          line-height: 16px;
+          font-size: 11px;
+          color: #888;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
         }
       }
     }
-    .fixed_btn {
-      position: fixed;
-      width: 48px;
-      height: 48px;
-      right: 10px;
-      bottom: 10px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-    }
   }
+  .fixed_btn {
+    position: fixed;
+    width: 48px;
+    height: 48px;
+    right: 10px;
+    bottom: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+}
 </style>
