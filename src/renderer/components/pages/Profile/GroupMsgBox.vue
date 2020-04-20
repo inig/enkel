@@ -5,7 +5,7 @@
          v-if="info.content && (info.content.msg_type == 'custom') && (info.content.msg_body.hasOwnProperty('answer'))">
       <div class="msg_box_custom_bg_line"></div>
       <div class="msg_box_custom_content">
-        <span class="msg_box_custom_content_username">{{info.content.from_name || info.content.from_id}}</span>提交了<span class="msg_box_custom_content_name"
+        <span class="msg_box_custom_content_username">{{info.content.msg_body.nickname || info.content.from_name || info.content.from_id}}</span>提交了<span class="msg_box_custom_content_name"
               v-if="info.content.msg_body.name"
               @click="clickHandler">{{info.content.msg_body.name}}</span>
       </div>
@@ -16,8 +16,8 @@
         <Avatar size="34"
                 shape="square"
                 style="background-color: #fff;"
-                :src="memberInfo.headIcon"
-                v-if="memberInfo.headIcon"></Avatar>
+                :src="memberInfo.avatar"
+                v-if="memberInfo.avatar"></Avatar>
         <Avatar size="34"
                 shape="square"
                 icon="ios-person"
@@ -138,7 +138,7 @@ export default {
           withoutHeader: false
         }
       })
-      // alert(JSON.stringify(this.info, null, 2))
+      alert(JSON.stringify(info, null, 2))
       ipcRenderer.send('open-window', info)
     }
   }

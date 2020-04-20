@@ -23,6 +23,7 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import { Modal, Form, FormItem, Input } from 'view-design'
 import { SurveyStore, setItem } from '../../../../utils'
 export default {

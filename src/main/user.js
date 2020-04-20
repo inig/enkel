@@ -230,3 +230,49 @@ ipcMain.on('login-out-response', (event) => {
     }
   })
 })
+
+ipcMain.on('survey-create', async (event, data) => {
+  console.log('>>>>>>>>', data)
+  await http({
+    method: 'POST',
+    url: '/enkel/survey/create',
+    data: qs.stringify(data)
+  }).then(response => {
+    event.returnValue = response.data
+  }).catch(err => {
+    event.returnValue = {
+      status: 1001,
+      message: err.message
+    }
+  })
+})
+
+ipcMain.on('survey-detail', async (event, data) => {
+  await http({
+    method: 'POST',
+    url: '/enkel/survey/detail',
+    data: qs.stringify(data)
+  }).then(response => {
+    event.returnValue = response.data
+  }).catch(err => {
+    event.returnValue = {
+      status: 1001,
+      message: err.message
+    }
+  })
+})
+
+ipcMain.on('survey-answer', async (event, data) => {
+  await http({
+    method: 'POST',
+    url: '/enkel/survey/answer',
+    data: qs.stringify(data)
+  }).then(response => {
+    event.returnValue = response.data
+  }).catch(err => {
+    event.returnValue = {
+      status: 1001,
+      message: err.message
+    }
+  })
+})

@@ -230,7 +230,6 @@
 import md5 from 'blueimp-md5'
 import { Avatar, CellGroup, Cell, Input, DatePicker, Tooltip, Icon, Button } from 'view-design'
 import { ipcRenderer, remote } from 'electron'
-import { getItem, setItem, SurveyStore } from '../../../utils'
 import { createNamespacedHelpers } from 'vuex'
 const { mapActions } = createNamespacedHelpers('./store/modules')
 export default {
@@ -338,12 +337,6 @@ export default {
 
     // await this.imGetFriendList()
     await Promise.all([this.imGetFriendList(), this.imGetGroups()])
-
-    // setItem({
-    //   key: 'survey-1e7a2e8e-af0585cc',
-    //   data: [],
-    //   store: SurveyStore
-    // })
   },
   methods: {
     ...mapActions([
@@ -376,36 +369,12 @@ export default {
           if (targetGroupIndex > -1) {
             this.groupConversations[targetGroupIndex].msgs.push(res.msg)
           }
-          if (res.msg.content.msg_body.auth_id == this.loginInfo.phonenum) {
-            // 发起者
-            let localSurvey = await getItem({
-              key: res.msg.content.msg_body.id,
-              store: SurveyStore
-            })
-            if (localSurvey && !localSurvey.some(item => item.username == res.msg.content.from_id)) {
-              await this.imGetSelfInfo(res.msg.content.from_id).then(async (response) => {
-                let _data = JSON.parse(JSON.stringify(response))
-                if ((_data.code == 0) && _data.user_info) {
-                  localSurvey.push(Object.assign({}, _data.user_info, {
-                    answer: res.msg.content.msg_body.answer
-                  }))
-                  await setItem({
-                    key: res.msg.content.msg_body.id,
-                    data: localSurvey,
-                    store: SurveyStore
-                  })
-                } else {
-
-                }
-              })
-            }
-          }
         }
       }).catch(err => {
         console.log('自定义消息发送失败：', err)
       })
     },
-    imOnMsgReceive (event, data) {
+    async imOnMsgReceive (event, data) {
       // 接收到新消息
       let message = data.messages[0]
       if (message.msg_type == 3) {
@@ -662,11 +631,16 @@ export default {
             if (data.code === 0 && data.user_info) {
               let _updateObj = {}
               if (data.user_info.avatar) {
-                _updateObj.headIcon = data.user_info.avatar
+                _updateObj.avatar = data.user_info.avatar
               }
+              if (args.headIcon) {
+                _updateObj.headIcon = args.headIcon
+              }
+              console.log('.......dat', data.user_info)
               this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
               ipcRenderer.send('update-user-info', {
-                headIcon: data.user_info.avatar
+                avatar: data.user_info.avatar,
+                headIcon: args.headIcon
               })
             } else {
             }
@@ -697,7 +671,7 @@ export default {
                   if (_data.user_info) {
                     let _updateObj = {}
                     if (_data.user_info.avatar) {
-                      _updateObj.headIcon = _data.user_info.avatar
+                      _updateObj.avatar = _data.user_info.avatar
                     }
                     if (_data.user_info.nickname) {
                       _updateObj.nickname = _data.user_info.nickname
@@ -790,7 +764,8 @@ export default {
     async modifyAvatar (data) {
       await this.imUpdateSelfAvatar({
         avatar: this.$createFileFormData(data.file),
-        username: this.loginInfo.phonenum
+        username: this.loginInfo.phonenum,
+        headIcon: data.path
       })
       // ipcRenderer.send('im-update-self-avatar', {
       //   avatar: data.file

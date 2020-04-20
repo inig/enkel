@@ -174,7 +174,7 @@ export default {
           let arr = JSON.parse(JSON.stringify(res.member_list))
           let membersInfo = {}
           for (let i = 0; i < arr.length; i++) {
-            arr[i].headIcon = await this.getResource(arr[i].avatar)
+            arr[i].avatar = await this.getResource(arr[i].avatar)
             if (!membersInfo.hasOwnProperty(arr[i].username)) {
               membersInfo[arr[i].username] = arr[i]
             }
@@ -259,48 +259,72 @@ export default {
       })
     },
     async sendCustom (data) {
-      this.hideOperation()
-      await this.$store.dispatch('moduleIM/sendGroupCustom', {
-        target_gid: this.info.gid,
-        target_gname: this.info.name,
-        custom: data
-      }).then(res => {
-        if (res.data.code == 0) {
-          this.messages.push(res.msg)
-          // this.messages.push({
-          //   content: {
-          //     create_time: res.ctime_ms,
-          //     from_appkey: '',
-          //     from_id: this.userInfo.username,
-          //     from_name: this.userInfo.nickname,
-          //     from_platform: 'web',
-          //     from_type: 'user',
-          //     msg_body: data,
-          //     msg_type: 'custom',
-          //     sui_mtime: 0,
-          //     target_type: 'group',
-          //     target_name: this.info.name,
-          //     target_id: this.info.gid,
-          //     version: 1
-          //   },
-          //   custom_notification: {
-          //     alert: '',
-          //     at_prefix: '',
-          //     enabled: false,
-          //     title: ''
-          //   },
-          //   ctime_ms: new Date().getTime(),
-          //   msg_id: res.msg_id,
-          //   msg_level: 0,
-          //   msg_type: 4,
-          //   need_receipt: false
-          // })
-          this.sendData.content = ''
-          this.scrollToEnd()
-        }
-      }).catch(err => {
-        console.log('自定义消息发送失败：', err)
+      this.$Message.loading('正在发送中...')
+      let response = ipcRenderer.sendSync('survey-create', {
+        uuid: data.id,
+        auth_id: data.userInfo.phonenum,
+        auth_name: data.userInfo.nickname || data.userInfo.username || data.userInfo.phonenum,
+        auth_avatar: data.userInfo.avatar,
+        auth_headIcon: data.userInfo.headIcon,
+        name: data.name,
+        desc: data.desc,
+        target_type: 'group',
+        target_id: this.info.gid,
+        target_name: this.info.name
       })
+
+      if (response.status == 200) {
+        this.$Message.destroy()
+        this.$Message.success('发送成功')
+        this.hideOperation()
+        await this.$store.dispatch('moduleIM/sendGroupCustom', {
+          target_gid: this.info.gid,
+          target_gname: this.info.name,
+          custom: data
+        }).then(res => {
+          if (res.data.code == 0) {
+            console.log('SEND >>>>>>>', res.msg)
+            let msg = JSON.parse(JSON.stringify(res.msg))
+            msg.content.from_name = this.userInfo.nickname || this.userInfo.username
+            msg.ctime_ms = msg.content.create_time
+            this.messages.push(msg)
+            // this.messages.push({
+            //   content: {
+            //     create_time: res.ctime_ms,
+            //     from_appkey: '',
+            //     from_id: this.userInfo.username,
+            //     from_name: this.userInfo.nickname,
+            //     from_platform: 'web',
+            //     from_type: 'user',
+            //     msg_body: data,
+            //     msg_type: 'custom',
+            //     sui_mtime: 0,
+            //     target_type: 'group',
+            //     target_name: this.info.name,
+            //     target_id: this.info.gid,
+            //     version: 1
+            //   },
+            //   custom_notification: {
+            //     alert: '',
+            //     at_prefix: '',
+            //     enabled: false,
+            //     title: ''
+            //   },
+            //   ctime_ms: new Date().getTime(),
+            //   msg_id: res.msg_id,
+            //   msg_level: 0,
+            //   msg_type: 4,
+            //   need_receipt: false
+            // })
+            this.sendData.content = ''
+            this.scrollToEnd()
+          }
+        }).catch(err => {
+          console.log('自定义消息发送失败：', err)
+        })
+      } else {
+        this.$Message.error('发送失败')
+      }
     }
   },
   watch: {

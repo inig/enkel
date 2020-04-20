@@ -11,19 +11,38 @@
               :disabled="hasSubmit">{{hasSubmit ? '已提交' : '提交'}}</Button>
     </div>
     <div class="media_pray_result">
-      <div class="media_pray_result_item"></div>
+      <div class="media_pray_result_item"
+           v-for="(item ,index) in info.answer"
+           :key="item.username">
+        <div class="media_pray_result_item_left">
+          <Avatar size="34"
+                  shape="square"
+                  style="background-color: #fff;"
+                  :src="item.headIcon"
+                  v-if="item.headIcon"></Avatar>
+          <Avatar size="34"
+                  shape="square"
+                  icon="ios-person"
+                  style="background-color: #87d068"
+                  v-else></Avatar>
+        </div>
+        <div class="media_pray_result_item_right">
+          <div class="media_pray_result_item_right_title">{{item.nickname || item.username}}: {{item.answer}}</div>
+          <div class="media_pray_result_item_right_time">{{item.ctime | msgTimeFilter}}</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { Button } from 'view-design'
+import { Button, Avatar } from 'view-design'
 import { ipcRenderer, remote } from 'electron'
 import { SurveyStore, getItem, setItem } from '../../../../utils'
 export default {
   name: 'MediaPray',
   components: {
-    Button,
+    Button, Avatar,
     AppHeader: () => import('../../../parts/AppHeader')
   },
   data () {
@@ -46,7 +65,10 @@ export default {
         redirect: 'http://dei2.com/?p=fm'
       },
       data: {},
-      hasSubmit: false
+      hasSubmit: false,
+      results: [
+      ],
+      info: {}
     }
   },
   created () {
@@ -54,17 +76,41 @@ export default {
     ipcRenderer.on('init-data', this.initData)
   },
   methods: {
+    initResult () {
+      let response = ipcRenderer.sendSync('survey-detail', {
+        uuid: this.data.content.msg_body.id
+      })
+      console.log('>>>>>>>>>>', response)
+      if (response.status == 200) {
+        this.info = response.data
+        if (this.info.answer.some(item => ((item.username == this.data.content.msg_body.userInfo.phonenum) || (item.username == this.data.content.msg_body.userInfo.username)))) {
+          this.hasSubmit = true
+        }
+      } else {
+        this.info = {
+          name: this.data.content.msg_body.name,
+          desc: this.data.content.msg_body.desc,
+          auth_avatar: '',
+          auth_id: this.data.content.from_id,
+          auth_name: this.data.content.from_name,
+          target_id: this.data.content.target_id,
+          target_name: this.data.content.target_name,
+          target_type: this.data.content.target_type,
+          uuid: this.data.content.msg_body.id,
+          createdAt: new Date(this.data.create_time),
+          answer: [],
+          question: [
+            {
+              type: 'RANDOM'
+            }
+          ]
+        }
+      }
+    },
     async initData (event, data) {
       this.data = data
-      let res = await getItem({
-        key: 'answer-' + this.data.content.msg_body.id,
-        store: SurveyStore
-      })
-      if (res) {
-        this.hasSubmit = true
-      } else {
-        this.hasSubmit = false
-      }
+      console.log('Data >>>>>', this.data)
+      this.initResult()
     },
     notify () {
       ipcRenderer.send('notification', this.messageObj)
@@ -81,25 +127,44 @@ export default {
       if (!this.data.content || !this.data.content.msg_body || !this.data.content.msg_body.userInfo) {
         return
       } else {
+        this.$Message.loading('提交中...')
         let _ran = this.getRandom()
-        let msg = {
-          id: this.data.content.msg_body.id,
-          name: this.data.content.msg_body.name,
-          desc: this.data.content.msg_body.desc,
-          type: this.data.content.msg_body.type,
+        let submitData = {
           answer: _ran,
-          target_gid: this.data.content.target_id,
-          target_gname: this.data.content.target_name,
-          auth_id: this.data.content.from_id, // 调查 发起者 id
-          auth_name: this.data.content.from_name
+          avatar: this.data.content.msg_body.userInfo.avatar || '',
+          headIcon: this.data.content.msg_body.userInfo.headIcon || '',
+          nickname: this.data.content.msg_body.userInfo.nickname || '',
+          username: this.data.content.msg_body.userInfo.username || '',
+          gender: this.data.content.msg_body.userInfo.gender || 2,
+          ctime: (new Date()).getTime()
         }
-        await setItem({
-          key: 'answer-' + this.data.content.msg_body.id,
-          data: _ran,
-          store: SurveyStore
+        let response = ipcRenderer.sendSync('survey-answer', {
+          uuid: this.data.content.msg_body.id,
+          answer: JSON.stringify(submitData)
         })
-        ipcRenderer.send('send-group-custom-msg', msg)
-        this.hasSubmit = true
+        this.$Message.destroy()
+        if (response.status == 200) {
+          // 提交成功
+          this.$Message.success('提交成功')
+          this.info.answer.push(submitData)
+          let msg = {
+            id: this.data.content.msg_body.id,
+            name: this.data.content.msg_body.name,
+            desc: this.data.content.msg_body.desc,
+            type: this.data.content.msg_body.type,
+            answer: _ran,
+            target_gid: this.data.content.target_id,
+            target_gname: this.data.content.target_name,
+            auth_id: this.data.content.from_id, // 调查 发起者 id
+            auth_name: this.data.content.from_name,
+            nickname: this.data.content.msg_body.userInfo.nickname,
+            username: this.data.content.msg_body.userInfo.username
+          }
+          ipcRenderer.send('send-group-custom-msg', msg)
+          this.hasSubmit = true
+        } else {
+          this.$Message.error('提交失败，请稍后再试')
+        }
       }
     }
   }
@@ -155,11 +220,43 @@ export default {
     padding: 15px;
     box-sizing: border-box;
     margin-top: 30px;
-    background-color: #f0f0f0;
     &_item {
       width: 100%;
       height: 48px;
       background-color: #fff;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      border-bottom: 1px solid #f8f8f8;
+      transition: all 0.2s ease-in-out;
+      &:hover {
+        background-color: #f8f8f8;
+      }
+      &_left {
+        width: 34px;
+        height: 48px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+      &_right {
+        width: calc(~"100% - 34px");
+        height: 48px;
+        padding-left: 15px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        &_title {
+          font-size: 14px;
+          color: 333;
+        }
+        &_time {
+          font-size: 12px;
+          color: #c8c8c8;
+        }
+      }
     }
   }
 }

@@ -245,6 +245,15 @@ export function imUpdateSelfInfoHandler (event, args) {
 }
 ipcMain.on('im-update-self-info', (event, args) => imUpdateSelfInfoHandler(event, args))
 
+export function imGetUserInfoHandler (event, args) {
+  BrowserWindow.getAllWindows().forEach(item => {
+    if (item.webContents !== event.sender) {
+      item.webContents.send('im-get-user-info', args)
+    }
+  })
+}
+ipcMain.on('im-get-user-info', (event, args) => imGetUserInfoHandler(event, args))
+
 export function imUpdateSelfAavatarHandler (event, args) {
   console.log('upload avatar =======> ', args)
   BrowserWindow.getAllWindows().forEach(item => {
