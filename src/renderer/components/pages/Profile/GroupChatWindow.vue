@@ -8,6 +8,12 @@
               size="20" />
       </div>
       <div class="chat_window_header_title">{{info.name}}</div>
+      <div class="chat_window_header_operation">
+        <Button type="primary"
+                shape="circle"
+                icon="md-settings"
+                @click="openGroupModal"></Button>
+      </div>
     </div>
     <div class="chat_window_content">
       <div class="chat_window_content_wrapper"
@@ -16,7 +22,7 @@
                      :key="item.msg_id"
                      style="margin-top: 20px;"
                      :user-info="userInfo"
-                     :member-info="membersInfo[item.content.from_id]"
+                     :member-info="membersInfo[item.content ? item.content.from_id : item.from_username]"
                      :ref="'msgBoxRef-' + index"
                      :info="item"></GroupMsgBox>
       </div>
@@ -70,12 +76,108 @@
                    type="group"></component>
       </div>
     </div>
+
+    <Drawer title="Basic Drawer"
+            :closable="false"
+            v-model="groupModal.shown">
+      <div class="member_container">
+        <div class="member_item"
+             v-for="(item, index) in members"
+             :key="item.username"
+             :title="item.nickName || item.username">
+          <Badge text="群主"
+                 class-name="group_master"
+                 type="success"
+                 :offset="[0, 5]"
+                 v-if="item.flag == 1">
+            <Avatar size="48"
+                    shape="square"
+                    style="background-color: #fff;"
+                    :src="item.avatar"
+                    v-if="item.avatar"></Avatar>
+            <Avatar size="48"
+                    shape="square"
+                    icon="ios-person"
+                    style="background-color: #87d068"
+                    v-else></Avatar>
+          </Badge>
+          <Avatar size="48"
+                  shape="square"
+                  style="background-color: #fff;"
+                  :src="item.avatar"
+                  v-else-if="item.avatar"></Avatar>
+          <Avatar size="48"
+                  shape="square"
+                  icon="ios-person"
+                  style="background-color: #87d068"
+                  v-else></Avatar>
+        </div>
+        <div class="member_item">
+          <div class="member_item_add"
+               @click="openMemberAddModal">
+            <Icon type="md-add"
+                  size="48"
+                  color="#f0f0f0" />
+          </div>
+        </div>
+        <div class="member_item_blank"></div>
+        <div class="member_item_blank"></div>
+        <div class="member_item_blank"></div>
+      </div>
+    </Drawer>
+
+    <Modal v-model="memberAddModal.shown"
+           width="250"
+           :styles="{height: '400px', top: '50px'}"
+           class='group_member_add_form'
+           footer-hide
+           title="邀请好友">
+      <div class="friends_list">
+        <div class="friends_list_header"></div>
+        <div class="friends_list_content">
+          <div class="friends_list_content_item"
+               v-for="(item, index) in formatFriends"
+               :key="item.username">
+            <div class="friends_list_content_item_avatar">
+              <Avatar size="34"
+                      shape="square"
+                      style="background-color: #fff;"
+                      :src="item.headIcon"
+                      v-if="item.headIcon"></Avatar>
+              <Avatar size="34"
+                      shape="square"
+                      icon="ios-person"
+                      style="background-color: #87d068"
+                      v-else></Avatar>
+            </div>
+            <div class="friends_list_content_item_nickname">{{item.memo_name || item.nickname || item.username}}</div>
+            <div class="friends_list_content_item_operation">
+              <Checkbox v-if="item.inGroup"
+                        :value="true"
+                        disabled></Checkbox>
+              <Checkbox v-else
+                        :value="memberAddModal.data.username.indexOf(item.username) > -1"
+                        @on-change="chooseFriend($event, item.username)"></Checkbox>
+            </div>
+          </div>
+        </div>
+        <div class="friends_list_footer">
+          <Button type="success"
+                  :disabled="memberAddModal.data.username.length < 1"
+                  size="small"
+                  @click="invite">邀请</Button>
+        </div>
+      </div>
+    </Modal>
+    <!-- <transition name="fade">
+      <div class="friends_list" v-if="memberAddModal.shown"></div>
+    </transition> -->
   </div>
 </template>
 
 <script>
 import { ipcRenderer } from 'electron'
-import { Icon, Input, Button } from 'view-design'
+import { Icon, Input, Button, Drawer, Avatar, Badge, Modal, Checkbox } from 'view-design'
 import GroupMsgBox from './GroupMsgBox'
 import { createNamespacedHelpers } from 'vuex'
 const { mapActions } = createNamespacedHelpers('./store/modules')
@@ -84,12 +186,18 @@ require('../../../assets/js/scrollTo.js')
 export default {
   name: 'ProfileGroupChatWindow',
   components: {
-    Icon, Input, Button,
+    Icon, Input, Button, Drawer, Avatar, Badge, Modal, Checkbox,
     GroupMsgBox,
     CustomItem: () => import('./items/index'),
     CustomItemSurvey: () => import('./items/Survey')
   },
   props: {
+    friends: {
+      type: Array,
+      default () {
+        return []
+      }
+    },
     info: {
       type: Object,
       default () {
@@ -117,6 +225,15 @@ export default {
         type: 'text',
         content: ''
       },
+      groupModal: {
+        shown: false
+      },
+      memberAddModal: {
+        shown: false,
+        data: {
+          username: []
+        }
+      },
       members: [],
       membersInfo: {},
       operationShown: false,
@@ -126,7 +243,8 @@ export default {
           icon: 'survey',
           text: '调查'
         }
-      ]
+      ],
+      formatFriends: []
     }
   },
   computed: {
@@ -139,12 +257,69 @@ export default {
     this.$nextTick(() => {
       this.scrollToEnd()
     })
-    await this.imGetGroupMembers()
+    // await this.imGetGroupMembers()
   },
   methods: {
     ...mapActions([
       'moduleIM'
     ]),
+    async invite () {
+      let users = this.memberAddModal.data.username.map(item => {
+        return {
+          username: item
+        }
+      })
+      let response = await this.$store.dispatch('moduleIM/addGroupMembers', {
+        gid: this.info.gid,
+        member_usernames: users
+      })
+      if (response.code == 0) {
+        this.$Message.success('邀请成功')
+        await this.imGetGroupMembers()
+        this.friendsFilter(this.friends)
+        this.closeMemberAddModal()
+      } else {
+        this.$Message.error('邀请失败，请稍后再试')
+      }
+    },
+    findIndexInMembers (username) {
+      return this.members.some(item => item.username == username)
+    },
+    friendsFilter (val) {
+      // 判断好友是否是群成员
+      let friends = JSON.parse(JSON.stringify(val))
+      friends.map(item => {
+        if (this.findIndexInMembers(item.username)) {
+          item.inGroup = true
+        } else {
+          item.inGroup = false
+        }
+        return item
+      })
+      this.formatFriends = friends
+    },
+    chooseFriend (value, username) {
+      let choosedUsername = this.memberAddModal.data.username
+      if (value) {
+        if (choosedUsername.indexOf(username) < 0) {
+          choosedUsername.push(username)
+        }
+      } else {
+        if (choosedUsername.indexOf(username) > -1) {
+          choosedUsername.splice(choosedUsername.indexOf(username), 1)
+        }
+      }
+      console.log(this.memberAddModal.data.username)
+    },
+    openMemberAddModal () {
+      this.memberAddModal.shown = true
+    },
+    closeMemberAddModal () {
+      this.memberAddModal.shown = false
+    },
+    openGroupModal () {
+      this.groupModal.shown = true
+    },
     hide () {
       this.$emit('hide')
     },
@@ -335,6 +510,16 @@ export default {
         this.messages = val
         this.scrollToEnd()
       }
+    },
+    friends: {
+      deep: true,
+      immediate: true,
+      async handler (val) {
+        await this.imGetGroupMembers()
+        if (val && val.length) {
+          this.friendsFilter(val)
+        }
+      }
     }
   }
 }
@@ -385,6 +570,17 @@ export default {
       }
     }
     &_title {
+      height: 48px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
+    &_operation {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 48px;
       height: 48px;
       display: flex;
       flex-direction: row;
@@ -460,6 +656,118 @@ export default {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0);
+  }
+}
+
+.member_container {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  .member_item {
+    width: 56px;
+    height: 56px;
+    // margin-right: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    .member_item_add {
+      width: 48px;
+      height: 48px;
+      border: 1px solid #f0f0f0;
+      box-sizing: border-box;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      &:hover {
+        background-color: #f0f0f0;
+        i {
+          color: #ccc !important;
+        }
+      }
+    }
+  }
+  .member_item_blank {
+    width: 56px;
+    height: 0;
+  }
+}
+.friends_list {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  &_header {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 36px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+  &_content {
+    position: absolute;
+    left: 0;
+    top: 36px;
+    width: 100%;
+    height: calc(~"100% - 36px - 30px");
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    &_item {
+      width: 100%;
+      height: 36px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      &_avatar {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+      &_nickname {
+        width: calc(~"100% - 36px - 36px");
+        height: 36px;
+        line-height: 36px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 13px;
+        margin-left: 5px;
+      }
+      &_operation {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+  &_footer {
+    width: 100%;
+    height: 30px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
   }
 }
 </style>

@@ -140,7 +140,6 @@ export default {
     clickHandler () {
       let info = Object.assign({}, this.info)
       info.content.msg_body.userInfo = this.userInfo
-      alert(JSON.stringify(info, null, 2))
       ipcRenderer.send('open-window', info)
     }
   }

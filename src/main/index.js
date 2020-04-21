@@ -964,7 +964,6 @@ ipcMain.on('set-window-size', (event, size) => {
 })
 
 ipcMain.on('open-window', (event, args) => {
-  console.log('=========', args)
   openUrlHandler(event, `http://enkel.com?p=${args.content.msg_body.path}`, args)
 })
 

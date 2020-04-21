@@ -205,6 +205,7 @@
                     enter-active-class="animated fadeIn"
                     leave-active-class="animated fadeOut faster">
           <ProfileGroup :groups="groups"
+                        :friends="friends"
                         :user-info="cachedLoginInfo"
                         :conversations="groupConversations"
                         v-if="activeMenuIndex === 3"></ProfileGroup>
@@ -426,6 +427,18 @@ export default {
         }
       }
     },
+    inviteFriendsHandler (data) {
+      // 邀请好友
+      let targetGroupItemIndex = -1
+      this.groupConversations.some((item, index) => {
+        if (item.from_gid == data.gid) {
+          targetGroupItemIndex = index
+        }
+      })
+      if (targetGroupItemIndex > -1) {
+        this.groupConversations[targetGroupItemIndex].msgs.push(data)
+      }
+    },
     imOnSyncConversation (event, data) {
       // 离线消息同步监听
       this.conversations = data.filter(item => item.from_username)
@@ -534,6 +547,10 @@ export default {
         case 7:
           // 好友更新事件
           console.log('>>>>>好友更新事件: ', data)
+          break
+        case 10:
+          // 邀请好友入群
+          this.inviteFriendsHandler(data)
           break
         default:
           break

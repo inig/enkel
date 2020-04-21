@@ -10,6 +10,23 @@
               @click="clickHandler">{{info.content.msg_body.name}}</span>
       </div>
     </div>
+
+    <div class="msg_box_custom"
+         v-else-if="info.event_type == 10">
+      <!-- <div class="msg_box_custom_bg_line"></div> -->
+      <div style="padding: 0 15px; white-space: normal; text-align: center;">
+        <span>{{info.from_nickname || info.from_username}}</span>
+        邀请了
+        <span style="color: #4fc08d;">{{info.to_usernames[0].nickname || info.to_usernames[0].username}}</span>
+        <span v-if="info.to_usernames.length > 1">
+          , 同时还邀请了
+          <span style="color: #4fc08d;">
+            {{info.to_usernames.slice(1).map(item => (item.nickname || item.username)).join('、')}}
+          </span>
+        </span>
+      </div>
+    </div>
+
     <div class="msg_box_left"
          v-else-if="userInfo.username !== info.content.from_id">
       <div class="msg_box_left_avatar">

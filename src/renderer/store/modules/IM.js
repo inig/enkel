@@ -498,6 +498,44 @@ const moduleIM = {
         })
       })
     },
+    addGroupMembers ({ dispatch }, args) {
+      /**
+       * 添加群成员
+       * gid: 群id
+       * member_usernames: [{'username':'name1'},{'username':'name2','appkey':'appkey2'}...]
+       */
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.addGroupMembers(args).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
+        })
+      })
+    },
+    delGroupMembers ({ dispatch }, args) {
+      /**
+       * 删除群成员
+       * gid: 群id
+       * member_usernames: [{'username':'name1'},{'username':'name2','appkey':'appkey2'}...]
+       */
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.delGroupMembers(args).onSuccess(data => {
+            resolve(data)
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
+        })
+      })
+    },
     /** 群组相关 */
     /** 好友相关 */
     getFriendList ({ dispatch }) {

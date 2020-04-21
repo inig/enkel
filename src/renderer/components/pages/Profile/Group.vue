@@ -47,6 +47,7 @@
                        :info="chatWindow.info"
                        :msgs="chatWindow.messages"
                        :user-info="userInfo"
+                       :friends="friends"
                        @hide="hideChatWindow"></GroupChatWindow>
     </transition>
   </div>
@@ -64,6 +65,12 @@ export default {
     GroupChatWindow: () => import('./GroupChatWindow')
   },
   props: {
+    friends: {
+      type: Array,
+      default () {
+        return []
+      }
+    },
     userInfo: {
       type: Object,
       default () {

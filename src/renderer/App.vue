@@ -481,4 +481,20 @@ body {
   border: none;
   box-shadow: none;
 }
+
+.member_item .group_master {
+  font-size: 10px !important;
+  height: 16px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.group_member_add_form .ivu-modal-content {
+  height: 100%;
+}
+.group_member_add_form .ivu-modal-content .ivu-modal-body {
+  height: 349px;
+}
 </style>
