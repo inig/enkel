@@ -109,9 +109,7 @@ export default {
       setTimeout(() => {
         this.query.group = 43377018
         if (this.query.hasOwnProperty('group')) {
-          console.log('=============', this.groups)
           let _group = this.findGroup(this.query.group)
-          console.log('>>>>>>>>>>>>>>>>>>', _group)
           if (_group) {
             this.showChatWindow(_group)
           }

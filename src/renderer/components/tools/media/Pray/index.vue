@@ -1,6 +1,6 @@
 <template>
   <div class="media_pray">
-    <AppHeader v-if="data.content && data.content.msg_body && !data.content.msg_body.withoutHeader"></AppHeader>
+    <AppHeader></AppHeader>
     <div class="media_pray_header"
          v-if="data.content && data.content.msg_body">{{data.content.msg_body.name}}</div>
     <div class="media_pray_desc"
@@ -74,13 +74,14 @@ export default {
   created () {
     this.query = this.$getParamsFromUrl(location.href)
     ipcRenderer.on('init-data', this.initData)
+
+    ipcRenderer.on('survey-answer-updated', this.initResult)
   },
   methods: {
     initResult () {
       let response = ipcRenderer.sendSync('survey-detail', {
         uuid: this.data.content.msg_body.id
       })
-      console.log('>>>>>>>>>>', response)
       if (response.status == 200) {
         this.info = response.data
         if (this.info.answer.some(item => ((item.username == this.data.content.msg_body.userInfo.phonenum) || (item.username == this.data.content.msg_body.userInfo.username)))) {
@@ -109,7 +110,6 @@ export default {
     },
     async initData (event, data) {
       this.data = data
-      console.log('Data >>>>>', this.data)
       this.initResult()
     },
     notify () {
@@ -146,7 +146,7 @@ export default {
         if (response.status == 200) {
           // 提交成功
           this.$Message.success('提交成功')
-          this.info.answer.push(submitData)
+          this.info.answer.unshift(submitData)
           let msg = {
             id: this.data.content.msg_body.id,
             name: this.data.content.msg_body.name,

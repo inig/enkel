@@ -207,6 +207,7 @@ ipcMain.on('modify-password', async (event, args) => {
 })
 
 ipcMain.on('update-user-info', (event, data) => {
+  console.log('==========', data)
   let userInfo = getUser()
   userInfo = Object.assign({}, userInfo, data)
   setUser(event, userInfo)
@@ -232,7 +233,6 @@ ipcMain.on('login-out-response', (event) => {
 })
 
 ipcMain.on('survey-create', async (event, data) => {
-  console.log('>>>>>>>>', data)
   await http({
     method: 'POST',
     url: '/enkel/survey/create',
@@ -273,6 +273,14 @@ ipcMain.on('survey-answer', async (event, data) => {
     event.returnValue = {
       status: 1001,
       message: err.message
+    }
+  })
+})
+
+ipcMain.on('survey-answer-updated', (event) => {
+  BrowserWindow.getAllWindows().forEach(item => {
+    if (item.webContents !== event.sender) {
+      item.webContents.send('survey-answer-updated')
     }
   })
 })

@@ -411,6 +411,10 @@ export default {
         if (targetGroupItemIndex > -1) {
           this.groupConversations[targetGroupItemIndex].msgs.push(message)
         }
+        if ((message.content.msg_body.type == 'survey') && message.content.msg_body.hasOwnProperty('answer')) {
+          // 通知所有窗口，Survey Answer有更新
+          ipcRenderer.send('survey-answer-updated')
+        }
         let win = remote.getCurrentWindow()
         if (!win.isVisible()) {
           // 当前窗口不可见
@@ -636,7 +640,6 @@ export default {
               if (args.headIcon) {
                 _updateObj.headIcon = args.headIcon
               }
-              console.log('.......dat', data.user_info)
               this.loginInfo = Object.assign({}, this.loginInfo, _updateObj)
               ipcRenderer.send('update-user-info', {
                 avatar: data.user_info.avatar,
