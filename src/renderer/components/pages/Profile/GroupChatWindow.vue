@@ -189,7 +189,8 @@ export default {
     Icon, Input, Button, Drawer, Avatar, Badge, Modal, Checkbox,
     GroupMsgBox,
     CustomItem: () => import('./items/index'),
-    CustomItemSurvey: () => import('./items/Survey')
+    CustomItemSurvey: () => import('./items/Survey'),
+    CustomItemSteganography: () => import('./items/Steganography')
   },
   props: {
     friends: {
@@ -243,6 +244,12 @@ export default {
           icon: 'survey',
           text: '调查'
         }
+        // ,
+        // {
+        //   name: 'steganography',
+        //   icon: 'steganography',
+        //   text: '隐写术'
+        // }
       ],
       formatFriends: []
     }
