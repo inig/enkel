@@ -155,7 +155,6 @@ export default {
           withoutHeader: false
         }
       })
-      alert(JSON.stringify(info, null, 2))
       ipcRenderer.send('open-window', info)
     }
   }

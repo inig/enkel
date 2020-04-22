@@ -309,7 +309,6 @@ export default {
           choosedUsername.splice(choosedUsername.indexOf(username), 1)
         }
       }
-      console.log(this.memberAddModal.data.username)
     },
     openMemberAddModal () {
       this.memberAddModal.shown = true
@@ -433,7 +432,6 @@ export default {
           this.scrollToEnd()
         }
       }).catch(err => {
-        console.log('发送消息失败：', err)
       })
     },
     async sendCustom (data) {
@@ -461,7 +459,6 @@ export default {
           custom: data
         }).then(res => {
           if (res.data.code == 0) {
-            console.log('SEND >>>>>>>', res.msg)
             let msg = JSON.parse(JSON.stringify(res.msg))
             msg.content.from_name = this.userInfo.nickname || this.userInfo.username
             msg.ctime_ms = msg.content.create_time
@@ -498,7 +495,6 @@ export default {
             this.scrollToEnd()
           }
         }).catch(err => {
-          console.log('自定义消息发送失败：', err)
         })
       } else {
         this.$Message.error('发送失败')

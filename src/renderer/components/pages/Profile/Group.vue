@@ -158,7 +158,6 @@ export default {
     },
     async imGetConversation () {
       let response = await this.$store.dispatch('moduleIM/getConversation')
-      console.log('imGetConversation>>>>>>', response)
     }
   }
 }

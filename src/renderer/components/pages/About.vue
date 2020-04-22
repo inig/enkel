@@ -8,32 +8,32 @@
 </template>
 
 <script>
-  const pkg = require('../../../../package.json')
-  export default {
-    name: 'About',
-    data () {
-      return {
-        pkg: {}
-      }
-    },
-    created () {
-      this.pkg = pkg
+const pkg = require('../../../../package.json')
+export default {
+  name: 'About',
+  data () {
+    return {
+      pkg: {}
     }
+  },
+  created () {
+    this.pkg = pkg
   }
+}
 </script>
 
 <style lang="less" scoped>
-  .about_container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .author {
-    margin-top: 10px;
-    color: #c8c8c8;
-  }
-  .appVersion {
-    color: #888;
-  }
+.about_container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.author {
+  margin-top: 10px;
+  color: #c8c8c8;
+}
+.appVersion {
+  color: #888;
+}
 </style>

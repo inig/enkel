@@ -312,7 +312,6 @@ export default {
     this.setAlwaysOnTop()
     ipcRenderer.on('change-query', (event, params) => {
       this.query = params
-      console.log('change-query', params)
       this.activeMenuIndex = 0
       setTimeout(() => {
         if (params.hasOwnProperty('target')) {
@@ -365,14 +364,12 @@ export default {
         custom: data
       }).then(async (res) => {
         if (res.data.code == 0) {
-          console.log('***********', res.msg)
           let targetGroupIndex = this.findGroupIndex(res.msg.target_gid)
           if (targetGroupIndex > -1) {
             this.groupConversations[targetGroupIndex].msgs.push(res.msg)
           }
         }
       }).catch(err => {
-        console.log('自定义消息发送失败：', err)
       })
     },
     async imOnMsgReceive (event, data) {
@@ -389,7 +386,6 @@ export default {
         if (targetItemIndex > -1) {
           this.conversations[targetItemIndex].msgs.push(message)
         }
-        console.log('++++++++++>>>>>>', message)
         let win = remote.getCurrentWindow()
         if (!win.isVisible()) {
           // 当前窗口不可见
@@ -403,7 +399,6 @@ export default {
         }
       } else if (message.msg_type == 4) {
         // 群消息
-        console.log('>>>>>>>>>>>>>>>>>', message)
         let targetGroupItemIndex = -1
         this.groupConversations.some((item, index) => {
           if (item.from_gid == message.from_gid) {
@@ -445,7 +440,6 @@ export default {
       // 离线消息同步监听
       this.conversations = data.filter(item => item.from_username)
       this.groupConversations = data.filter(item => item.from_gid)
-      console.log('>>>>>>>>imOnSyncConversation: ', data)
     },
     getResource (id) {
       return new Promise(async (resolve) => {
@@ -524,7 +518,6 @@ export default {
       this.friends.unshift(_data)
     },
     async imOnEventNotification (event, data) {
-      console.log('imOnEventNotification: ', data)
       switch (data.event_type) {
         case 2:
           // 密码被修改，被迫下线
@@ -548,7 +541,6 @@ export default {
           break
         case 7:
           // 好友更新事件
-          console.log('>>>>>好友更新事件: ', data)
           break
         case 10:
           // 邀请好友入群
@@ -559,7 +551,6 @@ export default {
       }
     },
     imOnSyncEvent (evet, data) {
-      console.log('imOnSyncEvent: ', data)
     },
     async imLogin (event, args) {
       await this.initLoginInfo()

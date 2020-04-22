@@ -120,7 +120,6 @@ export default {
       })
     },
     imAcceptFriendResponse (event, data) {
-      alert('添加好友：' + JSON.stringify(data, null, 2))
       if (data.code == 0) {
         // 好友添加成功
         this.message.splice(Number(index), 1, Object.assign({}, this.message[Number(index)], {

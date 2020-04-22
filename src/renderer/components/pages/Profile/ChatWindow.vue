@@ -122,7 +122,6 @@ export default {
           elementToScroll: document.querySelector('.chat_window_content'),
           minDuration: 400
         }).then(res => {
-          console.log('+++++++', res)
           clearTimeout(this.scrollerTimeout)
         })
       }, 300)
@@ -166,7 +165,6 @@ export default {
           this.scrollToEnd()
         }
       }).catch(err => {
-        console.log('发送消息失败：', err)
       })
     }
   },
