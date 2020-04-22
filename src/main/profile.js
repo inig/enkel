@@ -10,15 +10,15 @@ export function createProfileWindowHandler () {
     : `file://${__dirname}/index.html?page=profile`
   if (!profileWindow) {
     profileWindow = new BrowserWindow({
-      height: 440,
-      width: 440,
+      height: 500,
+      width: 500,
       x: 50,
       y: 100,
       modal: true,
-      show: true,
+      show: false,
       transparent: true,
       alwaysOnTop: true,
-      // resizable: false,
+      resizable: false,
       backgroundColor: '#00ffffff',
       frame: false,
       webPreferences: {
@@ -53,8 +53,8 @@ export function showProfileWindow (args) {
 
   profileWindow.show()
   profileWindow.setBounds({
-    width: 400,
-    height: 400
+    width: 500,
+    height: 500
   })
   setTimeout(() => {
     profileWindow.webContents.send('change-query', args)

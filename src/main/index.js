@@ -302,10 +302,10 @@ let defaultOption;
 
 function createMenuWindow (args) {
   menuWindow = new BrowserWindow({
-    width: 800,
-    height: 800,
-    // height: 667,
-    // width: 375,
+    // width: 800,
+    // height: 800,
+    height: 667,
+    width: 375,
     // titleBarStyle: 'hidden',
     // modal: true,
     // parent: mainWindow,

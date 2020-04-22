@@ -389,13 +389,14 @@ export default {
         if (targetItemIndex > -1) {
           this.conversations[targetItemIndex].msgs.push(message)
         }
+        console.log('++++++++++>>>>>>', message)
         let win = remote.getCurrentWindow()
         if (!win.isVisible()) {
           // 当前窗口不可见
-          if (message.from_username != this.cachedLoginInfo.phonenum) {
+          if (message.content.from_id != this.cachedLoginInfo.phonenum) {
             ipcRenderer.send('notification', {
               title: '新消息',
-              body: `${message.from_username}: ${message.content.msg_body.text.replace(/\\n/g, ' ')}`,
+              body: `${message.content.from_name || message.from_username}: ${message.content.msg_body.text.replace(/\\n/g, ' ')}`,
               redirect: 'https://dei2.com?p=profile&target=friend&friend=' + message.from_username
             })
           }
