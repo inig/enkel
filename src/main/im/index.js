@@ -157,7 +157,10 @@ ipcMain.on('im-send-single-msg', (event, args) => imSendSingleMsgHandler(event, 
 export function imLoginHandler (event, args) {
   BrowserWindow.getAllWindows().forEach(item => {
     // 登录
-    if (item.webContents !== event.sender) {
+    // if (item.webContents !== event.sender) {
+    //   item.webContents.send('im-login', args)
+    // }
+    if (item.webContents.browserWindowOptions && (item.webContents.browserWindowOptions.id == 'profile')) {
       item.webContents.send('im-login', args)
     }
   })
@@ -167,7 +170,11 @@ ipcMain.on('im-login', (event, args) => imLoginHandler(event, args))
 export function imRegisterHandler (event, args) {
   BrowserWindow.getAllWindows().forEach(item => {
     // 注册
-    if (item.webContents !== event.sender) {
+    // if (item.webContents !== event.sender) {
+    //   console.log('>>>>>>>>>>>>', item.webContents)
+    //   item.webContents.send('im-register', args)
+    // }
+    if (item.webContents.browserWindowOptions && (item.webContents.browserWindowOptions.id == 'profile')) {
       item.webContents.send('im-register', args)
     }
   })

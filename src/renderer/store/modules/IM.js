@@ -156,6 +156,10 @@ const moduleIM = {
               console.log('________onSyncEvent: ', data)
               ipcRenderer.send('im-on-sync-event', data)
             })
+            IM.onUserInfUpdate(data => {
+              console.log('%c【onUserInfUpdate】: ', 'color: darkgreen; font-size: 18px;', data)
+              ipcRenderer.send('im-on-user-info-update', data)
+            })
             resolve(data)
           }).onFail(data => {
 
@@ -240,13 +244,10 @@ const moduleIM = {
        */
       return new Promise((resolve, reject) => {
         IM.sendSingleMsg(args).onSuccess(data => {
-          console.log('success>>>>>>>>', data)
           resolve(data)
         }).onFail(data => {
-          console.log('fail>>>>>>>', data)
           reject(data)
         }).onTimeout(data => {
-          console.log('timeout>>>>>>>', data)
           reject(data)
         })
       })
