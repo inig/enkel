@@ -105,10 +105,13 @@ export default {
     },
     scrollToEnd () {
       let scrollToEndTimeout = setTimeout(() => {
-        let targetRef = this.$refs['msgBoxRef-' + (this.messages.length - 1)][0].$el
-        this.initScroller(targetRef)
+        let targetRef = this.$refs['msgBoxRef-' + (this.messages.length - 1)]
+        if (targetRef) {
+          targetRef = targetRef[0].$el
+          this.initScroller(targetRef)
+        }
         clearTimeout(scrollToEndTimeout)
-      }, 20)
+      }, 100)
     },
     initScroller (scrollTo) {
       if (this.scrollerTimeout) {

@@ -157,7 +157,7 @@ const moduleIM = {
               ipcRenderer.send('im-on-sync-event', data)
             })
             IM.onUserInfUpdate(data => {
-              console.log('%c【onUserInfUpdate】: ', 'color: darkgreen; font-size: 18px;', data)
+              console.log('【onUserInfUpdate】: ', data)
               ipcRenderer.send('im-on-user-info-update', data)
             })
             resolve(data)

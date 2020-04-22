@@ -64,24 +64,24 @@ export default {
   },
   computed: {
     theme () {
-      return (this.userInfo.username !== this.info.content.from_id) ? this.leftTheme : this.rightTheme
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? this.leftTheme : this.rightTheme
     },
     containerStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         alignItems: 'flex-start'
       } : {
           alignItems: 'flex-end'
         }
     },
     nameStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         marginRight: '10px'
       } : {
           marginLeft: '10px'
         }
     },
     timeStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         marginLeft: '10px'
       } : {
           marginRight: '10px',
@@ -90,14 +90,14 @@ export default {
         }
     },
     boxStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         marginLeft: '10px'
       } : {
           marginRight: '10px'
         }
     },
     arrowStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         left: '5px',
         transform: 'rotate(30deg)'
       } : {
@@ -106,21 +106,21 @@ export default {
         }
     },
     leftTitleStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         color: '#353535'
       } : {
           color: '#ccc'
         }
     },
     leftDescStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         color: '#888'
       } : {
           color: '#999'
         }
     },
     leftAuthStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         color: '#b2b2b2',
         borderTop: '1px dashed #ccc'
       } : {
@@ -129,7 +129,7 @@ export default {
         }
     },
     svgStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         fill: '#888'
       } : {
           fill: '#bbb'

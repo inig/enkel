@@ -49,24 +49,24 @@ export default {
   },
   computed: {
     theme () {
-      return (this.userInfo.username !== this.info.content.from_id) ? this.leftTheme : this.rightTheme
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? this.leftTheme : this.rightTheme
     },
     containerStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         alignItems: 'flex-start'
       } : {
           alignItems: 'flex-end'
         }
     },
     nameStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         marginRight: '10px'
       } : {
           marginLeft: '10px'
         }
     },
     timeStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         marginLeft: '10px'
       } : {
           marginRight: '10px',
@@ -75,14 +75,14 @@ export default {
         }
     },
     boxStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         marginLeft: '10px'
       } : {
           marginRight: '10px'
         }
     },
     arrowStyles () {
-      return (this.userInfo.username !== this.info.content.from_id) ? {
+      return (this.userInfo.phonenum !== this.info.content.from_id) ? {
         left: '5px',
         transform: 'rotate(30deg)'
       } : {

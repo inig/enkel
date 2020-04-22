@@ -28,7 +28,7 @@
     </div>
 
     <div class="msg_box_left"
-         v-else-if="userInfo.username !== info.content.from_id">
+         v-else-if="userInfo.phonenum !== info.content.from_id">
       <div class="msg_box_left_avatar">
         <Avatar size="34"
                 shape="square"
@@ -62,7 +62,7 @@
       </div>
     </div>
     <div class="msg_box_right"
-         v-else>
+         v-else-if="userInfo.phonenum == info.content.from_id">
       <div class="msg_box_right_content">
         <MsgText :info="info"
                  :user-info="userInfo"

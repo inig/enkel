@@ -371,8 +371,11 @@ export default {
     },
     scrollToEnd () {
       let scrollToEndTimeout = setTimeout(() => {
-        let targetRef = this.$refs['msgBoxRef-' + (this.renderMessages.length - 1)][0].$el
-        this.initScroller(targetRef)
+        let targetRef = this.$refs['msgBoxRef-' + (this.renderMessages.length - 1)]
+        if (targetRef) {
+          targetRef = targetRef[0].$el
+          this.initScroller(targetRef)
+        }
         clearTimeout(scrollToEndTimeout)
       }, 80)
     },
@@ -399,7 +402,7 @@ export default {
             content: {
               create_time: res.ctime_ms,
               from_appkey: '',
-              from_id: this.userInfo.username,
+              from_id: this.userInfo.phonenum,
               from_name: this.userInfo.nickname,
               from_platform: 'web',
               from_type: 'user',
