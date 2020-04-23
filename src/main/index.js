@@ -311,7 +311,7 @@ function createMenuWindow (args) {
     // parent: mainWindow,
     frame: false,
     show: false,
-    // resizable: false,
+    resizable: false,
     alwaysOnTop: true,
     transparent: true,
     backgroundColor: '#00ffffff',

@@ -24,7 +24,8 @@ const adapter = new FileSync(app.getPath('userData') + path.sep + 'user_info.jso
 const db = low(adapter)
 const http = axios.create({
   timeout: 5000,
-  baseURL: 'http://127.0.0.1:3000'
+  baseURL: 'http://talkapi.dei2.com'
+  // baseURL: 'http://127.0.0.1:3000'
 })
 db.defaults({
   user: {}
@@ -87,10 +88,12 @@ ipcMain.on('login', async (event, args) => {
   }).then(response => {
     if (response.data && (response.data.status === 200)) {
       // 登录成功
-      setUser(event, response.data.data)
+      setUser(event, Object.assign({}, response.data.data, {
+        password: args.password
+      }))
       imLoginHandler(event, {
         username: response.data.data.phonenum,
-        password: response.data.data.password
+        password: args.password
       })
     }
     event.reply('login-response', response.data)
