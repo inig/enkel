@@ -45,6 +45,9 @@
         <MsgText :info="info"
                  :user-info="userInfo"
                  v-if="info.content.msg_type == 'text'"></MsgText>
+        <MsgImage :info="info"
+                  :user-info="userInfo"
+                  v-else-if="info.content.msg_type == 'image'"></MsgImage>
         <MsgCustom :info="info"
                    :user-info="userInfo"
                    v-else-if="info.content.msg_type == 'custom'"></MsgCustom>
@@ -67,6 +70,9 @@
         <MsgText :info="info"
                  :user-info="userInfo"
                  v-if="info.content.msg_type == 'text'"></MsgText>
+        <MsgImage :info="info"
+                  :user-info="userInfo"
+                  v-else-if="info.content.msg_type == 'image'"></MsgImage>
         <MsgCustom :info="info"
                    :user-info="userInfo"
                    v-else-if="info.content.msg_type == 'custom'"></MsgCustom>
@@ -107,6 +113,7 @@ export default {
   components: {
     Avatar,
     MsgText: () => import('./msg-type/Text'),
+    MsgImage: () => import('./msg-type/Image'),
     MsgCustom: () => import('./msg-type/Custom')
   },
   props: {

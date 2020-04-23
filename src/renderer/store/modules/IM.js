@@ -444,6 +444,28 @@ const moduleIM = {
         })
       })
     },
+    sendGroupPic ({ dispatch }, args) {
+      /**
+       * 发送群聊图片
+       * target_gid: 群id
+       * image: 图片
+       */
+      return new Promise(async (resolve, reject) => {
+        await dispatch('imLoginCheck').then(() => {
+          IM.sendGroupPic(args).onSuccess((data, msg) => {
+            resolve({
+              data,
+              msg
+            })
+          }).onFail(data => {
+            reject(data)
+          })
+        }).catch(err => {
+          reject(err)
+          // reject(new Error(err.message))
+        })
+      })
+    },
     sendGroupCustom ({ dispatch }, args) {
       /**
        * 发送群消息

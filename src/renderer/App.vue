@@ -497,4 +497,15 @@ body {
 .group_member_add_form .ivu-modal-content .ivu-modal-body {
   height: 349px;
 }
+
+img[lazy="loading"] {
+  // width: 20px;
+  // height: 20px;
+  transition: all 0.2s ease-in-out;
+  // opacity: 0;
+}
+img[lazy="loaded"] {
+  /*your style here*/
+  opacity: 1;
+}
 </style>

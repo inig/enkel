@@ -26,8 +26,8 @@ Vue.config.productionTip = false
 Vue.use(VueLazyload, {
   preLoad: 1.3,
   // error: 'dist/error.png',
-  lazyComponent: true,
-  loading: '../../sttatic/images/loading.gif',
+  observer: true,
+  loading: '../../static/images/loading.gif',
   attempt: 1
 })
 
