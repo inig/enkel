@@ -15,6 +15,11 @@ import '../../static/css/font-awesome/css/font-awesome.min.css'
 
 import VueLazyload from 'vue-lazyload'
 
+const izitoast = require('izitoast')
+require('izitoast/dist/css/iziToast.min.css')
+
+Vue.prototype.$toast = izitoast
+
 Vue.prototype.$Notice = Notice
 Vue.prototype.$Message = Message
 Vue.prototype.$Modal = Modal
