@@ -97,7 +97,7 @@ function initMenu () {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-// initMenu()
+initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**

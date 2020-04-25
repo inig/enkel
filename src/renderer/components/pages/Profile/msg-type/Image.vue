@@ -14,7 +14,7 @@
       <canvas ref="canvasRef"
               :width="canvasSize.width"
               :height="canvasSize.height"
-              :style="{opacity: true ? 0 : 1}"></canvas>
+              style="opacity: 0; pointer-events: none;"></canvas>
     </div>
     <div class="msg_text_arrow"
          :style="[arrowStyles]">
