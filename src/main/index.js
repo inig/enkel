@@ -97,7 +97,7 @@ function initMenu () {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-initMenu()
+// initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -916,7 +916,7 @@ ipcMain.on('open-save', async (event, args) => {
 
 ipcMain.on('show-all-window', (event, args) => {
   BrowserWindow.getAllWindows().forEach(item => {
-    if (['menu', 'modal-loading', 'settings', 'about'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
+    if (['menu', 'modal-loading', 'settings', 'about', 'profile'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
       item.show()
     }
   })
@@ -924,7 +924,7 @@ ipcMain.on('show-all-window', (event, args) => {
 
 ipcMain.on('hide-all-window', (event, args) => {
   BrowserWindow.getAllWindows().forEach(item => {
-    if (['menu', 'modal-loading', 'settings', 'about'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
+    if (['menu', 'modal-loading', 'settings', 'about', 'profile'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
       item.hide()
     }
   })
@@ -932,7 +932,7 @@ ipcMain.on('hide-all-window', (event, args) => {
 
 ipcMain.on('close-all-window', (event, args) => {
   BrowserWindow.getAllWindows().forEach(item => {
-    if (['menu', 'modal-loading', 'settings', 'about'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
+    if (['menu', 'modal-loading', 'settings', 'about', 'profile'].indexOf(item.webContents.browserWindowOptions.id) < 0) {
       item.destroy()
     }
   })
