@@ -1,11 +1,11 @@
 <template>
   <div class="login_container">
-    <div id="login-container">
+    <div id="login-container" class="drag">
       <div class="top-container"
            :class="{'shadow': bottomContainerShown}">
         <div class="header-btns">
           <img src="~@/assets/close.png"
-               class="close"
+               class="close noDrag"
                @click="closeWindow">
         </div>
         <div class="main-container">
@@ -15,24 +15,24 @@
           <div class="status-container"></div>
           <div class="login-form"
                v-if="loginStatus === -1">
-            <div class="phonenum form-item">
+            <div class="phonenum form-item noDrag">
               <input type="text"
                      :ref="refEle.phonenum"
                      v-model="formData.phonenum"
                      placeholder="输入手机号" />
             </div>
-            <div class="password phonenum form-item">
+            <div class="password phonenum form-item noDrag">
               <input type="password"
                      :ref="refEle.password"
                      v-model="formData.password"
                      placeholder="输入密码" />
             </div>
-            <div class="password form-item">
+            <div class="password form-item noDrag">
               <input type="password"
                      :ref="refEle.confirmPassword"
                      v-model="formData.confirmPassword"
                      placeholder="再次输入密码" />
-              <div class="login"
+              <div class="login noDrag"
                    :class="{'shown': (formData.phonenum.trim() !== '' && formData.confirmPassword.trim() !== '' && (formData.confirmPassword.trim() == formData.password.trim()))}"
                    @click="register">
                 <img src="~@/assets/login.png"
@@ -44,7 +44,7 @@
                v-if="loginStatus === 0">
             <div class="info-phonenum"
                  v-text="formData.phonenum"></div>
-            <div class="login-cancel">
+            <div class="login-cancel noDrag">
               <button type="button">取消</button>
             </div>
           </div>
@@ -59,14 +59,14 @@
         </div>
         <div class="bottom-btns"
              @click="toggleBottomContainer">
-          <img class="show-bottom-container"
+          <img class="show-bottom-container noDrag"
                :class="{'up': bottomContainerShown}"
                src="~@/assets/down.png">
         </div>
       </div>
       <div class="bottom-container"
            :class="{'shown': bottomContainerShown}">
-        已有账号，<a href="javascript:void(0)"
+        已有账号，<a href="javascript:void(0)" class="noDrag"
            @click="gotoLoginPage">去登录</a>
       </div>
     </div>
@@ -104,7 +104,6 @@
     top: 0;
     border-radius: 4px;
     background-color: transparent;
-    -webkit-app-region: drag;
   }
   #login-container .top-container {
     position: absolute;
@@ -163,7 +162,6 @@
     /*text-align: right;*/
   }
   #login-container .top-container .header-btns img.close {
-    -webkit-app-region: no-drag;
     -webkit-user-select: none;
     width: 24px;
     height: 24px;

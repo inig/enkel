@@ -1,9 +1,9 @@
 <template>
   <div class="login_container">
-    <div id="login-container">
+    <div id="login-container" class="drag">
       <div class="top-container"
            :class="{'shadow': bottomContainerShown}">
-        <div class="header-btns">
+        <div class="header-btns noDrag">
           <img src="~@/assets/close.png"
                class="close"
                @click="closeWindow">
@@ -15,18 +15,18 @@
           <div class="status-container"></div>
           <div class="login-form"
                v-if="loginStatus === -1">
-            <div class="username form-item">
+            <div class="username form-item noDrag">
               <input type="text"
                      :ref="refEle.username"
                      v-model="loginForm.username"
                      placeholder="输入账号" />
             </div>
-            <div class="password form-item">
+            <div class="password form-item noDrag">
               <input type="password"
                      :ref="refEle.password"
                      v-model="loginForm.password"
                      placeholder="输入密码" />
-              <div class="login"
+              <div class="login noDrag"
                    :class="{'shown': (loginForm.username.trim() !== '' && loginForm.password.trim() !== '')}"
                    @click="login">
                 <img src="~@/assets/login.png"
@@ -38,7 +38,7 @@
                v-if="loginStatus === 0">
             <div class="info-username"
                  v-text="loginForm.username"></div>
-            <div class="login-cancel">
+            <div class="login-cancel noDrag">
               <button type="button">取消</button>
             </div>
           </div>
@@ -53,12 +53,12 @@
         </div>
         <div class="bottom-btns"
              @click="toggleBottomContainer">
-          <img class="show-bottom-container"
+          <img class="show-bottom-container noDrag"
                :class="{'up': bottomContainerShown}"
                src="~@/assets/down.png">
         </div>
       </div>
-      <div class="bottom-container"
+      <div class="bottom-container noDrag"
            :class="{'shown': bottomContainerShown}">
         <div class="item">
           <div class="left">
@@ -113,7 +113,6 @@
     top: 0;
     border-radius: 4px;
     background-color: transparent;
-    -webkit-app-region: drag;
   }
   #login-container .top-container {
     position: absolute;
@@ -146,7 +145,6 @@
     /*background-color: red;*/
   }
   #login-container .top-container .bottom-btns img {
-    -webkit-app-region: no-drag;
     -webkit-user-select: none;
     width: 64px;
     height: 32px;
@@ -172,7 +170,6 @@
     /*text-align: right;*/
   }
   #login-container .top-container .header-btns img.close {
-    -webkit-app-region: no-drag;
     -webkit-user-select: none;
     width: 24px;
     height: 24px;

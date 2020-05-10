@@ -210,7 +210,6 @@ ipcMain.on('modify-password', async (event, args) => {
 })
 
 ipcMain.on('update-user-info', (event, data) => {
-  console.log('==========', data)
   let userInfo = getUser()
   userInfo = Object.assign({}, userInfo, data)
   setUser(event, userInfo)

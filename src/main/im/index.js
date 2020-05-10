@@ -37,7 +37,6 @@ ipcMain.on('im-get-config', (event) => {
 
 function imNewHandler (event, im) {
   if (!IM) {
-    console.log('@@@@@@@', im)
     if (im) {
       IM = im
     } else {
@@ -46,7 +45,6 @@ function imNewHandler (event, im) {
         message: 'IM还未初始化'
       }
     }
-    console.log(IM)
   }
   event.returnValue = IM
 }
@@ -75,7 +73,6 @@ function imInitHandler (event) {
   }
   IM.init(getIMConfig()).onSuccess(data => {
     event.reply('im-init-success', data)
-    console.log('########', data)
     event.returnValue = data
   }).onFail(data => {
     event.reply('im-init-fail', data)
@@ -262,7 +259,6 @@ export function imGetUserInfoHandler (event, args) {
 ipcMain.on('im-get-user-info', (event, args) => imGetUserInfoHandler(event, args))
 
 export function imUpdateSelfAavatarHandler (event, args) {
-  console.log('upload avatar =======> ', args)
   BrowserWindow.getAllWindows().forEach(item => {
     // 聊天室消息监听
     if (item.webContents !== event.sender) {

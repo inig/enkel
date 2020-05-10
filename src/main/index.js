@@ -97,7 +97,7 @@ function initMenu () {
   const menu = Menu.buildFromTemplate(template)
   Menu.setApplicationMenu(menu)
 }
-// initMenu()
+initMenu()
 
 // if (process.mas) app.setName('Enkel')
 /**
@@ -227,6 +227,7 @@ async function createNewWindow (arg, extraData) {
     width: 1000,
     titleBarStyle: 'hidden',
     show: false,
+    frame: false,
     webPreferences: {
       javascript: true,
       plugins: true,
@@ -338,6 +339,7 @@ function createMenuWindow (args) {
   menuWindow.once('ready-to-show', () => {
     // openUrlHandler(null, 'http://enkel.com?p=profile&target=profile', false)
     menuWindow.show()
+    
     // setTimeout(() => {
     if (defaultOption && defaultOption.defaultOpen) {
       createNewWindow(defaultOption.defaultOpen)
@@ -599,7 +601,6 @@ let checkForUpdates = () => {
   autoUpdater.checkForUpdates()
 }
 function sendUpdateMessage (message, data) {
-  console.log({ message, data });
   menuWindow.webContents.send('update-message', { message, data });
 }
 
@@ -691,6 +692,8 @@ app.on('ready', async () => {
   if (!modalLoadingWindow) {
     createModalLoadingWindow()
   }
+
+  app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
   globalShortcut.register('CommandOrControl+Shift+E', () => {
     // createModalLoadingWindow()

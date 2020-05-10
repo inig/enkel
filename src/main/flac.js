@@ -269,7 +269,6 @@ function _flacGetRealPath (event, args) {
       }
       if (response.list && response.list.length) {
         event.sender.send('flac-response-real-path', response.list[0])
-        console.log('response: ', response.list[0])
         win.destroy()
       }
     })

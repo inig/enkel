@@ -1,21 +1,21 @@
 <template>
-  <div class="app_header"
+  <div class="app_header drag"
        @dblclick="toggleWindowSize">
-    <div class="close_wrapper"
+    <div class="close_wrapper noDrag"
          v-if="$route.meta && $route.meta.closable"
          @click="closeSettings">
       <svg>
         <use xlink:href="#close"></use>
       </svg>
     </div>
-    <div class="menu_fold"
+    <div class="menu_fold noDrag"
          v-if="$route.name === 'menu' && !menuFolded"
          @click="menuFold">
       <svg>
         <use :xlink:href="'#' + (menuFolded ? 'menu-unfold' : 'menu-fold')"></use>
       </svg>
     </div>
-    <div class="menu_fold bgWhite"
+    <div class="menu_fold bgWhite drag"
          v-if="$route.name === 'menu' && menuFolded"
          title="双击打开"
          @dblclick="menuFold"
@@ -54,7 +54,7 @@
               icon="ios-person"></Avatar>
     </div> -->
 
-    <div class="login_box"
+    <div class="login_box noDrag"
          v-if="$route.name === 'menu' && !menuFolded">
       <Dropdown class="menu_operate_dropdown"
                 transfer
@@ -379,7 +379,6 @@ export default {
   height: 48px;
   cursor: move;
   background-color: @primary-color;
-  -webkit-app-region: drag;
   color: #ffffff;
   display: flex;
   flex-direction: row;

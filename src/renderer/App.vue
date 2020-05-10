@@ -47,6 +47,19 @@
   body {
     background: rgba(0, 0, 0, 0);
   }
+  body::-webkit-scrollbar{
+    width:0;
+    -webkit-app-region: no-drag !important;
+  }
+  .drag {
+    -webkit-app-region: drag !important;
+  }
+  textarea, input, button, a, .profile_menu_item, .pin, .header-btns, .upload-plugin-container, .friend_item, .group_item, .profile_item_inner, .chat_window_header_back, .msg_box_left_content, .msg_box_right_content, .play_box_mood_control, .play_box_heart, .media_fm_side_bar, .vjs-control-bar, .playlist_container, .play_file_container, .download_container, .video_box_pin, .video_box_top_right_controls_item {
+    -webkit-app-region: no-drag !important;
+  }
+  .noDrag {
+    -webkit-app-region: no-drag !important;
+  }
   /* CSS */
   * {
     margin: 0;
