@@ -1,16 +1,47 @@
 <template>
   <div class="encrypt_container">
     <e-split v-model="split">
-      <Input slot="left"
-             class="encrypt_text encrypt_container_left"
+      <!-- <Input slot="left"
+             class="no_resize encrypt_text encrypt_container_left"
              type="textarea"
              placeholder="明文"
-             v-model="plaintextValue" />
+             :value="originStr"
+             @on-change="changeOriginStr" />
+
       <Input slot="right"
-             class="encrypt_text encrypt_container_right"
+             class="no_resize encrypt_text encrypt_container_right"
              type="textarea"
              placeholder="密文"
-             v-model="ciphertextValue" />
+             :value="targetStr"
+             readonly /> -->
+      <div slot="left"
+           class="input_box origin_box"
+           ref="originBoxRef">
+        <Input class="no_resize encrypt_text encrypt_container_left"
+               type="textarea"
+               placeholder="明文"
+               v-model="originStr"
+               @on-change="changeOriginStr" />
+        <copy style="position: absolute; right: 25px; top: 25px;"
+              :data="originStr"></copy>
+      </div>
+      <div slot="right"
+           class="input_box origin_box">
+        <div class="transformed_box">
+          <json-view class="json_target"
+                     :data="targetJson"
+                     v-if="showJsonView"></json-view>
+          <Input slot="right"
+                 class="no_resize encrypt_text encrypt_container_right"
+                 type="textarea"
+                 placeholder="密文"
+                 :value="targetStr"
+                 readonly
+                 v-else />
+        </div>
+        <copy style="position: absolute; right: 30px; top: 30px;"
+              :data="JSON.stringify(targetJson, null, 2)"></copy>
+      </div>
     </e-split>
   </div>
 </template>
@@ -20,41 +51,48 @@ import { Input } from "view-design"
 export default {
   name: 'EncryptContent',
   props: {
-    plaintext: {
+    targetStr: {
       type: String,
       default: ''
-    },
-    ciphertext: {
-      type: String,
-      default: ''
-    },
+    }
+  },
+  model: {
+    prop: 'value',
+    event: 'change'
   },
   components: {
     Input,
-    ESplit: () => import('../../../custom/ESplit')
+    ESplit: () => import('../../../custom/ESplit'),
+    JsonView: () => import('../../../custom/json-view'),
+    Copy: () => import('../../../custom/Copy')
   },
   data () {
     return {
       split: 0.5,
+      originStr: '',
+      targetJson: {}
     }
   },
   computed: {
-    plaintextValue: {
-      get () {
-        return this.plaintext
-      },
-      set (val) {
-        this.$emit('setPlaintext', val)
-      },
-    },
-    ciphertextValue: {
-      get () {
-        return this.ciphertext
-      },
-      set (val) {
-        this.$emit('setCiphertext', val)
-      },
-    },
+    showJsonView () {
+      let f = false
+      if (!this.targetStr || !this.targetStr.trim()) {
+        f = false
+      } else {
+        try {
+          this.targetJson = JSON.parse(this.targetStr)
+          f = true
+        } catch (err) {
+          f = false
+        }
+      }
+      return f
+    }
+  },
+  methods: {
+    changeOriginStr (data) {
+      this.$emit('change', data.target.value)
+    }
   }
 }
 </script>
@@ -70,11 +108,11 @@ export default {
   }
 
   &_left {
-    padding-right: 15px;
+    // padding-right: 15px;
   }
 
   &_right {
-    padding-left: 15px;
+    // padding-left: 15px;
   }
 }
 </style>
@@ -88,6 +126,23 @@ export default {
   &:focus {
     border-color: #dcdee2;
     box-shadow: none;
+  }
+}
+
+.input_box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  padding: 15px;
+  box-sizing: border-box;
+  .transformed_box {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    -webkit-user-select: text;
+    overflow-y: auto;
+    background-color: #282926;
   }
 }
 </style>

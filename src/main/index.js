@@ -222,9 +222,9 @@ async function createNewWindow (arg, extraData) {
   }
 
   let windowCreateOption = Object.assign({
-    height: 563,
+    height: 800,
     // useContentSize: true,
-    width: 1000,
+    width: 1200,
     titleBarStyle: 'hidden',
     show: false,
     webPreferences: {
