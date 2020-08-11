@@ -10,14 +10,10 @@
                class="encrypt_mian" />
     </Tabs>
     <encrypt-content class="encrypt_content"
-                     :plaintext="plaintext"
-                     :ciphertext="ciphertext"
-                     @setPlaintext="setPlaintext"
-                     @setCiphertext="setCiphertext"></encrypt-content>
+                     :targetStr="targetStr"
+                     v-model="originStr"></encrypt-content>
     <operation class="encrypt_operation"
-               :secretKey="secretKey"
-               @setSecretKey="setSecretKey"
-               @resetHandler="resetHandler"
+               :currentEncrypt="encryptValue"
                @decryptHandler="decryptHandler"
                @encryptHandler="encryptHandler"></operation>
   </div>
@@ -36,41 +32,40 @@ export default {
   },
   data () {
     return {
-      plaintext: '',
-      ciphertext: '',
-      secretKey: '',
+      originStr: '', // 原始值
+      targetStr: '', // 加密或解密后的值
       encryptValue: 'AES',
       encryptData: ['AES', 'DES', 'TripleDES', 'Rabbit', 'RC4', 'RC4Drop']
     }
   },
   methods: {
-    setPlaintext (data) { this.plaintext = data },
-    setCiphertext (data) { this.ciphertext = data },
-    decryptHandler () {
-      if (!this.ciphertext) { return }
-      // 解密
+    decryptHandler (data) {
+      if (!this.originStr) { return }
       try {
-        this.plaintext = CryptoJS[this.encryptValue].decrypt(this.ciphertext, this.secretKey).toString(CryptoJS.enc.Utf8)
-      } catch (error) {
-        this.plaintext = ''
+        const key = CryptoJS.enc.Utf8.parse(data.key)
+        const iv = CryptoJS.enc.Utf8.parse(data.iv)
+        let encryptedStr = CryptoJS.enc[data.outputType].parse(this.originStr);
+        let srcs = CryptoJS.enc.Base64.stringify(encryptedStr);
+        let decrypt = CryptoJS[this.encryptValue].decrypt(srcs, key, { iv: iv, mode: CryptoJS.mode[data.encryptionType], padding: CryptoJS.pad[data.paddingType] });
+        this.targetStr = decrypt.toString(CryptoJS.enc.Utf8).toString().replace(/\f/g, '')
+      } catch (err) {
+        this.targetStr = '解密失败'
       }
+      return this.targetStr;
     },
-    encryptHandler () {
-      if (!this.plaintext) { return }
+    encryptHandler (data) {
+      if (!this.originStr) { return }
       // 加密
       try {
-        this.ciphertext = CryptoJS[this.encryptValue].encrypt(this.plaintext, this.secretKey).toString()
-      } catch (error) {
-        this.ciphertext = ''
+        const key = CryptoJS.enc.Utf8.parse(data.key)
+        const iv = CryptoJS.enc.Utf8.parse(data.iv)
+        let srcs = CryptoJS.enc.Utf8.parse(this.originStr);
+        let encrypted = CryptoJS[this.encryptValue].encrypt(srcs, key, { iv: iv, mode: CryptoJS.mode[data.encryptionType], padding: CryptoJS.pad[data.paddingType] });
+        this.targetStr = encrypted.ciphertext.toString(CryptoJS.enc[data.outputType])
+      } catch (err) {
+        this.targetStr = '加密失败'
       }
-    },
-    resetHandler () {
-      this.plaintext = ''
-      this.ciphertext = ''
-      this.secretKey = ''
-    },
-    setSecretKey (data) {
-      this.secretKey = data
+      return this.targetStr
     }
   }
 }
@@ -84,11 +79,12 @@ export default {
   overflow: hidden;
   &_kindness {
     width: 100%;
-    height: 10%;
+    // height: 10%;
   }
   &_content {
     width: 100%;
-    height: 75%;
+    // height: 75%;
+    height: calc(100% - 120px);
   }
   &_operation {
     width: 100%;
