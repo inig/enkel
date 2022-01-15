@@ -84,7 +84,7 @@
     "qrcode": "^1.4.4",
     "qrcode-parser": "^1.2.0",
     "request": "^2.88.0",
-    "shelljs": "^0.8.3",
+    "shelljs": "^0.8.5",
     "video.js": "^7.6.6",
     "videojs-flash": "^2.2.1",
     "vue": "^2.5.16",
